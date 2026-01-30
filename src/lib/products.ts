@@ -18,15 +18,17 @@ const sebBench = "/images/86b90ebb8842cb1676eea6b7c231991c3cf94cbf.png";
 const scarletHighChair = "/images/6e09ca5f90e9914a812888b096bcf57d9f725cee.png";
 const scarlaHighChair = "/images/08a6d4d867e66c1e8e80e3d2bff9ede806c7506c.png";
 const scottHighChair = "/images/941937352f3f009bb9864931bdcd7d822e24dea5.png";
-const stellaSquareTable = "/images/cafea32ebc488e26329ba24518ef60ab0f0d869f.png";
+const stellaSquareTable =
+  "/images/cafea32ebc488e26329ba24518ef60ab0f0d869f.png";
 const stellaRoundTable = "/images/8efe6cab17d329bc3776f1784c468ea08b106c9e.png";
-const stellaRectangularTable = "/images/fcb68d4d6adabadc137201919584671787bf2758.png";
+const stellaRectangularTable =
+  "/images/fcb68d4d6adabadc137201919584671787bf2758.png";
 const serahHighTable = "/images/257d451842e1008f35cd8e216337142a1608f4a2.png";
 const senoHighTable = "/images/78d8323b5662ac9055fa1d9039c726bb13b919e4.png";
 const senaHighTable = "/images/f9806cdc1b94a033ed9681ff4605103e469f6121.png";
 
 export interface WarehouseStock {
-  warehouse: 'Lorenzo' | 'Oroquieta';
+  warehouse: "Lorenzo" | "Oroquieta";
   quantity: number;
   reserved: number; // Stock reserved for pending orders
   batches?: InventoryBatch[]; // FIFO batch tracking
@@ -74,7 +76,7 @@ export interface Product {
   name: string;
   price: number; // Base price (for display, actual price comes from variants)
   description: string;
-  category: 'chairs' | 'tables';
+  category: "chairs" | "tables";
   subCategory: string;
   imageUrl: string; // Main image
   images: string[]; // All product images
@@ -102,281 +104,707 @@ const defaultProducts: Product[] = [
   // DINING CHAIRS (14 items)
   {
     id: 1,
-    name: 'Shelli Chair',
-    price: 950.00,
-    description: 'Elegant solid wood dining chair with armrests. Perfect for extended dining comfort with its supportive armrests and smooth finish. Part of the Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Dining Chairs',
+    name: "Shelli Chair",
+    price: 950.0,
+    description:
+      "Elegant solid wood dining chair with armrests. Perfect for extended dining comfort with its supportive armrests and smooth finish. Part of the Heritage Collection.",
+    category: "chairs",
+    subCategory: "Dining Chairs",
     imageUrl: shelliChair,
     images: [shelliChair],
-    material: 'Solid Wood',
+    material: "Solid Wood",
     dimensions: { width: 55, height: 88, depth: 58 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 950.0,
+        dimensions: { width: 55, height: 88, depth: 58 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 8, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 7, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 950.0,
+        dimensions: { width: 55, height: 88, depth: 58 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 8, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 6, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-terracotta",
+        size: null,
+        color: "Terracotta",
+        price: 950.0,
+        dimensions: { width: 55, height: 88, depth: 58 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 7, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 6, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-black",
+        size: null,
+        color: "Black",
+        price: 950.0,
+        dimensions: { width: 55, height: 88, depth: 58 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 7, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 6, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: true,
-    colors: ['Warm Sand', 'Deep Espresso', 'Terracotta', 'Black'],
+    colors: ["Warm Sand", "Deep Espresso", "Terracotta", "Black"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 30, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 25, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 30, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 25, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 2,
-    name: 'Sasha Chair',
-    price: 750.00,
-    description: 'Classic solid wood dining chair with clean lines. A timeless design that complements any dining space with its simple yet sophisticated profile. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Dining Chairs',
+    name: "Sasha Chair",
+    price: 750.0,
+    description:
+      "Classic solid wood dining chair with clean lines. A timeless design that complements any dining space with its simple yet sophisticated profile. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Dining Chairs",
     imageUrl: sashaChair,
     images: [sashaChair],
-    material: 'Solid Wood',
+    material: "Solid Wood",
     dimensions: { width: 45, height: 85, depth: 50 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 750.0,
+        dimensions: { width: 45, height: 85, depth: 50 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 14, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 12, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 750.0,
+        dimensions: { width: 45, height: 85, depth: 50 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 13, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 12, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-brick-brown",
+        size: null,
+        color: "Brick Brown",
+        price: 750.0,
+        dimensions: { width: 45, height: 85, depth: 50 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 13, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 11, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: true,
-    colors: ['Warm Sand', 'Deep Espresso', 'Brick Brown'],
+    colors: ["Warm Sand", "Deep Espresso", "Brick Brown"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 40, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 35, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 40, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 35, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 3,
-    name: 'Shayla Chair',
-    price: 850.00,
-    description: 'Solid wood chair with comfortable cushioned seat. Combines the durability of wood construction with the comfort of upholstered seating. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Dining Chairs',
+    name: "Shayla Chair",
+    price: 850.0,
+    description:
+      "Solid wood chair with comfortable cushioned seat. Combines the durability of wood construction with the comfort of upholstered seating. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Dining Chairs",
     imageUrl: shaylaChair,
     images: [shaylaChair],
-    material: 'Solid Wood & Fabric',
+    material: "Solid Wood & Fabric",
     dimensions: { width: 46, height: 87, depth: 52 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 850.0,
+        dimensions: { width: 46, height: 87, depth: 52 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 14, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 11, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 850.0,
+        dimensions: { width: 46, height: 87, depth: 52 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 14, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 11, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: true,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 28, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 22, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 28, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 22, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 4,
-    name: 'Sherilee Chair',
-    price: 920.00,
-    description: 'Stunning solid wood chair with woven cane back and seat. Features traditional craftsmanship with natural woven details for a breezy, tropical aesthetic. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Dining Chairs',
+    name: "Sherilee Chair",
+    price: 920.0,
+    description:
+      "Stunning solid wood chair with woven cane back and seat. Features traditional craftsmanship with natural woven details for a breezy, tropical aesthetic. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Dining Chairs",
     imageUrl: sherileeChair,
     images: [sherileeChair],
-    material: 'Solid Wood & Woven Cane',
+    material: "Solid Wood & Woven Cane",
     dimensions: { width: 48, height: 89, depth: 54 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 920.0,
+        dimensions: { width: 48, height: 89, depth: 54 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 8, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 6, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 920.0,
+        dimensions: { width: 48, height: 89, depth: 54 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 7, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 6, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-brick-brown",
+        size: null,
+        color: "Brick Brown",
+        price: 920.0,
+        dimensions: { width: 48, height: 89, depth: 54 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 7, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 6, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: true,
-    colors: ['Warm Sand', 'Deep Espresso', 'Brick Brown'],
+    colors: ["Warm Sand", "Deep Espresso", "Brick Brown"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 22, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 18, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 22, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 18, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 5,
-    name: 'Samira Chair',
-    price: 820.00,
-    description: 'Refined solid wood chair with padded cushioned seat. Offers excellent support and comfort for everyday dining with elegant proportions. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Dining Chairs',
+    name: "Samira Chair",
+    price: 820.0,
+    description:
+      "Refined solid wood chair with padded cushioned seat. Offers excellent support and comfort for everyday dining with elegant proportions. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Dining Chairs",
     imageUrl: samiraChair,
     images: [samiraChair],
-    material: 'Solid Wood & Fabric',
+    material: "Solid Wood & Fabric",
     dimensions: { width: 47, height: 86, depth: 51 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 820.0,
+        dimensions: { width: 47, height: 86, depth: 51 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 12, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 10, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 820.0,
+        dimensions: { width: 47, height: 86, depth: 51 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 12, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 10, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 26, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 20, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 26, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 20, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 6,
-    name: 'Sami Chair',
-    price: 680.00,
-    description: 'Pure solid wood construction chair with minimalist design. Showcases the natural beauty of wood grain with its simple, sturdy construction. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Dining Chairs',
+    name: "Sami Chair",
+    price: 680.0,
+    description:
+      "Pure solid wood construction chair with minimalist design. Showcases the natural beauty of wood grain with its simple, sturdy construction. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Dining Chairs",
     imageUrl: samiChair,
     images: [samiChair],
-    material: 'Solid Wood',
+    material: "Solid Wood",
     dimensions: { width: 44, height: 84, depth: 49 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 680.0,
+        dimensions: { width: 44, height: 84, depth: 49 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 18, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 15, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 680.0,
+        dimensions: { width: 44, height: 84, depth: 49 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 17, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 15, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 35, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 30, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 35, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 30, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 7,
-    name: 'Sade Chair',
-    price: 790.00,
-    description: 'Modern solid wood dining chair with cushioned seat. Features contemporary styling with comfortable seating perfect for modern homes. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Dining Chairs',
+    name: "Sade Chair",
+    price: 790.0,
+    description:
+      "Modern solid wood dining chair with cushioned seat. Features contemporary styling with comfortable seating perfect for modern homes. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Dining Chairs",
     imageUrl: sadeChair,
     images: [sadeChair],
-    material: 'Solid Wood & Fabric',
+    material: "Solid Wood & Fabric",
     dimensions: { width: 46, height: 88, depth: 52 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 790.0,
+        dimensions: { width: 46, height: 88, depth: 52 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 12, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 10, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 790.0,
+        dimensions: { width: 46, height: 88, depth: 52 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 12, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 9, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 24, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 19, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 24, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 19, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 8,
-    name: 'Sadah Chair',
-    price: 880.00,
-    description: 'Solid wood chair with fully upholstered cushioned seat. Premium comfort with thick padding for extended dining sessions. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Dining Chairs',
+    name: "Sadah Chair",
+    price: 880.0,
+    description:
+      "Solid wood chair with fully upholstered cushioned seat. Premium comfort with thick padding for extended dining sessions. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Dining Chairs",
     imageUrl: sadahChair,
     images: [sadahChair],
-    material: 'Solid Wood & Fabric',
+    material: "Solid Wood & Fabric",
     dimensions: { width: 48, height: 87, depth: 53 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 880.0,
+        dimensions: { width: 48, height: 87, depth: 53 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 8, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 880.0,
+        dimensions: { width: 48, height: 87, depth: 53 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 8, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 20, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 16, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 20, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 16, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 9,
-    name: 'Sedra Chair',
-    price: 840.00,
-    description: 'Classic solid wood Windsor-style chair with spindle back. Traditional craftsmanship meets timeless design in this elegant dining chair. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Dining Chairs',
+    name: "Sedra Chair",
+    price: 840.0,
+    description:
+      "Classic solid wood Windsor-style chair with spindle back. Traditional craftsmanship meets timeless design in this elegant dining chair. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Dining Chairs",
     imageUrl: sedraChair,
     images: [sedraChair],
-    material: 'Solid Wood',
+    material: "Solid Wood",
     dimensions: { width: 46, height: 92, depth: 51 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 840.0,
+        dimensions: { width: 46, height: 92, depth: 51 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 9, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 7, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 840.0,
+        dimensions: { width: 46, height: 92, depth: 51 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 9, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 7, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 18, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 14, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 18, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 14, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 10,
-    name: 'Sarah Chair',
-    price: 720.00,
-    description: 'Simple solid wood dining chair with soft cushioned seat. Clean, straightforward design that works with any dining table style. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Dining Chairs',
+    name: "Sarah Chair",
+    price: 720.0,
+    description:
+      "Simple solid wood dining chair with soft cushioned seat. Clean, straightforward design that works with any dining table style. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Dining Chairs",
     imageUrl: sarahChair,
     images: [sarahChair],
-    material: 'Solid Wood & Fabric',
+    material: "Solid Wood & Fabric",
     dimensions: { width: 45, height: 85, depth: 50 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 720.0,
+        dimensions: { width: 45, height: 85, depth: 50 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 16, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 14, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 720.0,
+        dimensions: { width: 45, height: 85, depth: 50 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 16, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 14, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 32, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 28, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 32, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 28, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 11,
-    name: 'Sage Chair',
-    price: 810.00,
-    description: 'Solid wood chair with black cushioned seat and distinctive T-shaped back. Modern design with excellent back support. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Dining Chairs',
+    name: "Sage Chair",
+    price: 810.0,
+    description:
+      "Solid wood chair with black cushioned seat and distinctive T-shaped back. Modern design with excellent back support. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Dining Chairs",
     imageUrl: sageChair,
     images: [sageChair],
-    material: 'Solid Wood & Fabric',
+    material: "Solid Wood & Fabric",
     dimensions: { width: 47, height: 89, depth: 52 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 810.0,
+        dimensions: { width: 47, height: 89, depth: 52 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 11, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 9, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 810.0,
+        dimensions: { width: 47, height: 89, depth: 52 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 8, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 21, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 17, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 21, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 17, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 12,
-    name: 'Secoya Chair',
-    price: 950.00,
-    description: 'Premium solid wood chair with armrests and upholstered back and seat. Maximum comfort with full upholstery and supportive armrests. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Dining Chairs',
+    name: "Secoya Chair",
+    price: 950.0,
+    description:
+      "Premium solid wood chair with armrests and upholstered back and seat. Maximum comfort with full upholstery and supportive armrests. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Dining Chairs",
     imageUrl: secoyaChair,
     images: [secoyaChair],
-    material: 'Solid Wood & Fabric',
+    material: "Solid Wood & Fabric",
     dimensions: { width: 56, height: 90, depth: 58 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 950.0,
+        dimensions: { width: 56, height: 90, depth: 58 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 8, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 6, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 950.0,
+        dimensions: { width: 56, height: 90, depth: 58 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 8, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 6, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 16, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 12, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 16, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 12, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 13,
-    name: 'Sammy Chair',
-    price: 890.00,
-    description: 'Solid wood chair with cushioned back and seat in multiple color options. Versatile design available in various upholstery colors. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Dining Chairs',
+    name: "Sammy Chair",
+    price: 890.0,
+    description:
+      "Solid wood chair with cushioned back and seat in multiple color options. Versatile design available in various upholstery colors. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Dining Chairs",
     imageUrl: sammyChair,
     images: [sammyChair],
-    material: 'Solid Wood & Fabric',
+    material: "Solid Wood & Fabric",
     dimensions: { width: 48, height: 88, depth: 53 },
+    variants: [
+      {
+        id: "one-size-cloud-white",
+        size: null,
+        color: "Cloud White",
+        price: 890.0,
+        dimensions: { width: 48, height: 88, depth: 53 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 13, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 10, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-clay-rose",
+        size: null,
+        color: "Clay Rose",
+        price: 890.0,
+        dimensions: { width: 48, height: 88, depth: 53 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 12, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 10, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Cloud White', 'Clay Rose'],
+    colors: ["Cloud White", "Clay Rose"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 25, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 20, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 25, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 20, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 14,
-    name: 'Sarina Chair',
-    price: 800.00,
-    description: 'Solid wood chair with T-shaped curved back and cushioned seat. Ergonomic curved back design for superior comfort. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Dining Chairs',
+    name: "Sarina Chair",
+    price: 800.0,
+    description:
+      "Solid wood chair with T-shaped curved back and cushioned seat. Ergonomic curved back design for superior comfort. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Dining Chairs",
     imageUrl: sarinaChair,
     images: [sarinaChair],
-    material: 'Solid Wood & Fabric',
+    material: "Solid Wood & Fabric",
     dimensions: { width: 46, height: 87, depth: 51 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 800.0,
+        dimensions: { width: 46, height: 87, depth: 51 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 12, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 10, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-warm-taupe",
+        size: null,
+        color: "Warm Taupe",
+        price: 800.0,
+        dimensions: { width: 46, height: 87, depth: 51 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 11, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 9, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Warm Sand', 'Warm Taupe'],
+    colors: ["Warm Sand", "Warm Taupe"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 23, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 19, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 23, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 19, reserved: 0 },
     ],
     active: true,
   },
@@ -384,61 +812,166 @@ const defaultProducts: Product[] = [
   // BAR STOOLS / HIGH CHAIRS (3 items)
   {
     id: 15,
-    name: 'Scarlet High Chair',
-    price: 1150.00,
-    description: 'Solid wood bar stool with cushioned seat in multiple color options. Perfect for kitchen islands and bar counters. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Bar Stools',
+    name: "Scarlet High Chair",
+    price: 1150.0,
+    description:
+      "Solid wood bar stool with cushioned seat in multiple color options. Perfect for kitchen islands and bar counters. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Bar Stools",
     imageUrl: scarletHighChair,
     images: [scarletHighChair],
-    material: 'Solid Wood & Fabric',
+    material: "Solid Wood & Fabric",
     dimensions: { width: 42, height: 100, depth: 46 },
+    variants: [
+      {
+        id: "one-size-slate-green",
+        size: null,
+        color: "Slate Green",
+        price: 1150.0,
+        dimensions: { width: 42, height: 100, depth: 46 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 7, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 5, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-chestnut-brown",
+        size: null,
+        color: "Chestnut Brown",
+        price: 1150.0,
+        dimensions: { width: 42, height: 100, depth: 46 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 7, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 5, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-antique-olive",
+        size: null,
+        color: "Antique Olive",
+        price: 1150.0,
+        dimensions: { width: 42, height: 100, depth: 46 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 6, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 5, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: true,
-    colors: ['Slate Green', 'Chestnut Brown', 'Antique Olive'],
+    colors: ["Slate Green", "Chestnut Brown", "Antique Olive"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 20, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 15, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 20, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 15, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 16,
-    name: 'Scarla High Chair',
-    price: 1250.00,
-    description: 'Solid wood bar stool with upholstered back and seat. Premium comfort for elevated seating with full back support. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Bar Stools',
+    name: "Scarla High Chair",
+    price: 1250.0,
+    description:
+      "Solid wood bar stool with upholstered back and seat. Premium comfort for elevated seating with full back support. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Bar Stools",
     imageUrl: scarlaHighChair,
     images: [scarlaHighChair],
-    material: 'Solid Wood & Fabric',
+    material: "Solid Wood & Fabric",
     dimensions: { width: 44, height: 102, depth: 48 },
+    variants: [
+      {
+        id: "one-size-linen-beige",
+        size: null,
+        color: "Linen Beige",
+        price: 1250.0,
+        dimensions: { width: 44, height: 102, depth: 48 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 6, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 5, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-pebble-gray",
+        size: null,
+        color: "Pebble Gray",
+        price: 1250.0,
+        dimensions: { width: 44, height: 102, depth: 48 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 6, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 5, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-storm-gray",
+        size: null,
+        color: "Storm Gray",
+        price: 1250.0,
+        dimensions: { width: 44, height: 102, depth: 48 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 6, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: true,
-    colors: ['Linen Beige', 'Pebble Gray', 'Storm Gray'],
+    colors: ["Linen Beige", "Pebble Gray", "Storm Gray"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 18, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 14, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 18, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 14, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 17,
-    name: 'Scott High Chair',
-    price: 950.00,
-    description: 'Classic solid wood bar stool in multiple color finishes. Simple, sturdy design ideal for casual dining areas. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Bar Stools',
+    name: "Scott High Chair",
+    price: 950.0,
+    description:
+      "Classic solid wood bar stool in multiple color finishes. Simple, sturdy design ideal for casual dining areas. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Bar Stools",
     imageUrl: scottHighChair,
     images: [scottHighChair],
-    material: 'Solid Wood',
+    material: "Solid Wood",
     dimensions: { width: 40, height: 98, depth: 44 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 950.0,
+        dimensions: { width: 40, height: 98, depth: 44 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 11, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 9, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 950.0,
+        dimensions: { width: 40, height: 98, depth: 44 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 11, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 9, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 22, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 18, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 22, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 18, reserved: 0 },
     ],
     active: true,
   },
@@ -446,41 +979,71 @@ const defaultProducts: Product[] = [
   // BENCHES / SMALL FURNITURE (2 items)
   {
     id: 18,
-    name: 'Sally Stool',
-    price: 650.00,
-    description: 'Solid wood stool with drawer storage. Multi-functional piece serves as both seating and side table with hidden storage. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Stools & Benches',
+    name: "Sally Stool",
+    price: 650.0,
+    description:
+      "Solid wood stool with drawer storage. Multi-functional piece serves as both seating and side table with hidden storage. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Stools & Benches",
     imageUrl: sallyStool,
     images: [sallyStool],
-    material: 'Solid Wood',
+    material: "Solid Wood",
     dimensions: { width: 35, height: 45, depth: 35 },
+    variants: [
+      {
+        id: "one-size-natural-wood",
+        size: null,
+        color: "Natural Wood",
+        price: 650.0,
+        dimensions: { width: 35, height: 45, depth: 35 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 25, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 20, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Natural Wood'],
+    colors: ["Natural Wood"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 25, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 20, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 25, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 20, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 19,
-    name: 'Seb Bench',
-    price: 850.00,
-    description: 'Solid wood bench suitable for entryways or as a coffee table. Versatile piece with clean lines and sturdy construction. Heritage Collection.',
-    category: 'chairs',
-    subCategory: 'Stools & Benches',
+    name: "Seb Bench",
+    price: 850.0,
+    description:
+      "Solid wood bench suitable for entryways or as a coffee table. Versatile piece with clean lines and sturdy construction. Heritage Collection.",
+    category: "chairs",
+    subCategory: "Stools & Benches",
     imageUrl: sebBench,
     images: [sebBench],
-    material: 'Solid Wood',
+    material: "Solid Wood",
     dimensions: { width: 100, height: 45, depth: 35 },
+    variants: [
+      {
+        id: "one-size-natural-wood",
+        size: null,
+        color: "Natural Wood",
+        price: 850.0,
+        dimensions: { width: 100, height: 45, depth: 35 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 15, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 12, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Natural Wood'],
+    colors: ["Natural Wood"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 15, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 12, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 15, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 12, reserved: 0 },
     ],
     active: true,
   },
@@ -488,226 +1051,680 @@ const defaultProducts: Product[] = [
   // DINING TABLES (3 items)
   {
     id: 20,
-    name: 'Stella Square Table',
-    price: 1250.00, // Base price set to minimum size option price
-    description: 'Solid wood square dining table available in multiple sizes (60cm, 70cm, 80cm, 90cm). Perfect for intimate dining spaces. Heritage Collection.',
-    category: 'tables',
-    subCategory: 'Dining Tables',
+    name: "Stella Square Table",
+    price: 1250.0, // Base price set to minimum size option price
+    description:
+      "Solid wood square dining table available in multiple sizes (60cm, 70cm, 80cm, 90cm). Perfect for intimate dining spaces. Heritage Collection.",
+    category: "tables",
+    subCategory: "Dining Tables",
     imageUrl: stellaSquareTable,
     images: [stellaSquareTable],
-    material: 'Solid Wood',
+    material: "Solid Wood",
     dimensions: { width: 80, height: 75, depth: 80 },
+    // NEW: Using variants system for proper inventory tracking per size-color combination
+    variants: [
+      // 60cm variants
+      {
+        id: "60cm-warm-sand",
+        size: "60cm",
+        color: "Warm Sand",
+        price: 1250.0,
+        dimensions: { width: 60, height: 75, depth: 60 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 3, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 2, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "60cm-deep-espresso",
+        size: "60cm",
+        color: "Deep Espresso",
+        price: 1250.0,
+        dimensions: { width: 60, height: 75, depth: 60 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 5, reserved: 0 },
+        ],
+        active: true,
+      },
+      // 70cm variants
+      {
+        id: "70cm-warm-sand",
+        size: "70cm",
+        color: "Warm Sand",
+        price: 1350.0,
+        dimensions: { width: 70, height: 75, depth: 70 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 5, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "70cm-deep-espresso",
+        size: "70cm",
+        color: "Deep Espresso",
+        price: 1350.0,
+        dimensions: { width: 70, height: 75, depth: 70 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 5, reserved: 0 },
+        ],
+        active: true,
+      },
+      // 80cm variants
+      {
+        id: "80cm-warm-sand",
+        size: "80cm",
+        color: "Warm Sand",
+        price: 1450.0,
+        dimensions: { width: 80, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 5, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "80cm-deep-espresso",
+        size: "80cm",
+        color: "Deep Espresso",
+        price: 1450.0,
+        dimensions: { width: 80, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 5, reserved: 0 },
+        ],
+        active: true,
+      },
+      // 90cm variants
+      {
+        id: "90cm-warm-sand",
+        size: "90cm",
+        color: "Warm Sand",
+        price: 1550.0,
+        dimensions: { width: 90, height: 75, depth: 90 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 5, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "90cm-deep-espresso",
+        size: "90cm",
+        color: "Deep Espresso",
+        price: 1550.0,
+        dimensions: { width: 90, height: 75, depth: 90 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 5, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
+    // LEGACY: Keep for backward compatibility during migration
     sizeOptions: [
       {
-        label: '60cm', price: 1250.00, dimensions: { width: 60, height: 75, depth: 60 }, warehouseStock: [
-          { warehouse: 'Lorenzo', quantity: 10, reserved: 0 },
-          { warehouse: 'Oroquieta', quantity: 8, reserved: 0 },
-        ]
+        label: "60cm",
+        price: 1250.0,
+        dimensions: { width: 60, height: 75, depth: 60 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 8, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 7, reserved: 0 },
+        ],
       },
       {
-        label: '70cm', price: 1350.00, dimensions: { width: 70, height: 75, depth: 70 }, warehouseStock: [
-          { warehouse: 'Lorenzo', quantity: 10, reserved: 0 },
-          { warehouse: 'Oroquieta', quantity: 8, reserved: 0 },
-        ]
+        label: "70cm",
+        price: 1350.0,
+        dimensions: { width: 70, height: 75, depth: 70 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 10, reserved: 0 },
+        ],
       },
       {
-        label: '80cm', price: 1450.00, dimensions: { width: 80, height: 75, depth: 80 }, warehouseStock: [
-          { warehouse: 'Lorenzo', quantity: 10, reserved: 0 },
-          { warehouse: 'Oroquieta', quantity: 8, reserved: 0 },
-        ]
+        label: "80cm",
+        price: 1450.0,
+        dimensions: { width: 80, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 10, reserved: 0 },
+        ],
       },
       {
-        label: '90cm', price: 1550.00, dimensions: { width: 90, height: 75, depth: 90 }, warehouseStock: [
-          { warehouse: 'Lorenzo', quantity: 10, reserved: 0 },
-          { warehouse: 'Oroquieta', quantity: 8, reserved: 0 },
-        ]
+        label: "90cm",
+        price: 1550.0,
+        dimensions: { width: 90, height: 75, depth: 90 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 10, reserved: 0 },
+        ],
       },
     ],
     inStock: true,
     featured: true,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     active: true,
   },
   {
     id: 21,
-    name: 'Stella Round Table',
-    price: 1500.00,
-    description: 'Solid wood round dining table available in multiple sizes (60cm, 70cm, 80cm, 90cm). Elegant circular design for cozy gatherings. Heritage Collection.',
-    category: 'tables',
-    subCategory: 'Dining Tables',
+    name: "Stella Round Table",
+    price: 1500.0,
+    description:
+      "Solid wood round dining table available in multiple sizes (60cm, 70cm, 80cm, 90cm). Elegant circular design for cozy gatherings. Heritage Collection.",
+    category: "tables",
+    subCategory: "Dining Tables",
     imageUrl: stellaRoundTable,
     images: [stellaRoundTable],
-    material: 'Solid Wood',
+    material: "Solid Wood",
     dimensions: { width: 90, height: 75, depth: 90 },
+    variants: [
+      {
+        id: "60cm-warm-sand",
+        size: "60cm",
+        color: "Warm Sand",
+        price: 1500.0,
+        dimensions: { width: 60, height: 75, depth: 60 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "60cm-deep-espresso",
+        size: "60cm",
+        color: "Deep Espresso",
+        price: 1500.0,
+        dimensions: { width: 60, height: 75, depth: 60 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "70cm-warm-sand",
+        size: "70cm",
+        color: "Warm Sand",
+        price: 1650.0,
+        dimensions: { width: 70, height: 75, depth: 70 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "70cm-deep-espresso",
+        size: "70cm",
+        color: "Deep Espresso",
+        price: 1650.0,
+        dimensions: { width: 70, height: 75, depth: 70 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "80cm-warm-sand",
+        size: "80cm",
+        color: "Warm Sand",
+        price: 1800.0,
+        dimensions: { width: 80, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "80cm-deep-espresso",
+        size: "80cm",
+        color: "Deep Espresso",
+        price: 1800.0,
+        dimensions: { width: 80, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "90cm-warm-sand",
+        size: "90cm",
+        color: "Warm Sand",
+        price: 1950.0,
+        dimensions: { width: 90, height: 75, depth: 90 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "90cm-deep-espresso",
+        size: "90cm",
+        color: "Deep Espresso",
+        price: 1950.0,
+        dimensions: { width: 90, height: 75, depth: 90 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     sizeOptions: [
       {
-        label: '60cm', price: 1500.00, dimensions: { width: 60, height: 75, depth: 60 }, warehouseStock: [
-          { warehouse: 'Lorenzo', quantity: 10, reserved: 0 },
-          { warehouse: 'Oroquieta', quantity: 8, reserved: 0 },
-        ]
+        label: "60cm",
+        price: 1500.0,
+        dimensions: { width: 60, height: 75, depth: 60 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 8, reserved: 0 },
+        ],
       },
       {
-        label: '70cm', price: 1650.00, dimensions: { width: 70, height: 75, depth: 70 }, warehouseStock: [
-          { warehouse: 'Lorenzo', quantity: 10, reserved: 0 },
-          { warehouse: 'Oroquieta', quantity: 8, reserved: 0 },
-        ]
+        label: "70cm",
+        price: 1650.0,
+        dimensions: { width: 70, height: 75, depth: 70 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 8, reserved: 0 },
+        ],
       },
       {
-        label: '80cm', price: 1800.00, dimensions: { width: 80, height: 75, depth: 80 }, warehouseStock: [
-          { warehouse: 'Lorenzo', quantity: 10, reserved: 0 },
-          { warehouse: 'Oroquieta', quantity: 8, reserved: 0 },
-        ]
+        label: "80cm",
+        price: 1800.0,
+        dimensions: { width: 80, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 8, reserved: 0 },
+        ],
       },
       {
-        label: '90cm', price: 1950.00, dimensions: { width: 90, height: 75, depth: 90 }, warehouseStock: [
-          { warehouse: 'Lorenzo', quantity: 10, reserved: 0 },
-          { warehouse: 'Oroquieta', quantity: 8, reserved: 0 },
-        ]
+        label: "90cm",
+        price: 1950.0,
+        dimensions: { width: 90, height: 75, depth: 90 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 8, reserved: 0 },
+        ],
       },
     ],
     inStock: true,
     featured: false,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     active: true,
   },
   {
     id: 22,
-    name: 'Stella Rectangular Table',
-    price: 1500.00,
-    description: 'Solid wood rectangular dining table available in multiple sizes (120x60, 130x80, 140x80, 150x80, 160x80). Versatile table for family dining. Heritage Collection.',
-    category: 'tables',
-    subCategory: 'Dining Tables',
+    name: "Stella Rectangular Table",
+    price: 1500.0,
+    description:
+      "Solid wood rectangular dining table available in multiple sizes (120x60, 130x80, 140x80, 150x80, 160x80). Versatile table for family dining. Heritage Collection.",
+    category: "tables",
+    subCategory: "Dining Tables",
     imageUrl: stellaRectangularTable,
     images: [stellaRectangularTable],
-    material: 'Solid Wood',
+    material: "Solid Wood",
     dimensions: { width: 150, height: 75, depth: 80 },
+    variants: [
+      {
+        id: "120x60-warm-sand",
+        size: "120x60",
+        color: "Warm Sand",
+        price: 1500.0,
+        dimensions: { width: 120, height: 75, depth: 60 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "120x60-deep-espresso",
+        size: "120x60",
+        color: "Deep Espresso",
+        price: 1500.0,
+        dimensions: { width: 120, height: 75, depth: 60 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "130x80-warm-sand",
+        size: "130x80",
+        color: "Warm Sand",
+        price: 1650.0,
+        dimensions: { width: 130, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "130x80-deep-espresso",
+        size: "130x80",
+        color: "Deep Espresso",
+        price: 1650.0,
+        dimensions: { width: 130, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "140x80-warm-sand",
+        size: "140x80",
+        color: "Warm Sand",
+        price: 1800.0,
+        dimensions: { width: 140, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "140x80-deep-espresso",
+        size: "140x80",
+        color: "Deep Espresso",
+        price: 1800.0,
+        dimensions: { width: 140, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "150x80-warm-sand",
+        size: "150x80",
+        color: "Warm Sand",
+        price: 1950.0,
+        dimensions: { width: 150, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "150x80-deep-espresso",
+        size: "150x80",
+        color: "Deep Espresso",
+        price: 1950.0,
+        dimensions: { width: 150, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "160x80-warm-sand",
+        size: "160x80",
+        color: "Warm Sand",
+        price: 2100.0,
+        dimensions: { width: 160, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "160x80-deep-espresso",
+        size: "160x80",
+        color: "Deep Espresso",
+        price: 2100.0,
+        dimensions: { width: 160, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     sizeOptions: [
       {
-        label: '120x60', price: 1500.00, dimensions: { width: 120, height: 75, depth: 60 }, warehouseStock: [
-          { warehouse: 'Lorenzo', quantity: 10, reserved: 0 },
-          { warehouse: 'Oroquieta', quantity: 8, reserved: 0 },
-        ]
+        label: "120x60",
+        price: 1500.0,
+        dimensions: { width: 120, height: 75, depth: 60 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 8, reserved: 0 },
+        ],
       },
       {
-        label: '130x80', price: 1650.00, dimensions: { width: 130, height: 75, depth: 80 }, warehouseStock: [
-          { warehouse: 'Lorenzo', quantity: 10, reserved: 0 },
-          { warehouse: 'Oroquieta', quantity: 8, reserved: 0 },
-        ]
+        label: "130x80",
+        price: 1650.0,
+        dimensions: { width: 130, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 8, reserved: 0 },
+        ],
       },
       {
-        label: '140x80', price: 1800.00, dimensions: { width: 140, height: 75, depth: 80 }, warehouseStock: [
-          { warehouse: 'Lorenzo', quantity: 10, reserved: 0 },
-          { warehouse: 'Oroquieta', quantity: 8, reserved: 0 },
-        ]
+        label: "140x80",
+        price: 1800.0,
+        dimensions: { width: 140, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 8, reserved: 0 },
+        ],
       },
       {
-        label: '150x80', price: 1950.00, dimensions: { width: 150, height: 75, depth: 80 }, warehouseStock: [
-          { warehouse: 'Lorenzo', quantity: 10, reserved: 0 },
-          { warehouse: 'Oroquieta', quantity: 8, reserved: 0 },
-        ]
+        label: "150x80",
+        price: 1950.0,
+        dimensions: { width: 150, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 8, reserved: 0 },
+        ],
       },
       {
-        label: '160x80', price: 2100.00, dimensions: { width: 160, height: 75, depth: 80 }, warehouseStock: [
-          { warehouse: 'Lorenzo', quantity: 10, reserved: 0 },
-          { warehouse: 'Oroquieta', quantity: 8, reserved: 0 },
-        ]
+        label: "160x80",
+        price: 2100.0,
+        dimensions: { width: 160, height: 75, depth: 80 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 8, reserved: 0 },
+        ],
       },
     ],
     inStock: true,
     featured: true,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     active: true,
   },
 
   // BAR / HIGH TABLES (3 items)
   {
     id: 23,
-    name: 'Serah High Table',
-    price: 1350.00,
-    description: 'Solid wood bar table (120x50x100cm). Perfect height for standing meetings or casual dining with bar stools. Heritage Collection.',
-    category: 'tables',
-    subCategory: 'Bar Tables',
+    name: "Serah High Table",
+    price: 1350.0,
+    description:
+      "Solid wood bar table (120x50x100cm). Perfect height for standing meetings or casual dining with bar stools. Heritage Collection.",
+    category: "tables",
+    subCategory: "Bar Tables",
     imageUrl: serahHighTable,
     images: [serahHighTable],
-    material: 'Solid Wood',
+    material: "Solid Wood",
     dimensions: { width: 120, height: 100, depth: 50 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 1350.0,
+        dimensions: { width: 120, height: 100, depth: 50 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 4, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 3, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 1350.0,
+        dimensions: { width: 120, height: 100, depth: 50 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 4, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 3, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 8, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 6, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 8, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 6, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 24,
-    name: 'Seno High Table',
-    price: 1250.00,
-    description: 'Solid wood round bar table with shelf (60x60x103cm). Features additional storage shelf for convenience. Heritage Collection.',
-    category: 'tables',
-    subCategory: 'Bar Tables',
+    name: "Seno High Table",
+    price: 1250.0,
+    description:
+      "Solid wood round bar table with shelf (60x60x103cm). Features additional storage shelf for convenience. Heritage Collection.",
+    category: "tables",
+    subCategory: "Bar Tables",
     imageUrl: senoHighTable,
     images: [senoHighTable],
-    material: 'Solid Wood',
+    material: "Solid Wood",
     dimensions: { width: 60, height: 103, depth: 60 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 1250.0,
+        dimensions: { width: 60, height: 103, depth: 60 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 1250.0,
+        dimensions: { width: 60, height: 103, depth: 60 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 10, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 8, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 10, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 8, reserved: 0 },
     ],
     active: true,
   },
   {
     id: 25,
-    name: 'Sena High Table',
-    price: 1200.00,
-    description: 'Solid wood bar table (60x60x103cm). Compact high table perfect for small spaces and casual dining. Heritage Collection.',
-    category: 'tables',
-    subCategory: 'Bar Tables',
+    name: "Sena High Table",
+    price: 1200.0,
+    description:
+      "Solid wood bar table (60x60x103cm). Compact high table perfect for small spaces and casual dining. Heritage Collection.",
+    category: "tables",
+    subCategory: "Bar Tables",
     imageUrl: senaHighTable,
     images: [senaHighTable],
-    material: 'Solid Wood',
+    material: "Solid Wood",
     dimensions: { width: 60, height: 103, depth: 60 },
+    variants: [
+      {
+        id: "one-size-warm-sand",
+        size: null,
+        color: "Warm Sand",
+        price: 1200.0,
+        dimensions: { width: 60, height: 103, depth: 60 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 5, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 4, reserved: 0 },
+        ],
+        active: true,
+      },
+      {
+        id: "one-size-deep-espresso",
+        size: null,
+        color: "Deep Espresso",
+        price: 1200.0,
+        dimensions: { width: 60, height: 103, depth: 60 },
+        warehouseStock: [
+          { warehouse: "Lorenzo", quantity: 4, reserved: 0 },
+          { warehouse: "Oroquieta", quantity: 3, reserved: 0 },
+        ],
+        active: true,
+      },
+    ],
     inStock: true,
     featured: false,
-    colors: ['Warm Sand', 'Deep Espresso'],
+    colors: ["Warm Sand", "Deep Espresso"],
     warehouseStock: [
-      { warehouse: 'Lorenzo', quantity: 9, reserved: 0 },
-      { warehouse: 'Oroquieta', quantity: 7, reserved: 0 },
+      { warehouse: "Lorenzo", quantity: 9, reserved: 0 },
+      { warehouse: "Oroquieta", quantity: 7, reserved: 0 },
     ],
     active: true,
   },
 ];
 
 // Initialize products in localStorage if not exists
-if (typeof window !== 'undefined') {
-  const storedProducts = localStorage.getItem('products');
+if (typeof window !== "undefined") {
+  const storedProducts = localStorage.getItem("products");
 
   // Force reset if the first product doesn't match the new structure (checking for Shelli Chair with figma asset)
   if (storedProducts) {
     try {
       const parsed = JSON.parse(storedProducts);
       // Check if imageUrl contains figma:asset - if not, reset to use the new imported images
-      if (!parsed[0] || parsed[0].name !== 'Shelli Chair' || !String(parsed[0].imageUrl).includes('figma:asset')) {
+      if (
+        !parsed[0] ||
+        parsed[0].name !== "Shelli Chair" ||
+        !String(parsed[0].imageUrl).includes("figma:asset")
+      ) {
         // Reset to default products with proper figma:asset imports
-        localStorage.setItem('products', JSON.stringify(defaultProducts));
+        localStorage.setItem("products", JSON.stringify(defaultProducts));
       }
     } catch (e) {
       // If parsing fails, reset to default
-      localStorage.setItem('products', JSON.stringify(defaultProducts));
+      localStorage.setItem("products", JSON.stringify(defaultProducts));
     }
   } else {
-    localStorage.setItem('products', JSON.stringify(defaultProducts));
+    localStorage.setItem("products", JSON.stringify(defaultProducts));
   }
 }
 
 // Helper function to generate variant ID
-export const generateVariantId = (size: string | null, color: string): string => {
-  const sizeSlug = size ? size.toLowerCase().replace(/\s+/g, '-') : 'one-size';
-  const colorSlug = color.toLowerCase().replace(/\s+/g, '-');
+export const generateVariantId = (
+  size: string | null,
+  color: string,
+): string => {
+  const sizeSlug = size ? size.toLowerCase().replace(/\s+/g, "-") : "one-size";
+  const colorSlug = color.toLowerCase().replace(/\s+/g, "-");
   return `${sizeSlug}-${colorSlug}`;
 };
 
@@ -722,14 +1739,19 @@ const migrateProductToVariants = (product: Product): Product => {
 
   // Case 1: Product with sizeOptions (old tables with sizes)
   if (product.sizeOptions && product.sizeOptions.length > 0) {
-    const colors = product.colors && product.colors.length > 0 ? product.colors : ['Natural'];
+    const colors =
+      product.colors && product.colors.length > 0
+        ? product.colors
+        : ["Natural"];
 
     // Create variant for each size-color combination
-    product.sizeOptions.forEach(sizeOption => {
-      colors.forEach(color => {
+    product.sizeOptions.forEach((sizeOption) => {
+      colors.forEach((color) => {
         const variantId = generateVariantId(sizeOption.label, color);
         // Distribute stock from size option evenly across colors
-        const stockPerColor = Math.floor((sizeOption.warehouseStock[0]?.quantity || 0) / colors.length);
+        const stockPerColor = Math.floor(
+          (sizeOption.warehouseStock[0]?.quantity || 0) / colors.length,
+        );
 
         variants.push({
           id: variantId,
@@ -739,14 +1761,14 @@ const migrateProductToVariants = (product: Product): Product => {
           dimensions: sizeOption.dimensions,
           warehouseStock: [
             {
-              warehouse: 'Lorenzo',
+              warehouse: "Lorenzo",
               quantity: Math.floor(stockPerColor / 2),
-              reserved: 0
+              reserved: 0,
             },
             {
-              warehouse: 'Oroquieta',
+              warehouse: "Oroquieta",
               quantity: Math.ceil(stockPerColor / 2),
-              reserved: 0
+              reserved: 0,
             },
           ],
           active: true,
@@ -756,10 +1778,12 @@ const migrateProductToVariants = (product: Product): Product => {
   }
   // Case 2: Product with only colors (old chairs)
   else if (product.colors && product.colors.length > 0) {
-    const totalStock = (product.warehouseStock?.[0]?.quantity || 0) + (product.warehouseStock?.[1]?.quantity || 0);
+    const totalStock =
+      (product.warehouseStock?.[0]?.quantity || 0) +
+      (product.warehouseStock?.[1]?.quantity || 0);
     const stockPerColor = Math.floor(totalStock / product.colors.length);
 
-    product.colors.forEach(color => {
+    product.colors.forEach((color) => {
       const variantId = generateVariantId(null, color);
 
       variants.push({
@@ -770,14 +1794,14 @@ const migrateProductToVariants = (product: Product): Product => {
         dimensions: product.dimensions,
         warehouseStock: [
           {
-            warehouse: 'Lorenzo',
+            warehouse: "Lorenzo",
             quantity: Math.floor(stockPerColor / 2),
-            reserved: 0
+            reserved: 0,
           },
           {
-            warehouse: 'Oroquieta',
+            warehouse: "Oroquieta",
             quantity: Math.ceil(stockPerColor / 2),
-            reserved: 0
+            reserved: 0,
           },
         ],
         active: true,
@@ -787,9 +1811,9 @@ const migrateProductToVariants = (product: Product): Product => {
   // Case 3: Product with warehouseStock but no colors (create default variant)
   else if (product.warehouseStock && product.warehouseStock.length > 0) {
     variants.push({
-      id: generateVariantId(null, 'Natural'),
+      id: generateVariantId(null, "Natural"),
       size: null,
-      color: 'Natural',
+      color: "Natural",
       price: product.price,
       dimensions: product.dimensions,
       warehouseStock: [...product.warehouseStock],
@@ -799,14 +1823,14 @@ const migrateProductToVariants = (product: Product): Product => {
   // Case 4: No stock data at all (create empty default variant)
   else {
     variants.push({
-      id: generateVariantId(null, 'Natural'),
+      id: generateVariantId(null, "Natural"),
       size: null,
-      color: 'Natural',
+      color: "Natural",
       price: product.price,
       dimensions: product.dimensions,
       warehouseStock: [
-        { warehouse: 'Lorenzo', quantity: 0, reserved: 0 },
-        { warehouse: 'Oroquieta', quantity: 0, reserved: 0 },
+        { warehouse: "Lorenzo", quantity: 0, reserved: 0 },
+        { warehouse: "Oroquieta", quantity: 0, reserved: 0 },
       ],
       active: true,
     });
@@ -820,13 +1844,13 @@ const migrateProductToVariants = (product: Product): Product => {
 
 // Get products from localStorage or use default
 export const getProducts = (): Product[] => {
-  if (typeof window === 'undefined') return defaultProducts;
-  const stored = localStorage.getItem('products');
+  if (typeof window === "undefined") return defaultProducts;
+  const stored = localStorage.getItem("products");
   if (!stored) return defaultProducts;
 
   // Parse and migrate old products to new structure
   const products: Product[] = JSON.parse(stored);
-  const migratedProducts = products.map(product => {
+  const migratedProducts = products.map((product) => {
     let updatedProduct = { ...product };
 
     // Add active field if missing (for soft delete)
@@ -835,12 +1859,23 @@ export const getProducts = (): Product[] => {
     }
 
     // If product doesn't have warehouseStock, add it
-    if (!updatedProduct.warehouseStock || updatedProduct.warehouseStock.length === 0) {
+    if (
+      !updatedProduct.warehouseStock ||
+      updatedProduct.warehouseStock.length === 0
+    ) {
       // Distribute stock evenly between warehouses if inStock
       const totalStock = updatedProduct.inStock ? 20 : 0;
       updatedProduct.warehouseStock = [
-        { warehouse: 'Lorenzo' as const, quantity: Math.floor(totalStock / 2), reserved: 0 },
-        { warehouse: 'Oroquieta' as const, quantity: Math.ceil(totalStock / 2), reserved: 0 },
+        {
+          warehouse: "Lorenzo" as const,
+          quantity: Math.floor(totalStock / 2),
+          reserved: 0,
+        },
+        {
+          warehouse: "Oroquieta" as const,
+          quantity: Math.ceil(totalStock / 2),
+          reserved: 0,
+        },
       ];
     }
 
@@ -856,7 +1891,7 @@ export const getProducts = (): Product[] => {
   });
 
   // Save migrated products back
-  localStorage.setItem('products', JSON.stringify(migratedProducts));
+  localStorage.setItem("products", JSON.stringify(migratedProducts));
   return migratedProducts;
 };
 
@@ -868,8 +1903,13 @@ export const getTotalStock = (product: Product): number => {
   if (product.variants && product.variants.length > 0) {
     return product.variants.reduce((total, variant) => {
       if (!variant.active) return total;
-      return total + variant.warehouseStock.reduce((sum, stock) =>
-        sum + (stock.quantity - stock.reserved), 0);
+      return (
+        total +
+        variant.warehouseStock.reduce(
+          (sum, stock) => sum + (stock.quantity - stock.reserved),
+          0,
+        )
+      );
     }, 0);
   }
 
@@ -877,27 +1917,38 @@ export const getTotalStock = (product: Product): number => {
   if (product.sizeOptions) {
     // For products with size options, sum all size variants
     return product.sizeOptions.reduce((total, sizeOption) => {
-      return total + sizeOption.warehouseStock.reduce((sum, stock) => sum + (stock.quantity - stock.reserved), 0);
+      return (
+        total +
+        sizeOption.warehouseStock.reduce(
+          (sum, stock) => sum + (stock.quantity - stock.reserved),
+          0,
+        )
+      );
     }, 0);
   }
   if (product.warehouseStock) {
-    return product.warehouseStock.reduce((sum, stock) => sum + (stock.quantity - stock.reserved), 0);
+    return product.warehouseStock.reduce(
+      (sum, stock) => sum + (stock.quantity - stock.reserved),
+      0,
+    );
   }
   return 0;
 };
 
 // Helper function to get stock for specific variant
 export const getVariantStock = (variant: ProductVariant): number => {
-  return variant.warehouseStock.reduce((sum, stock) =>
-    sum + (stock.quantity - stock.reserved), 0);
+  return variant.warehouseStock.reduce(
+    (sum, stock) => sum + (stock.quantity - stock.reserved),
+    0,
+  );
 };
 
 // Helper function to get stock for specific variant at specific warehouse
 export const getVariantWarehouseStock = (
   variant: ProductVariant,
-  warehouse: 'Lorenzo' | 'Oroquieta'
+  warehouse: "Lorenzo" | "Oroquieta",
 ): number => {
-  const stock = variant.warehouseStock.find(s => s.warehouse === warehouse);
+  const stock = variant.warehouseStock.find((s) => s.warehouse === warehouse);
   return stock ? stock.quantity - stock.reserved : 0;
 };
 
@@ -911,8 +1962,8 @@ export const getProductSizes = (product: Product): string[] => {
   if (!product.variants || product.variants.length === 0) return [];
 
   const sizes = product.variants
-    .filter(v => v.active && v.size !== null)
-    .map(v => v.size as string);
+    .filter((v) => v.active && v.size !== null)
+    .map((v) => v.size as string);
 
   return Array.from(new Set(sizes));
 };
@@ -921,9 +1972,7 @@ export const getProductSizes = (product: Product): string[] => {
 export const getProductColors = (product: Product): string[] => {
   if (!product.variants || product.variants.length === 0) return [];
 
-  const colors = product.variants
-    .filter(v => v.active)
-    .map(v => v.color);
+  const colors = product.variants.filter((v) => v.active).map((v) => v.color);
 
   return Array.from(new Set(colors));
 };
@@ -932,50 +1981,50 @@ export const getProductColors = (product: Product): string[] => {
 export const findVariant = (
   product: Product,
   size: string | null,
-  color: string
+  color: string,
 ): ProductVariant | undefined => {
   if (!product.variants) return undefined;
 
-  return product.variants.find(v =>
-    v.size === size && v.color === color && v.active
+  return product.variants.find(
+    (v) => v.size === size && v.color === color && v.active,
   );
 };
 
 // Helper function to get variant by ID
 export const getVariantById = (
   product: Product,
-  variantId: string
+  variantId: string,
 ): ProductVariant | undefined => {
   if (!product.variants) return undefined;
-  return product.variants.find(v => v.id === variantId);
+  return product.variants.find((v) => v.id === variantId);
 };
 
 // CRUD operations for admin
-export const addProduct = (product: Omit<Product, 'id'>): Product => {
+export const addProduct = (product: Omit<Product, "id">): Product => {
   const currentProducts = getProducts();
-  const newId = Math.max(...currentProducts.map(p => p.id), 0) + 1;
+  const newId = Math.max(...currentProducts.map((p) => p.id), 0) + 1;
   const newProduct = { ...product, id: newId };
   const updatedProducts = [...currentProducts, newProduct];
-  localStorage.setItem('products', JSON.stringify(updatedProducts));
+  localStorage.setItem("products", JSON.stringify(updatedProducts));
   return newProduct;
 };
 
 export const updateProduct = (id: number, updates: Partial<Product>): void => {
   const currentProducts = getProducts();
-  const updatedProducts = currentProducts.map(p =>
-    p.id === id ? { ...p, ...updates } : p
+  const updatedProducts = currentProducts.map((p) =>
+    p.id === id ? { ...p, ...updates } : p,
   );
-  localStorage.setItem('products', JSON.stringify(updatedProducts));
+  localStorage.setItem("products", JSON.stringify(updatedProducts));
 };
 
 export const deleteProduct = (id: number): void => {
   const currentProducts = getProducts();
-  const updatedProducts = currentProducts.filter(p => p.id !== id);
-  localStorage.setItem('products', JSON.stringify(updatedProducts));
+  const updatedProducts = currentProducts.filter((p) => p.id !== id);
+  localStorage.setItem("products", JSON.stringify(updatedProducts));
 };
 
 export const getProductById = (id: number): Product | undefined => {
-  return getProducts().find(p => p.id === id);
+  return getProducts().find((p) => p.id === id);
 };
 
 // VARIANT CRUD OPERATIONS
@@ -983,10 +2032,10 @@ export const getProductById = (id: number): Product | undefined => {
 // Add a new variant to a product
 export const addVariant = (
   productId: number,
-  variant: Omit<ProductVariant, 'id'>
+  variant: Omit<ProductVariant, "id">,
 ): void => {
   const currentProducts = getProducts();
-  const updatedProducts = currentProducts.map(p => {
+  const updatedProducts = currentProducts.map((p) => {
     if (p.id === productId) {
       const variantId = generateVariantId(variant.size, variant.color);
       const newVariant: ProductVariant = { ...variant, id: variantId };
@@ -998,52 +2047,51 @@ export const addVariant = (
     }
     return p;
   });
-  localStorage.setItem('products', JSON.stringify(updatedProducts));
+  localStorage.setItem("products", JSON.stringify(updatedProducts));
 };
 
 // Update an existing variant
 export const updateVariant = (
   productId: number,
   variantId: string,
-  updates: Partial<ProductVariant>
+  updates: Partial<ProductVariant>,
 ): void => {
   const currentProducts = getProducts();
-  const updatedProducts = currentProducts.map(p => {
+  const updatedProducts = currentProducts.map((p) => {
     if (p.id === productId && p.variants) {
-      const updatedVariants = p.variants.map(v =>
-        v.id === variantId ? { ...v, ...updates } : v
+      const updatedVariants = p.variants.map((v) =>
+        v.id === variantId ? { ...v, ...updates } : v,
       );
       return { ...p, variants: updatedVariants };
     }
     return p;
   });
-  localStorage.setItem('products', JSON.stringify(updatedProducts));
+  localStorage.setItem("products", JSON.stringify(updatedProducts));
 };
 
 // Delete a variant (soft delete by setting active to false)
-export const deleteVariant = (
-  productId: number,
-  variantId: string
-): void => {
+export const deleteVariant = (productId: number, variantId: string): void => {
   const currentProducts = getProducts();
-  const updatedProducts = currentProducts.map(p => {
+  const updatedProducts = currentProducts.map((p) => {
     if (p.id === productId && p.variants) {
-      const updatedVariants = p.variants.map(v =>
-        v.id === variantId ? { ...v, active: false } : v
+      const updatedVariants = p.variants.map((v) =>
+        v.id === variantId ? { ...v, active: false } : v,
       );
       return { ...p, variants: updatedVariants };
     }
     return p;
   });
-  localStorage.setItem('products', JSON.stringify(updatedProducts));
+  localStorage.setItem("products", JSON.stringify(updatedProducts));
 };
 
 // Helper function to generate batch ID
 const generateBatchId = (): string => {
   const now = new Date();
-  const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
-  const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
-  const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+  const dateStr = now.toISOString().slice(0, 10).replace(/-/g, "");
+  const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, "");
+  const randomNum = Math.floor(Math.random() * 1000)
+    .toString()
+    .padStart(3, "0");
   return `BATCH-${dateStr}-${timeStr}-${randomNum}`;
 };
 
@@ -1051,16 +2099,16 @@ const generateBatchId = (): string => {
 export const updateVariantStock = (
   productId: number,
   variantId: string,
-  warehouse: 'Lorenzo' | 'Oroquieta',
+  warehouse: "Lorenzo" | "Oroquieta",
   quantity: number,
-  reserved: number = 0
+  reserved: number = 0,
 ): void => {
   const currentProducts = getProducts();
-  const updatedProducts = currentProducts.map(p => {
+  const updatedProducts = currentProducts.map((p) => {
     if (p.id === productId && p.variants) {
-      const updatedVariants = p.variants.map(v => {
+      const updatedVariants = p.variants.map((v) => {
         if (v.id === variantId) {
-          const updatedWarehouseStock = v.warehouseStock.map(ws => {
+          const updatedWarehouseStock = v.warehouseStock.map((ws) => {
             if (ws.warehouse === warehouse) {
               const oldQuantity = ws.quantity;
               const quantityDiff = quantity - oldQuantity;
@@ -1076,9 +2124,10 @@ export const updateVariantStock = (
                   quantity: Math.abs(quantityDiff),
                   reserved: 0,
                   available: Math.abs(quantityDiff),
-                  notes: quantityDiff > 0
-                    ? `Added ${quantityDiff} units`
-                    : `Removed ${Math.abs(quantityDiff)} units`,
+                  notes:
+                    quantityDiff > 0
+                      ? `Added ${quantityDiff} units`
+                      : `Removed ${Math.abs(quantityDiff)} units`,
                 };
                 batches.push(newBatch);
               }
@@ -1100,51 +2149,54 @@ export const updateVariantStock = (
     }
     return p;
   });
-  localStorage.setItem('products', JSON.stringify(updatedProducts));
+  localStorage.setItem("products", JSON.stringify(updatedProducts));
 };
 
 // LEGACY: Update warehouse stock (supports old system)
 export const updateWarehouseStock = (
   productId: number,
-  warehouse: 'Lorenzo' | 'Oroquieta',
+  warehouse: "Lorenzo" | "Oroquieta",
   quantity: number,
   reserved: number = 0,
-  sizeLabel?: string
+  sizeLabel?: string,
 ): void => {
   const currentProducts = getProducts();
-  const updatedProducts = currentProducts.map(p => {
+  const updatedProducts = currentProducts.map((p) => {
     if (p.id === productId) {
       if (sizeLabel && p.sizeOptions) {
         // Update stock for a specific size option
-        const updatedSizeOptions = p.sizeOptions.map(sizeOption => {
+        const updatedSizeOptions = p.sizeOptions.map((sizeOption) => {
           if (sizeOption.label === sizeLabel) {
-            const updatedWarehouseStock = sizeOption.warehouseStock.map(ws => {
-              if (ws.warehouse === warehouse) {
-                const oldQuantity = ws.quantity;
-                const quantityDiff = quantity - oldQuantity;
+            const updatedWarehouseStock = sizeOption.warehouseStock.map(
+              (ws) => {
+                if (ws.warehouse === warehouse) {
+                  const oldQuantity = ws.quantity;
+                  const quantityDiff = quantity - oldQuantity;
 
-                // Initialize batches array if it doesn't exist
-                const batches = ws.batches || [];
+                  // Initialize batches array if it doesn't exist
+                  const batches = ws.batches || [];
 
-                // Create a new batch entry if quantity changed
-                if (quantityDiff !== 0) {
-                  const newBatch: InventoryBatch = {
-                    batchId: generateBatchId(),
-                    receivedAt: new Date().toISOString(),
-                    quantity: Math.abs(quantityDiff),
-                    reserved: 0,
-                    available: Math.abs(quantityDiff),
-                    notes: quantityDiff > 0
-                      ? `Added ${quantityDiff} units`
-                      : `Removed ${Math.abs(quantityDiff)} units`,
-                  };
-                  batches.push(newBatch);
+                  // Create a new batch entry if quantity changed
+                  if (quantityDiff !== 0) {
+                    const newBatch: InventoryBatch = {
+                      batchId: generateBatchId(),
+                      receivedAt: new Date().toISOString(),
+                      quantity: Math.abs(quantityDiff),
+                      reserved: 0,
+                      available: Math.abs(quantityDiff),
+                      notes:
+                        quantityDiff > 0
+                          ? `Added ${quantityDiff} units`
+                          : `Removed ${Math.abs(quantityDiff)} units`,
+                    };
+                    batches.push(newBatch);
+                  }
+
+                  return { ...ws, quantity, reserved, batches };
                 }
-
-                return { ...ws, quantity, reserved, batches };
-              }
-              return ws;
-            });
+                return ws;
+              },
+            );
             return { ...sizeOption, warehouseStock: updatedWarehouseStock };
           }
           return sizeOption;
@@ -1152,7 +2204,7 @@ export const updateWarehouseStock = (
         return { ...p, sizeOptions: updatedSizeOptions };
       } else if (p.warehouseStock) {
         // Update stock for product without size options
-        const updatedWarehouseStock = p.warehouseStock.map(ws => {
+        const updatedWarehouseStock = p.warehouseStock.map((ws) => {
           if (ws.warehouse === warehouse) {
             const oldQuantity = ws.quantity;
             const quantityDiff = quantity - oldQuantity;
@@ -1168,9 +2220,10 @@ export const updateWarehouseStock = (
                 quantity: Math.abs(quantityDiff),
                 reserved: 0,
                 available: Math.abs(quantityDiff),
-                notes: quantityDiff > 0
-                  ? `Added ${quantityDiff} units`
-                  : `Removed ${Math.abs(quantityDiff)} units`,
+                notes:
+                  quantityDiff > 0
+                    ? `Added ${quantityDiff} units`
+                    : `Removed ${Math.abs(quantityDiff)} units`,
               };
               batches.push(newBatch);
             }
@@ -1184,5 +2237,5 @@ export const updateWarehouseStock = (
     }
     return p;
   });
-  localStorage.setItem('products', JSON.stringify(updatedProducts));
+  localStorage.setItem("products", JSON.stringify(updatedProducts));
 };

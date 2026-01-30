@@ -13,7 +13,7 @@ import {
 } from './ui/dropdown-menu';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
 import { SearchDialog } from './SearchDialog';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -28,9 +28,14 @@ export function Header({ onCartOpen }: HeaderProps) {
   const { getCartCount } = useCart();
   const { isAuthenticated, isAdmin, logout } = useAuth();
   const router = useRouter();
-  const cartCount = getCartCount();
+  const [cartCount, setCartCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+
+  // Only update cart count on client-side to prevent hydration mismatch
+  useEffect(() => {
+    setCartCount(getCartCount());
+  }, [getCartCount]);
 
   const handleProductClick = (productId: number) => {
     router.push(`/products/${productId}`);

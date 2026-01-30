@@ -91,7 +91,7 @@ export function OrderConfirmationPage({ orderId, onNavigate }: OrderConfirmation
                   </p>
                 </div>
               </div>
-              
+
               {order.deliveryMethod === 'store-pickup' ? (
                 <div className="flex gap-4">
                   <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
@@ -100,7 +100,7 @@ export function OrderConfirmationPage({ orderId, onNavigate }: OrderConfirmation
                   <div>
                     <h4>Ready for Pickup</h4>
                     <p className="text-muted-foreground">
-                      We'll notify you when your order is ready for pickup at our store. 
+                      We'll notify you when your order is ready for pickup at our store.
                       Pickup person: {order.pickupDetails?.pickupPerson}
                     </p>
                     <p className="text-muted-foreground mt-2">
@@ -136,10 +136,10 @@ export function OrderConfirmationPage({ orderId, onNavigate }: OrderConfirmation
                 <QrCode className="w-6 h-6 text-primary" />
                 <h3 className="text-xl">Pickup QR Code</h3>
               </div>
-              
+
               <div className="flex justify-center">
                 <div className="p-6 bg-white rounded-lg border-2 border-primary/20 inline-block">
-                  <QRCodeSVG 
+                  <QRCodeSVG
                     value={`POYBASH-ORDER-${order.id}`}
                     size={200}
                     level="H"
@@ -147,7 +147,7 @@ export function OrderConfirmationPage({ orderId, onNavigate }: OrderConfirmation
                   />
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <p className="text-sm">
                   <span className="text-muted-foreground">Pickup Code:</span>{' '}
@@ -180,7 +180,7 @@ export function OrderConfirmationPage({ orderId, onNavigate }: OrderConfirmation
         <div className="text-center mt-12 p-6 bg-secondary/30 rounded-lg">
           <p className="text-muted-foreground">
             Questions about your order? Contact us on Facebook at{' '}
-            <a href="https://www.facebook.com/PoyBashFunShoppe/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+            <a href="https://bit.ly/poybash" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
               Poybash Furniture
             </a>
             {' '}or call{' '}

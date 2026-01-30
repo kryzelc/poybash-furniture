@@ -1,24 +1,30 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { toast } from 'sonner';
-import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { useState, useEffect } from "react";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { toast } from "sonner";
+import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 const poybashLogo = "/images/d5402509ea28f1255409df1863e03ad909a38d15.png";
-import { supabase } from '../utils/supabase/client';
-import { CheckCircle } from 'lucide-react';
-import { validatePassword } from '../lib/validation';
+import { supabase } from "../utils/supabase/client";
+import { CheckCircle } from "lucide-react";
+import { validatePassword } from "../lib/validation";
 
 interface ResetPasswordPageProps {
   onNavigate: (page: string) => void;
 }
 
 export function ResetPasswordPage({ onNavigate }: ResetPasswordPageProps) {
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [passwordReset, setPasswordReset] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -26,12 +32,14 @@ export function ResetPasswordPage({ onNavigate }: ResetPasswordPageProps) {
   // Check if user has a valid session from the reset link
   useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
-        toast.error('Invalid or expired reset link', {
-          description: 'Please request a new password reset link.',
+        toast.error("Invalid or expired reset link", {
+          description: "Please request a new password reset link.",
         });
-        setTimeout(() => onNavigate('forgot-password'), 2000);
+        setTimeout(() => onNavigate("forgot-password"), 2000);
       }
     };
     checkSession();
@@ -42,11 +50,11 @@ export function ResetPasswordPage({ onNavigate }: ResetPasswordPageProps) {
 
     const passwordValidation = validatePassword(password);
     if (!passwordValidation.valid) {
-      newErrors.password = passwordValidation.error || '';
+      newErrors.password = passwordValidation.error || "";
     }
 
     if (password !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     setErrors(newErrors);
@@ -57,7 +65,7 @@ export function ResetPasswordPage({ onNavigate }: ResetPasswordPageProps) {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
+      // Form validation errors are shown inline
       return;
     }
 
@@ -69,21 +77,20 @@ export function ResetPasswordPage({ onNavigate }: ResetPasswordPageProps) {
       });
 
       if (error) {
-        toast.error('Failed to reset password', {
-          description: error.message || 'Please try again.',
+        toast.error("Failed to reset password", {
+          description: error.message || "Please try again.",
           duration: 4000,
         });
       } else {
         setPasswordReset(true);
-        toast.success('Password reset successful! ✅', {
-          description: 'You can now log in with your new password.',
-          duration: 4000,
+        toast.success("Password updated successfully", {
+          description: "You can now sign in with your new password.",
         });
-        setTimeout(() => onNavigate('login'), 2000);
+        setTimeout(() => onNavigate("login"), 2000);
       }
     } catch (error) {
-      toast.error('An unexpected error occurred', {
-        description: 'Please try again later.',
+      toast.error("An unexpected error occurred", {
+        description: "Please try again later.",
         duration: 4000,
       });
     } finally {
@@ -112,10 +119,7 @@ export function ResetPasswordPage({ onNavigate }: ResetPasswordPageProps) {
                 <p className="text-center text-muted-foreground mb-4">
                   Redirecting you to login...
                 </p>
-                <Button
-                  className="w-full"
-                  onClick={() => onNavigate('login')}
-                >
+                <Button className="w-full" onClick={() => onNavigate("login")}>
                   Go to Login
                 </Button>
               </CardContent>
@@ -133,12 +137,14 @@ export function ResetPasswordPage({ onNavigate }: ResetPasswordPageProps) {
           <Card>
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
-                <ImageWithFallback src={poybashLogo} alt="PoyBash Furniture" className="w-16 h-16" />
+                <ImageWithFallback
+                  src={poybashLogo}
+                  alt="PoyBash Furniture"
+                  className="w-16 h-16"
+                />
               </div>
               <CardTitle>Reset Your Password</CardTitle>
-              <CardDescription>
-                Enter your new password below
-              </CardDescription>
+              <CardDescription>Enter your new password below</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -151,9 +157,9 @@ export function ResetPasswordPage({ onNavigate }: ResetPasswordPageProps) {
                     value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
-                      setErrors(prev => ({ ...prev, password: '' }));
+                      setErrors((prev) => ({ ...prev, password: "" }));
                     }}
-                    className={errors.password ? 'border-red-500' : ''}
+                    className={errors.password ? "border-red-500" : ""}
                     required
                   />
                   {errors.password && (
@@ -165,7 +171,9 @@ export function ResetPasswordPage({ onNavigate }: ResetPasswordPageProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm New Password *</Label>
+                  <Label htmlFor="confirmPassword">
+                    Confirm New Password *
+                  </Label>
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -173,18 +181,25 @@ export function ResetPasswordPage({ onNavigate }: ResetPasswordPageProps) {
                     value={confirmPassword}
                     onChange={(e) => {
                       setConfirmPassword(e.target.value);
-                      setErrors(prev => ({ ...prev, confirmPassword: '' }));
+                      setErrors((prev) => ({ ...prev, confirmPassword: "" }));
                     }}
-                    className={errors.confirmPassword ? 'border-red-500' : ''}
+                    className={errors.confirmPassword ? "border-red-500" : ""}
                     required
                   />
                   {errors.confirmPassword && (
-                    <p className="text-xs text-red-500">{errors.confirmPassword}</p>
+                    <p className="text-xs text-red-500">
+                      {errors.confirmPassword}
+                    </p>
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                  {isLoading ? 'Resetting Password...' : 'Reset Password'}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Resetting Password..." : "Reset Password"}
                 </Button>
               </form>
             </CardContent>

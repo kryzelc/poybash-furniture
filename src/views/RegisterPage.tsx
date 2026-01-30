@@ -1,25 +1,31 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Separator } from '../components/ui/separator';
-import { toast } from 'sonner';
-import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { useState } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Separator } from "../components/ui/separator";
+import { toast } from "sonner";
+import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 const poybashLogo = "/images/d5402509ea28f1255409df1863e03ad909a38d15.png";
-import { supabase } from '../utils/supabase/client';
-import { 
-  validateName, 
-  validateEmail, 
-  validatePhoneNumber, 
+import { supabase } from "../utils/supabase/client";
+import {
+  validateName,
+  validateEmail,
+  validatePhoneNumber,
   validatePassword,
   validatePasswordMatch,
   formatPhoneNumber,
-  sanitizeInput 
-} from '../lib/validation';
+  sanitizeInput,
+} from "../lib/validation";
 
 interface RegisterPageProps {
   onNavigate: (page: string, id?: number | string, email?: string) => void;
@@ -28,33 +34,33 @@ interface RegisterPageProps {
 export function RegisterPage({ onNavigate }: RegisterPageProps) {
   const { register } = useAuth();
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirmPassword: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     // Clear error for this field
-    setErrors(prev => ({ ...prev, [name]: '' }));
-    
+    setErrors((prev) => ({ ...prev, [name]: "" }));
+
     // Apply specific formatting/filtering
     let processedValue = value;
-    
-    if (name === 'firstName' || name === 'lastName') {
+
+    if (name === "firstName" || name === "lastName") {
       // Only allow letters, spaces, hyphens, and apostrophes
-      processedValue = value.replace(/[^A-Za-zÀ-ÿ\s'-]/g, '');
-    } else if (name === 'phone') {
+      processedValue = value.replace(/[^A-Za-zÀ-ÿ\s'-]/g, "");
+    } else if (name === "phone") {
       // Only allow numbers, spaces, dashes, and plus sign
-      processedValue = value.replace(/[^0-9\s+-]/g, '');
+      processedValue = value.replace(/[^0-9\s+-]/g, "");
     }
-    
+
     setFormData({
       ...formData,
       [name]: processedValue,
@@ -67,39 +73,42 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
     // Validate first name
     const firstNameValidation = validateName(formData.firstName);
     if (!firstNameValidation.valid) {
-      newErrors.firstName = firstNameValidation.error || '';
+      newErrors.firstName = firstNameValidation.error || "";
     }
 
     // Validate last name
     const lastNameValidation = validateName(formData.lastName);
     if (!lastNameValidation.valid) {
-      newErrors.lastName = lastNameValidation.error || '';
+      newErrors.lastName = lastNameValidation.error || "";
     }
 
     // Validate email
     const emailValidation = validateEmail(formData.email);
     if (!emailValidation.valid) {
-      newErrors.email = emailValidation.error || '';
+      newErrors.email = emailValidation.error || "";
     }
 
     // Validate phone (optional but must be valid if provided)
     if (formData.phone.trim()) {
       const phoneValidation = validatePhoneNumber(formData.phone);
       if (!phoneValidation.valid) {
-        newErrors.phone = phoneValidation.error || '';
+        newErrors.phone = phoneValidation.error || "";
       }
     }
 
     // Validate password
     const passwordValidation = validatePassword(formData.password);
     if (!passwordValidation.valid) {
-      newErrors.password = passwordValidation.error || '';
+      newErrors.password = passwordValidation.error || "";
     }
 
     // Validate password match
-    const passwordMatchValidation = validatePasswordMatch(formData.password, formData.confirmPassword);
+    const passwordMatchValidation = validatePasswordMatch(
+      formData.password,
+      formData.confirmPassword,
+    );
     if (!passwordMatchValidation.valid) {
-      newErrors.confirmPassword = passwordMatchValidation.error || '';
+      newErrors.confirmPassword = passwordMatchValidation.error || "";
     }
 
     setErrors(newErrors);
@@ -110,7 +119,7 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form');
+      // Form validation errors are shown inline
       return;
     }
 
@@ -120,7 +129,7 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
       // Try to register with Supabase Auth first
       let supabaseSuccess = false;
       let supabaseUserId: string | undefined;
-      
+
       try {
         const { data, error } = await supabase.auth.signUp({
           email: formData.email.trim().toLowerCase(),
@@ -129,8 +138,8 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
             data: {
               first_name: sanitizeInput(formData.firstName),
               last_name: sanitizeInput(formData.lastName),
-              phone: formData.phone ? formatPhoneNumber(formData.phone) : '',
-              role: 'customer',
+              phone: formData.phone ? formatPhoneNumber(formData.phone) : "",
+              role: "customer",
             },
           },
         });
@@ -150,37 +159,39 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
         password: formData.password,
         firstName: sanitizeInput(formData.firstName),
         lastName: sanitizeInput(formData.lastName),
-        phone: formData.phone ? formatPhoneNumber(formData.phone) : '',
-        role: 'customer',
+        phone: formData.phone ? formatPhoneNumber(formData.phone) : "",
+        role: "customer",
       });
 
       setIsLoading(false);
 
       if (!registrationSuccess) {
-        toast.error('Registration failed', {
-          description: 'An account with this email already exists.',
-          duration: 4000,
+        toast.error("Account creation failed", {
+          description: "An account with this email already exists.",
         });
         return;
       }
 
-      toast.success('Account created! 🎉', {
-        description: supabaseSuccess 
-          ? 'Please check your email to verify your account.'
-          : 'You can now log in to your account.',
-        duration: 6000,
+      toast.success("Account created successfully!", {
+        description: supabaseSuccess
+          ? "Please check your email to verify your account."
+          : "You can now sign in to your account.",
       });
-      
+
       // Navigate based on whether Supabase was successful
       if (supabaseSuccess) {
-        onNavigate('verify-email', undefined, formData.email.trim().toLowerCase());
+        onNavigate(
+          "verify-email",
+          undefined,
+          formData.email.trim().toLowerCase(),
+        );
       } else {
-        onNavigate('login');
+        onNavigate("login");
       }
     } catch (error) {
       setIsLoading(false);
-      toast.error('Registration failed', {
-        description: 'An unexpected error occurred. Please try again.',
+      toast.error("Account creation failed", {
+        description: "An unexpected error occurred. Please try again.",
       });
     }
   };
@@ -189,15 +200,17 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
     <div className="min-h-screen bg-background flex items-center justify-center py-12">
       <div className="container mx-auto px-4 lg:px-8">
         <div className="max-w-md mx-auto">
-          <Card>
+          <Card className="bg-white">
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
-                <ImageWithFallback src={poybashLogo} alt="PoyBash Furniture" className="w-16 h-16" />
+                <ImageWithFallback
+                  src={poybashLogo}
+                  alt="PoyBash Furniture"
+                  className="w-16 h-16"
+                />
               </div>
               <CardTitle>Create Account</CardTitle>
-              <CardDescription>
-                Join PoyBash Furniture today
-              </CardDescription>
+              <CardDescription>Join PoyBash Furniture today</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -209,7 +222,7 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
                       name="firstName"
                       value={formData.firstName}
                       onChange={handleInputChange}
-                      className={errors.firstName ? 'border-red-500' : ''}
+                      className={errors.firstName ? "border-red-500" : ""}
                       placeholder="Juan"
                       required
                     />
@@ -224,7 +237,7 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
                       name="lastName"
                       value={formData.lastName}
                       onChange={handleInputChange}
-                      className={errors.lastName ? 'border-red-500' : ''}
+                      className={errors.lastName ? "border-red-500" : ""}
                       placeholder="Dela Cruz"
                       required
                     />
@@ -243,7 +256,7 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
                     placeholder="juan.delacruz@example.com"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className={errors.email ? 'border-red-500' : ''}
+                    className={errors.email ? "border-red-500" : ""}
                     required
                   />
                   {errors.email && (
@@ -261,7 +274,6 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
                     value={formData.phone}
                     onChange={handleInputChange}
                     className={errors.phone ? "border-red-500" : ""}
-                    required
                   />
                   {errors.phone && (
                     <p className="text-xs text-red-500">{errors.phone}</p>
@@ -280,7 +292,7 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className={errors.password ? 'border-red-500' : ''}
+                    className={errors.password ? "border-red-500" : ""}
                     required
                   />
                   {errors.password && (
@@ -300,16 +312,23 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
                     placeholder="••••••••"
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
-                    className={errors.confirmPassword ? 'border-red-500' : ''}
+                    className={errors.confirmPassword ? "border-red-500" : ""}
                     required
                   />
                   {errors.confirmPassword && (
-                    <p className="text-xs text-red-500">{errors.confirmPassword}</p>
+                    <p className="text-xs text-red-500">
+                      {errors.confirmPassword}
+                    </p>
                   )}
                 </div>
 
-                <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                  {isLoading ? 'Creating Account...' : 'Create Account'}
+                <Button
+                  type="submit"
+                  className="w-full"
+                  size="lg"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>
               </form>
 
@@ -328,7 +347,7 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
                 <Button
                   variant="outline"
                   className="w-full mt-4"
-                  onClick={() => onNavigate('login')}
+                  onClick={() => onNavigate("login")}
                 >
                   Log In
                 </Button>

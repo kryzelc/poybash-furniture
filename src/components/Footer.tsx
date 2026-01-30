@@ -14,10 +14,10 @@ export function Footer() {
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-              <ImageWithFallback 
-                src={poybashLogo} 
-                alt="PoyBash Furniture" 
-                className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 flex-shrink-0" 
+              <ImageWithFallback
+                src={poybashLogo}
+                alt="PoyBash Furniture"
+                className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 flex-shrink-0"
               />
               <span className="text-base sm:text-lg font-semibold tracking-tight whitespace-nowrap">
                 PoyBash Furniture
@@ -27,8 +27,8 @@ export function Footer() {
               Quality chairs and tables for modern living spaces.
             </p>
             <div className="flex items-center gap-3 sm:gap-4">
-              <Link 
-                href="https://www.facebook.com/PoyBashFunShoppe/" 
+              <Link
+                href="https://bit.ly/poybash"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 sm:gap-2 text-[#D7CCC8] hover:text-[#FDFBF7] transition-colors text-xs sm:text-sm"
@@ -37,7 +37,7 @@ export function Footer() {
                 <Facebook className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 <span className="hidden sm:inline">Facebook</span>
               </Link>
-              <Link 
+              <Link
                 href="tel:+639325490596"
                 className="flex items-center gap-1.5 sm:gap-2 text-[#D7CCC8] hover:text-[#FDFBF7] transition-colors text-xs sm:text-sm"
                 aria-label="Call us"

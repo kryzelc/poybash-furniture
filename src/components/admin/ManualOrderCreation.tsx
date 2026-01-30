@@ -1,108 +1,157 @@
 // @ts-nocheck
 // TODO: Fix type errors for optional warehouseStock property
-'use client';
+"use client";
 
-import { useState, useMemo, useEffect } from 'react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Textarea } from '../ui/textarea';
-import { Checkbox } from '../ui/checkbox';
-import { Trash2, Save, Search, Upload, Printer, UserPlus, X, Tag, Eye, CheckCircle } from 'lucide-react';
-import { toast } from 'sonner';
-import { getProducts, updateWarehouseStock, updateVariantStock, getVariantStock, type ProductVariant, type Product } from '../../lib/products';
-import type { Order, OrderItem, User } from '../../contexts/AuthContext';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
-import { 
-  validateName, 
-  validatePhoneNumber, 
-  validateAddress, 
-  validateCity, 
+import { useState, useMemo, useEffect } from "react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Textarea } from "../ui/textarea";
+import { Checkbox } from "../ui/checkbox";
+import {
+  Trash2,
+  Save,
+  Search,
+  Upload,
+  Printer,
+  UserPlus,
+  X,
+  Tag,
+  Eye,
+  CheckCircle,
+} from "lucide-react";
+import { toast } from "sonner";
+import {
+  getProducts,
+  updateWarehouseStock,
+  updateVariantStock,
+  getVariantStock,
+  type ProductVariant,
+  type Product,
+} from "../../lib/products";
+import type { Order, OrderItem, User } from "../../contexts/AuthContext";
+import { ImageWithFallback } from "../figma/ImageWithFallback";
+import {
+  validateName,
+  validatePhoneNumber,
+  validateAddress,
+  validateCity,
   validatePostalCode,
   formatPhoneNumber,
-  sanitizeInput 
-} from '../../lib/validation';
-import { getCoupons, validateCoupon, calculateDiscount } from '../../lib/coupons';
-import type { Coupon } from '../../lib/coupons';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
-import { InvoiceReceipt } from '../InvoiceReceipt';
-import { Badge } from '../ui/badge';
-import { Card, CardContent } from '../ui/card';
+  sanitizeInput,
+} from "../../lib/validation";
+import {
+  getCoupons,
+  validateCoupon,
+  calculateDiscount,
+} from "../../lib/coupons";
+import type { Coupon } from "../../lib/coupons";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
+import { InvoiceReceipt } from "../InvoiceReceipt";
+import { Badge } from "../ui/badge";
+import { Card, CardContent } from "../ui/card";
 
 interface ManualOrderCreationProps {
-  onCreateOrder: (order: Omit<Order, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'status'>, customerUserId?: string) => void;
+  onCreateOrder: (
+    order: Omit<Order, "id" | "userId" | "createdAt" | "updatedAt" | "status">,
+    customerUserId?: string,
+  ) => void;
 }
 
-export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps) {
+export function ManualOrderCreation({
+  onCreateOrder,
+}: ManualOrderCreationProps) {
   // FIXED: Make products reactive to localStorage changes
-  const [products, setProducts] = useState<Product[]>(() => getProducts().filter(p => p.active !== false));
-  
+  const [products, setProducts] = useState<Product[]>(() =>
+    getProducts().filter((p) => p.active !== false),
+  );
+
   // Reload products whenever localStorage changes (after stock updates)
   const reloadProducts = () => {
-    setProducts(getProducts().filter(p => p.active !== false));
+    setProducts(getProducts().filter((p) => p.active !== false));
   };
-  
+
   //Load customers from localStorage
   const [customers, setCustomers] = useState<User[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const stored = localStorage.getItem('users');
+    if (typeof window === "undefined") return [];
+    const stored = localStorage.getItem("users");
     if (!stored) return [];
     const users = JSON.parse(stored);
-    return users.filter((u: User) => u.role === 'customer');
+    return users.filter((u: User) => u.role === "customer");
   });
-  
+
   const [selectedCustomer, setSelectedCustomer] = useState<User | null>(null);
-  const [customerSearchTerm, setCustomerSearchTerm] = useState('');
+  const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [customerInfo, setCustomerInfo] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    address: '',
-    barangay: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: 'Philippines',
+    firstName: "",
+    lastName: "",
+    phone: "",
+    address: "",
+    barangay: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "Philippines",
   });
-  const [deliveryMethod, setDeliveryMethod] = useState<'store-pickup' | 'customer-arranged' | 'staff-delivery'>('store-pickup');
+  const [deliveryMethod, setDeliveryMethod] = useState<
+    "store-pickup" | "customer-arranged" | "staff-delivery"
+  >("store-pickup");
   const [deliveryFee, setDeliveryFee] = useState<number>(0);
   const [pickupDetails, setPickupDetails] = useState({
-    pickupPerson: '',
-    pickupPhone: '',
-    deliveryService: '',
+    pickupPerson: "",
+    pickupPhone: "",
+    deliveryService: "",
   });
   const [billingAddress, setBillingAddress] = useState({
-    firstName: '',
-    lastName: '',
-    address: '',
-    barangay: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: 'Philippines',
+    firstName: "",
+    lastName: "",
+    address: "",
+    barangay: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "Philippines",
   });
   const [useSameAddress, setUseSameAddress] = useState(true);
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'gcash' | 'bank-transfer'>('cash');
-  const [paymentReference, setPaymentReference] = useState<string>('');
-  const [paymentRecipient, setPaymentRecipient] = useState<string>('');
-  const [paymentRecipientName, setPaymentRecipientName] = useState<string>('');
-  const [paymentProof, setPaymentProof] = useState<string>('');
+  const [paymentMethod, setPaymentMethod] = useState<
+    "cash" | "gcash" | "bank-transfer"
+  >("cash");
+  const [paymentReference, setPaymentReference] = useState<string>("");
+  const [paymentRecipient, setPaymentRecipient] = useState<string>("");
+  const [paymentRecipientName, setPaymentRecipientName] = useState<string>("");
+  const [paymentProof, setPaymentProof] = useState<string>("");
   const [isReservation, setIsReservation] = useState(false);
-  const [reservationPercentage, setReservationPercentage] = useState<number>(30);
-  const [notes, setNotes] = useState('');
+  const [reservationPercentage, setReservationPercentage] =
+    useState<number>(30);
+  const [notes, setNotes] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [productSearch, setProductSearch] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<'all' | 'chairs' | 'tables'>('all');
+  const [productSearch, setProductSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<
+    "all" | "chairs" | "tables"
+  >("all");
   const [isSearchDialogOpen, setIsSearchDialogOpen] = useState(false);
   const [createdOrderId, setCreatedOrderId] = useState<string | null>(null);
   const [showInvoice, setShowInvoice] = useState(false);
-  
+
   // Coupon state
-  const [couponCode, setCouponCode] = useState('');
+  const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
-  const [couponError, setCouponError] = useState('');
+  const [couponError, setCouponError] = useState("");
 
   // FIXED: Reload products when component mounts and when localStorage changes
   useEffect(() => {
@@ -111,101 +160,125 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
     };
 
     // Listen for custom storage events (when stock is updated)
-    window.addEventListener('storage', handleStorageChange);
-    
+    window.addEventListener("storage", handleStorageChange);
+
     // Also listen for a custom event we'll dispatch when stock changes
-    window.addEventListener('stockUpdated', handleStorageChange);
+    window.addEventListener("stockUpdated", handleStorageChange);
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('stockUpdated', handleStorageChange);
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener("stockUpdated", handleStorageChange);
     };
   }, []);
 
   // Filter products based on search and category
   const filteredProducts = useMemo(() => {
     let filtered = products;
-    
-    if (categoryFilter !== 'all') {
-      filtered = filtered.filter(p => p.category === categoryFilter);
+
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter((p) => p.category === categoryFilter);
     }
-    
+
     if (productSearch) {
       const query = productSearch.toLowerCase().trim();
       const words = query.split(/\s+/);
-      
-      filtered = filtered.filter(p => {
+
+      filtered = filtered.filter((p) => {
         const nameLower = p.name.toLowerCase();
         const subCategoryLower = p.subCategory.toLowerCase();
         const materialLower = p.material.toLowerCase();
-        
+
         // Check if all search words appear in name, subcategory, or material
-        return words.every(word => 
-          nameLower.includes(word) || 
-          subCategoryLower.includes(word) ||
-          materialLower.includes(word)
+        return words.every(
+          (word) =>
+            nameLower.includes(word) ||
+            subCategoryLower.includes(word) ||
+            materialLower.includes(word),
         );
       });
     }
-    
+
     return filtered;
   }, [products, categoryFilter, productSearch]);
 
   const handleAddProduct = (productId?: number) => {
-    const product = productId 
-      ? products.find(p => p.id === productId)
+    const product = productId
+      ? products.find((p) => p.id === productId)
       : filteredProducts[0];
-      
+
     if (!product) {
-      toast.error('No products available');
+      toast.error("No products available");
       return;
     }
 
     let productPrice = product.price;
-    let defaultWarehouse: 'Lorenzo' | 'Oroquieta' = 'Lorenzo';
+    let defaultWarehouse: "Lorenzo" | "Oroquieta" = "Lorenzo";
     let selectedVariant: ProductVariant | null = null;
     let selectedSize: string | undefined;
-    let selectedColor: string = 'Default';
-    
+    let selectedColor: string = "Default";
+
     // NEW: Use variant system if available
     if (product.variants && product.variants.length > 0) {
-      const activeVariants = product.variants.filter(v => v.active && getVariantStock(v) > 0);
-      
+      const activeVariants = product.variants.filter(
+        (v) => v.active && getVariantStock(v) > 0,
+      );
+
       if (activeVariants.length === 0) {
-        toast.error('No variants available with stock');
+        toast.error("No variants available with stock");
         return;
       }
-      
+
       // Use first available variant
       selectedVariant = activeVariants[0];
       productPrice = selectedVariant.price;
       selectedSize = selectedVariant.size || undefined;
       selectedColor = selectedVariant.color;
-      
+
       // Determine warehouse with more stock for this variant
-      const lorenzoStock = selectedVariant.warehouseStock.find(w => w.warehouse === 'Lorenzo');
-      const oroquietaStock = selectedVariant.warehouseStock.find(w => w.warehouse === 'Oroquieta');
-      const lorenzoAvailable = (lorenzoStock?.quantity || 0) - (lorenzoStock?.reserved || 0);
-      const oroquietaAvailable = (oroquietaStock?.quantity || 0) - (oroquietaStock?.reserved || 0);
-      defaultWarehouse = lorenzoAvailable >= oroquietaAvailable ? 'Lorenzo' : 'Oroquieta';
+      const lorenzoStock = selectedVariant.warehouseStock.find(
+        (w) => w.warehouse === "Lorenzo",
+      );
+      const oroquietaStock = selectedVariant.warehouseStock.find(
+        (w) => w.warehouse === "Oroquieta",
+      );
+      const lorenzoAvailable =
+        (lorenzoStock?.quantity || 0) - (lorenzoStock?.reserved || 0);
+      const oroquietaAvailable =
+        (oroquietaStock?.quantity || 0) - (oroquietaStock?.reserved || 0);
+      defaultWarehouse =
+        lorenzoAvailable >= oroquietaAvailable ? "Lorenzo" : "Oroquieta";
     }
     // LEGACY: Old system support
     else {
-      let defaultSizeOption = product.sizeOptions && product.sizeOptions.length > 0 ? product.sizeOptions[0] : null;
-      
+      let defaultSizeOption =
+        product.sizeOptions && product.sizeOptions.length > 0
+          ? product.sizeOptions[0]
+          : null;
+
       if (defaultSizeOption) {
         productPrice = defaultSizeOption.price;
         selectedSize = defaultSizeOption.label;
       }
 
-      const lorenzoStock = defaultSizeOption ? defaultSizeOption.warehouseStock.find(w => w.warehouse === 'Lorenzo') : product.warehouseStock?.find(w => w.warehouse === 'Lorenzo');
-      const oroquietaStock = defaultSizeOption ? defaultSizeOption.warehouseStock.find(w => w.warehouse === 'Oroquieta') : product.warehouseStock?.find(w => w.warehouse === 'Oroquieta');
-      const lorenzoAvailable = (lorenzoStock?.quantity || 0) - (lorenzoStock?.reserved || 0);
-      const oroquietaAvailable = (oroquietaStock?.quantity || 0) - (oroquietaStock?.reserved || 0);
-      defaultWarehouse = lorenzoAvailable >= oroquietaAvailable ? 'Lorenzo' : 'Oroquieta';
-      
+      const lorenzoStock = defaultSizeOption
+        ? defaultSizeOption.warehouseStock.find(
+            (w) => w.warehouse === "Lorenzo",
+          )
+        : product.warehouseStock?.find((w) => w.warehouse === "Lorenzo");
+      const oroquietaStock = defaultSizeOption
+        ? defaultSizeOption.warehouseStock.find(
+            (w) => w.warehouse === "Oroquieta",
+          )
+        : product.warehouseStock?.find((w) => w.warehouse === "Oroquieta");
+      const lorenzoAvailable =
+        (lorenzoStock?.quantity || 0) - (lorenzoStock?.reserved || 0);
+      const oroquietaAvailable =
+        (oroquietaStock?.quantity || 0) - (oroquietaStock?.reserved || 0);
+      defaultWarehouse =
+        lorenzoAvailable >= oroquietaAvailable ? "Lorenzo" : "Oroquieta";
+
       // Legacy products without variants should display a generic color
-      selectedColor = 'Default';
+      selectedColor = "Default";
     }
 
     const newItem: OrderItem = {
@@ -222,113 +295,150 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
 
     setOrderItems([...orderItems, newItem]);
     setIsSearchDialogOpen(false);
-    setProductSearch('');
+    setProductSearch("");
   };
 
   const handleRemoveProduct = (index: number) => {
     setOrderItems(orderItems.filter((_, i) => i !== index));
   };
 
-  const handleUpdateItem = (index: number, field: keyof OrderItem, value: any) => {
+  const handleUpdateItem = (
+    index: number,
+    field: keyof OrderItem,
+    value: any,
+  ) => {
     const updatedItems = [...orderItems];
     const currentItem = updatedItems[index];
     updatedItems[index] = { ...currentItem, [field]: value };
-    
-    const product = products.find(p => p.id === currentItem.productId);
+
+    const product = products.find((p) => p.id === currentItem.productId);
     if (!product) return;
-    
+
     // NEW: If size or color is being updated, find matching variant and update price
-    if (field === 'size' || field === 'color') {
+    if (field === "size" || field === "color") {
       if (product.variants && product.variants.length > 0) {
-        const size = field === 'size' ? value : currentItem.size || null;
-        const color = field === 'color' ? value : currentItem.color;
-        
-        const matchingVariant = product.variants.find(v => 
-          v.size === size && v.color === color && v.active
+        const size = field === "size" ? value : currentItem.size || null;
+        const color = field === "color" ? value : currentItem.color;
+
+        const matchingVariant = product.variants.find(
+          (v) => v.size === size && v.color === color && v.active,
         );
-        
+
         if (matchingVariant) {
           updatedItems[index].price = matchingVariant.price;
           updatedItems[index].variantId = matchingVariant.id;
-          
+
           // Update warehouse to the one with more stock for this variant
-          const lorenzoStock = matchingVariant.warehouseStock.find(w => w.warehouse === 'Lorenzo');
-          const oroquietaStock = matchingVariant.warehouseStock.find(w => w.warehouse === 'Oroquieta');
-          const lorenzoAvailable = (lorenzoStock?.quantity || 0) - (lorenzoStock?.reserved || 0);
-          const oroquietaAvailable = (oroquietaStock?.quantity || 0) - (oroquietaStock?.reserved || 0);
-          
+          const lorenzoStock = matchingVariant.warehouseStock.find(
+            (w) => w.warehouse === "Lorenzo",
+          );
+          const oroquietaStock = matchingVariant.warehouseStock.find(
+            (w) => w.warehouse === "Oroquieta",
+          );
+          const lorenzoAvailable =
+            (lorenzoStock?.quantity || 0) - (lorenzoStock?.reserved || 0);
+          const oroquietaAvailable =
+            (oroquietaStock?.quantity || 0) - (oroquietaStock?.reserved || 0);
+
           // Only auto-switch warehouse if current selection has no stock
-          const currentWarehouse = currentItem.warehouseSource || 'Lorenzo';
-          const currentStock = currentWarehouse === 'Lorenzo' ? lorenzoAvailable : oroquietaAvailable;
-          
+          const currentWarehouse = currentItem.warehouseSource || "Lorenzo";
+          const currentStock =
+            currentWarehouse === "Lorenzo"
+              ? lorenzoAvailable
+              : oroquietaAvailable;
+
           if (currentStock <= 0) {
-            updatedItems[index].warehouseSource = lorenzoAvailable > oroquietaAvailable ? 'Lorenzo' : 'Oroquieta';
+            updatedItems[index].warehouseSource =
+              lorenzoAvailable > oroquietaAvailable ? "Lorenzo" : "Oroquieta";
           }
         } else {
-          toast.error('Selected size/color combination not available');
+          toast.error("Selected size/color combination not available");
           return;
         }
       }
       // LEGACY: Old system support
-      else if (field === 'size' && product.sizeOptions) {
-        const selectedSize = product.sizeOptions.find(s => s.label === value);
+      else if (field === "size" && product.sizeOptions) {
+        const selectedSize = product.sizeOptions.find((s) => s.label === value);
         if (selectedSize) {
           updatedItems[index].price = selectedSize.price;
         }
       }
     }
-    
+
     setOrderItems(updatedItems);
   };
 
   const handleProductChange = (index: number, productId: number) => {
-    const product = products.find(p => p.id === productId);
+    const product = products.find((p) => p.id === productId);
     if (!product) return;
 
     let productPrice = product.price;
-    let defaultWarehouse: 'Lorenzo' | 'Oroquieta' = 'Lorenzo';
+    let defaultWarehouse: "Lorenzo" | "Oroquieta" = "Lorenzo";
     let selectedVariant: ProductVariant | null = null;
     let selectedSize: string | undefined;
-    let selectedColor: string = 'Default';
-    
+    let selectedColor: string = "Default";
+
     // NEW: Use variant system if available
     if (product.variants && product.variants.length > 0) {
-      const activeVariants = product.variants.filter(v => v.active && getVariantStock(v) > 0);
-      
+      const activeVariants = product.variants.filter(
+        (v) => v.active && getVariantStock(v) > 0,
+      );
+
       if (activeVariants.length === 0) {
-        toast.error('No variants available with stock for this product');
+        toast.error("No variants available with stock for this product");
         return;
       }
-      
+
       // Use first available variant
       selectedVariant = activeVariants[0];
       productPrice = selectedVariant.price;
       selectedSize = selectedVariant.size || undefined;
       selectedColor = selectedVariant.color;
-      
+
       // Determine warehouse with more stock for this variant
-      const lorenzoStock = selectedVariant.warehouseStock.find(w => w.warehouse === 'Lorenzo');
-      const oroquietaStock = selectedVariant.warehouseStock.find(w => w.warehouse === 'Oroquieta');
-      const lorenzoAvailable = (lorenzoStock?.quantity || 0) - (lorenzoStock?.reserved || 0);
-      const oroquietaAvailable = (oroquietaStock?.quantity || 0) - (oroquietaStock?.reserved || 0);
-      defaultWarehouse = lorenzoAvailable >= oroquietaAvailable ? 'Lorenzo' : 'Oroquieta';
+      const lorenzoStock = selectedVariant.warehouseStock.find(
+        (w) => w.warehouse === "Lorenzo",
+      );
+      const oroquietaStock = selectedVariant.warehouseStock.find(
+        (w) => w.warehouse === "Oroquieta",
+      );
+      const lorenzoAvailable =
+        (lorenzoStock?.quantity || 0) - (lorenzoStock?.reserved || 0);
+      const oroquietaAvailable =
+        (oroquietaStock?.quantity || 0) - (oroquietaStock?.reserved || 0);
+      defaultWarehouse =
+        lorenzoAvailable >= oroquietaAvailable ? "Lorenzo" : "Oroquieta";
     }
     // LEGACY: Old system support
     else {
-      let defaultSizeOption = product.sizeOptions && product.sizeOptions.length > 0 ? product.sizeOptions[0] : null;
-      
+      let defaultSizeOption =
+        product.sizeOptions && product.sizeOptions.length > 0
+          ? product.sizeOptions[0]
+          : null;
+
       if (defaultSizeOption) {
         productPrice = defaultSizeOption.price;
         selectedSize = defaultSizeOption.label;
       }
 
-      const lorenzoStock = defaultSizeOption ? defaultSizeOption.warehouseStock.find(w => w.warehouse === 'Lorenzo') : product.warehouseStock?.find(w => w.warehouse === 'Lorenzo');
-      const oroquietaStock = defaultSizeOption ? defaultSizeOption.warehouseStock.find(w => w.warehouse === 'Oroquieta') : product.warehouseStock?.find(w => w.warehouse === 'Oroquieta');
-      const lorenzoAvailable = (lorenzoStock?.quantity || 0) - (lorenzoStock?.reserved || 0);
-      const oroquietaAvailable = (oroquietaStock?.quantity || 0) - (oroquietaStock?.reserved || 0);
-      defaultWarehouse = lorenzoAvailable >= oroquietaAvailable ? 'Lorenzo' : 'Oroquieta';
-      
-      selectedColor = 'Default';
+      const lorenzoStock = defaultSizeOption
+        ? defaultSizeOption.warehouseStock.find(
+            (w) => w.warehouse === "Lorenzo",
+          )
+        : product.warehouseStock?.find((w) => w.warehouse === "Lorenzo");
+      const oroquietaStock = defaultSizeOption
+        ? defaultSizeOption.warehouseStock.find(
+            (w) => w.warehouse === "Oroquieta",
+          )
+        : product.warehouseStock?.find((w) => w.warehouse === "Oroquieta");
+      const lorenzoAvailable =
+        (lorenzoStock?.quantity || 0) - (lorenzoStock?.reserved || 0);
+      const oroquietaAvailable =
+        (oroquietaStock?.quantity || 0) - (oroquietaStock?.reserved || 0);
+      defaultWarehouse =
+        lorenzoAvailable >= oroquietaAvailable ? "Lorenzo" : "Oroquieta";
+
+      selectedColor = "Default";
     }
 
     const updatedItems = [...orderItems];
@@ -351,37 +461,43 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
     if (!file) return;
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size must be less than 5MB');
+      toast.error("Image size must be less than 5MB");
       return;
     }
 
     const reader = new FileReader();
     reader.onloadend = () => {
       setPaymentProof(reader.result as string);
-      setErrors(prev => ({ ...prev, paymentProof: '' }));
-      toast.success('Payment proof uploaded successfully');
+      setErrors((prev) => ({ ...prev, paymentProof: "" }));
+      toast.success("Payment proof uploaded successfully");
     };
     reader.readAsDataURL(file);
   };
 
   const calculateTotal = () => {
-    const subtotal = orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const couponDiscount = appliedCoupon ? calculateDiscount(appliedCoupon, subtotal) : 0;
+    const subtotal = orderItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
+    const couponDiscount = appliedCoupon
+      ? calculateDiscount(appliedCoupon, subtotal)
+      : 0;
     const afterDiscount = subtotal - couponDiscount;
-    const total = afterDiscount + (deliveryMethod === 'staff-delivery' ? deliveryFee : 0);
+    const total =
+      afterDiscount + (deliveryMethod === "staff-delivery" ? deliveryFee : 0);
     return { subtotal, couponDiscount, total };
   };
 
   const handleApplyCoupon = () => {
     if (!couponCode.trim()) {
-      setCouponError('Please enter a coupon code');
+      setCouponError("Please enter a coupon code");
       return;
     }
 
@@ -390,14 +506,14 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
 
     if (result.valid && result.coupon) {
       setAppliedCoupon(result.coupon);
-      setCouponError('');
-      toast.success('Coupon applied successfully! 🎉', {
+      setCouponError("");
+      toast.success("Coupon applied successfully! 🎉", {
         description: `${result.coupon.description}`,
       });
     } else {
-      setCouponError(result.error || 'Invalid coupon');
+      setCouponError(result.error || "Invalid coupon");
       setAppliedCoupon(null);
-      toast.error('Coupon not valid', {
+      toast.error("Coupon not valid", {
         description: result.error,
       });
     }
@@ -405,112 +521,117 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
 
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null);
-    setCouponCode('');
-    setCouponError('');
-    toast.info('Coupon removed');
+    setCouponCode("");
+    setCouponError("");
+    toast.info("Coupon removed");
   };
 
   // Filter customers based on search
   const filteredCustomers = useMemo(() => {
     if (!customerSearchTerm) return customers;
     const search = customerSearchTerm.toLowerCase();
-    return customers.filter(c => 
-      c.firstName.toLowerCase().includes(search) ||
-      c.lastName.toLowerCase().includes(search) ||
-      c.email.toLowerCase().includes(search) ||
-      (c.phone && c.phone.toLowerCase().includes(search))
+    return customers.filter(
+      (c) =>
+        c.firstName.toLowerCase().includes(search) ||
+        c.lastName.toLowerCase().includes(search) ||
+        c.email.toLowerCase().includes(search) ||
+        (c.phone && c.phone.toLowerCase().includes(search)),
     );
   }, [customers, customerSearchTerm]);
 
   // Handle customer selection
   const handleSelectCustomer = (customer: User) => {
     setSelectedCustomer(customer);
-    
+
     // Find the default address or use the first address
-    const defaultAddress = customer.addresses?.find(addr => addr.isDefault) || customer.addresses?.[0];
-    
+    const defaultAddress =
+      customer.addresses?.find((addr) => addr.isDefault) ||
+      customer.addresses?.[0];
+
     setCustomerInfo({
       firstName: customer.firstName,
       lastName: customer.lastName,
-      phone: customer.phone || defaultAddress?.phone || '',
-      address: defaultAddress?.address || '',
-      barangay: defaultAddress?.barangay || '',
-      city: defaultAddress?.city || '',
-      state: defaultAddress?.state || '',
-      zipCode: defaultAddress?.zipCode || '',
-      country: defaultAddress?.country || 'Philippines',
+      phone: customer.phone || defaultAddress?.phone || "",
+      address: defaultAddress?.address || "",
+      barangay: defaultAddress?.barangay || "",
+      city: defaultAddress?.city || "",
+      state: defaultAddress?.state || "",
+      zipCode: defaultAddress?.zipCode || "",
+      country: defaultAddress?.country || "Philippines",
     });
-    
+
     // Also update billing address if same address is checked
     if (useSameAddress) {
       setBillingAddress({
         firstName: customer.firstName,
         lastName: customer.lastName,
-        address: defaultAddress?.address || '',
-        barangay: defaultAddress?.barangay || '',
-        city: defaultAddress?.city || '',
-        state: defaultAddress?.state || '',
-        zipCode: defaultAddress?.zipCode || '',
-        country: defaultAddress?.country || 'Philippines',
+        address: defaultAddress?.address || "",
+        barangay: defaultAddress?.barangay || "",
+        city: defaultAddress?.city || "",
+        state: defaultAddress?.state || "",
+        zipCode: defaultAddress?.zipCode || "",
+        country: defaultAddress?.country || "Philippines",
       });
     }
-    
+
     // Clear all validation errors when customer is selected
     setErrors({});
-    
-    toast.success(`Customer ${customer.firstName} ${customer.lastName} selected`);
+
+    toast.success(
+      `Customer ${customer.firstName} ${customer.lastName} selected`,
+    );
   };
 
   // Handle clearing selected customer
   const handleClearCustomer = () => {
     setSelectedCustomer(null);
     setCustomerInfo({
-      firstName: '',
-      lastName: '',
-      phone: '',
-      address: '',
-      barangay: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: 'Philippines',
+      firstName: "",
+      lastName: "",
+      phone: "",
+      address: "",
+      barangay: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      country: "Philippines",
     });
-    
+
     if (useSameAddress) {
       setBillingAddress({
-        firstName: '',
-        lastName: '',
-        address: '',
-        barangay: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: 'Philippines',
+        firstName: "",
+        lastName: "",
+        address: "",
+        barangay: "",
+        city: "",
+        state: "",
+        zipCode: "",
+        country: "Philippines",
       });
     }
-    
-    toast.info('Customer cleared');
+
+    toast.info("Customer cleared");
   };
 
   const handleCustomerInfoChange = (field: string, value: string) => {
-    setErrors(prev => ({ ...prev, [field]: '' }));
-    
+    setErrors((prev) => ({ ...prev, [field]: "" }));
+
     let processedValue = value;
-    
-    if (field === 'firstName' || field === 'lastName') {
-      processedValue = value.replace(/[^A-Za-zÀ-ÿ\s'-]/g, '');
-    } else if (field === 'city' || field === 'state') {
-      processedValue = value.replace(/[^A-Za-zÀ-ÿ\s.-]/g, '');
-    } else if (field === 'zipCode') {
-      processedValue = value.replace(/[^0-9]/g, '').slice(0, 4);
-    } else if (field === 'address') {
-      processedValue = value.replace(/[^A-Za-z0-9\s.,#'-]/g, '');
-    } else if (field === 'phone') {
-      processedValue = value.replace(/[^0-9\s+-]/g, '');
+
+    if (field === "firstName" || field === "lastName") {
+      processedValue = value.replace(/[^A-Za-zÀ-ÿ\s'-]/g, "");
+    } else if (field === "city" || field === "state") {
+      processedValue = value.replace(/[^A-Za-zÀ-ÿ\s.-]/g, "");
+    } else if (field === "zipCode") {
+      processedValue = value.replace(/[^0-9]/g, "").slice(0, 4);
+    } else if (field === "address") {
+      processedValue = value.replace(/[^A-Za-z0-9\s.,#'-]/g, "");
+    } else if (field === "phone") {
+      processedValue = value.replace(/[^0-9\s+-]/g, "");
     }
-    
+
     setCustomerInfo({ ...customerInfo, [field]: processedValue });
-    
+
     // Sync with billing address if same address is checked
     if (useSameAddress) {
       setBillingAddress({ ...billingAddress, [field]: processedValue });
@@ -518,34 +639,37 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
   };
 
   const handleBillingAddressChange = (field: string, value: string) => {
-    setErrors(prev => ({ ...prev, [`billing${field.charAt(0).toUpperCase() + field.slice(1)}`]: '' }));
-    
+    setErrors((prev) => ({
+      ...prev,
+      [`billing${field.charAt(0).toUpperCase() + field.slice(1)}`]: "",
+    }));
+
     let processedValue = value;
-    
-    if (field === 'firstName' || field === 'lastName') {
-      processedValue = value.replace(/[^A-Za-zÀ-ÿ\s'-]/g, '');
-    } else if (field === 'city' || field === 'state') {
-      processedValue = value.replace(/[^A-Za-zÀ-ÿ\s.-]/g, '');
-    } else if (field === 'zipCode') {
-      processedValue = value.replace(/[^0-9]/g, '').slice(0, 4);
-    } else if (field === 'address') {
-      processedValue = value.replace(/[^A-Za-z0-9\s.,#'-]/g, '');
+
+    if (field === "firstName" || field === "lastName") {
+      processedValue = value.replace(/[^A-Za-zÀ-ÿ\s'-]/g, "");
+    } else if (field === "city" || field === "state") {
+      processedValue = value.replace(/[^A-Za-zÀ-ÿ\s.-]/g, "");
+    } else if (field === "zipCode") {
+      processedValue = value.replace(/[^0-9]/g, "").slice(0, 4);
+    } else if (field === "address") {
+      processedValue = value.replace(/[^A-Za-z0-9\s.,#'-]/g, "");
     }
-    
+
     setBillingAddress({ ...billingAddress, [field]: processedValue });
   };
 
   const handlePickupDetailsChange = (field: string, value: string) => {
-    setErrors(prev => ({ ...prev, [field]: '' }));
-    
+    setErrors((prev) => ({ ...prev, [field]: "" }));
+
     let processedValue = value;
-    
-    if (field === 'pickupPerson') {
-      processedValue = value.replace(/[^A-Za-zÀ-ÿ\s'-]/g, '');
-    } else if (field === 'pickupPhone') {
-      processedValue = value.replace(/[^0-9\s+-]/g, '');
+
+    if (field === "pickupPerson") {
+      processedValue = value.replace(/[^A-Za-zÀ-ÿ\s'-]/g, "");
+    } else if (field === "pickupPhone") {
+      processedValue = value.replace(/[^0-9\s+-]/g, "");
     }
-    
+
     setPickupDetails({ ...pickupDetails, [field]: processedValue });
   };
 
@@ -553,19 +677,23 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
     const newErrors: Record<string, string> = {};
 
     if (orderItems.length === 0) {
-      toast.error('Please add at least one product');
+      toast.error("Please add at least one product");
       return false;
     }
 
     // Validate stock availability
     for (const item of orderItems) {
-      const product = products.find(p => p.id === item.productId);
+      const product = products.find((p) => p.id === item.productId);
       if (product && item.warehouseSource) {
-        const warehouse = product.warehouseStock.find(w => w.warehouse === item.warehouseSource);
+        const warehouse = product.warehouseStock.find(
+          (w) => w.warehouse === item.warehouseSource,
+        );
         if (warehouse) {
           const available = warehouse.quantity - warehouse.reserved;
           if (item.quantity > available) {
-            toast.error(`Insufficient stock for ${item.name} in ${item.warehouseSource} warehouse. Available: ${available}`);
+            toast.error(
+              `Insufficient stock for ${item.name} in ${item.warehouseSource} warehouse. Available: ${available}`,
+            );
             return false;
           }
         }
@@ -573,85 +701,101 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
     }
 
     const firstNameVal = validateName(customerInfo.firstName);
-    if (!firstNameVal.valid) newErrors.firstName = firstNameVal.error || '';
+    if (!firstNameVal.valid) newErrors.firstName = firstNameVal.error || "";
 
     const lastNameVal = validateName(customerInfo.lastName);
-    if (!lastNameVal.valid) newErrors.lastName = lastNameVal.error || '';
+    if (!lastNameVal.valid) newErrors.lastName = lastNameVal.error || "";
 
     const addressVal = validateAddress(customerInfo.address);
-    if (!addressVal.valid) newErrors.address = addressVal.error || '';
+    if (!addressVal.valid) newErrors.address = addressVal.error || "";
 
     const barangayVal = validateCity(customerInfo.barangay);
-    if (!barangayVal.valid) newErrors.barangay = barangayVal.error || '';
+    if (!barangayVal.valid) newErrors.barangay = barangayVal.error || "";
 
     const cityVal = validateCity(customerInfo.city);
-    if (!cityVal.valid) newErrors.city = cityVal.error || '';
+    if (!cityVal.valid) newErrors.city = cityVal.error || "";
 
     const stateVal = validateCity(customerInfo.state);
-    if (!stateVal.valid) newErrors.state = stateVal.error || '';
+    if (!stateVal.valid) newErrors.state = stateVal.error || "";
 
     const zipVal = validatePostalCode(customerInfo.zipCode);
-    if (!zipVal.valid) newErrors.zipCode = zipVal.error || '';
+    if (!zipVal.valid) newErrors.zipCode = zipVal.error || "";
 
     const phoneVal = validatePhoneNumber(customerInfo.phone);
-    if (!phoneVal.valid) newErrors.phone = phoneVal.error || '';
+    if (!phoneVal.valid) newErrors.phone = phoneVal.error || "";
 
     const pickupPersonVal = validateName(pickupDetails.pickupPerson);
-    if (!pickupPersonVal.valid) newErrors.pickupPerson = pickupPersonVal.error || '';
+    if (!pickupPersonVal.valid)
+      newErrors.pickupPerson = pickupPersonVal.error || "";
 
     const pickupPhoneVal = validatePhoneNumber(pickupDetails.pickupPhone);
-    if (!pickupPhoneVal.valid) newErrors.pickupPhone = pickupPhoneVal.error || '';
+    if (!pickupPhoneVal.valid)
+      newErrors.pickupPhone = pickupPhoneVal.error || "";
 
-    if (deliveryMethod === 'customer-arranged' && !pickupDetails.deliveryService.trim()) {
-      newErrors.deliveryService = 'Please specify delivery service';
+    if (
+      deliveryMethod === "customer-arranged" &&
+      !pickupDetails.deliveryService.trim()
+    ) {
+      newErrors.deliveryService = "Please specify delivery service";
     }
 
     // Validate billing address if not using same address and delivery method is staff-delivery
-    if (deliveryMethod === 'staff-delivery' && !useSameAddress) {
+    if (deliveryMethod === "staff-delivery" && !useSameAddress) {
       const billingFirstNameVal = validateName(billingAddress.firstName);
-      if (!billingFirstNameVal.valid) newErrors.billingFirstName = billingFirstNameVal.error || '';
+      if (!billingFirstNameVal.valid)
+        newErrors.billingFirstName = billingFirstNameVal.error || "";
 
       const billingLastNameVal = validateName(billingAddress.lastName);
-      if (!billingLastNameVal.valid) newErrors.billingLastName = billingLastNameVal.error || '';
+      if (!billingLastNameVal.valid)
+        newErrors.billingLastName = billingLastNameVal.error || "";
 
       const billingAddressVal = validateAddress(billingAddress.address);
-      if (!billingAddressVal.valid) newErrors.billingAddress = billingAddressVal.error || '';
+      if (!billingAddressVal.valid)
+        newErrors.billingAddress = billingAddressVal.error || "";
 
       const billingBarangayVal = validateCity(billingAddress.barangay);
-      if (!billingBarangayVal.valid) newErrors.billingBarangay = billingBarangayVal.error || '';
+      if (!billingBarangayVal.valid)
+        newErrors.billingBarangay = billingBarangayVal.error || "";
 
       const billingCityVal = validateCity(billingAddress.city);
-      if (!billingCityVal.valid) newErrors.billingCity = billingCityVal.error || '';
+      if (!billingCityVal.valid)
+        newErrors.billingCity = billingCityVal.error || "";
 
       const billingStateVal = validateCity(billingAddress.state);
-      if (!billingStateVal.valid) newErrors.billingState = billingStateVal.error || '';
+      if (!billingStateVal.valid)
+        newErrors.billingState = billingStateVal.error || "";
 
       const billingZipVal = validatePostalCode(billingAddress.zipCode);
-      if (!billingZipVal.valid) newErrors.billingZipCode = billingZipVal.error || '';
+      if (!billingZipVal.valid)
+        newErrors.billingZipCode = billingZipVal.error || "";
     }
 
     // FIXED: Payment proof is ALWAYS required for manual orders (all payment methods)
     if (!paymentProof) {
-      newErrors.paymentProof = 'Payment proof screenshot is required for all manual orders (Max 5MB)';
+      newErrors.paymentProof =
+        "Payment proof screenshot is required for all manual orders (Max 5MB)";
     }
 
     // Additional validation for digital payment methods
-    if (paymentMethod === 'gcash' || paymentMethod === 'bank-transfer') {
+    if (paymentMethod === "gcash" || paymentMethod === "bank-transfer") {
       if (!paymentReference.trim()) {
-        newErrors.paymentReference = 'Payment reference number is required';
+        newErrors.paymentReference = "Payment reference number is required";
       }
       if (!paymentRecipient.trim()) {
-        newErrors.paymentRecipient = paymentMethod === 'gcash' ? 'GCash number is required' : 'Bank account number is required';
+        newErrors.paymentRecipient =
+          paymentMethod === "gcash"
+            ? "GCash number is required"
+            : "Bank account number is required";
       }
       if (!paymentRecipientName.trim()) {
-        newErrors.paymentRecipientName = 'Account holder name is required';
+        newErrors.paymentRecipientName = "Account holder name is required";
       }
     }
 
     setErrors(newErrors);
-    
+
     if (Object.keys(newErrors).length > 0) {
-      toast.error('Please fix the errors in the form');
+      toast.error("Please fix the errors in the form");
       return false;
     }
 
@@ -665,43 +809,54 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
 
     const { subtotal, couponDiscount, total } = calculateTotal();
 
-    const finalBillingAddress = useSameAddress ? {
-      firstName: sanitizeInput(customerInfo.firstName),
-      lastName: sanitizeInput(customerInfo.lastName),
-      address: sanitizeInput(customerInfo.address),
-      barangay: sanitizeInput(customerInfo.barangay),
-      city: sanitizeInput(customerInfo.city),
-      state: sanitizeInput(customerInfo.state),
-      zipCode: customerInfo.zipCode,
-      country: customerInfo.country,
-    } : {
-      firstName: sanitizeInput(billingAddress.firstName),
-      lastName: sanitizeInput(billingAddress.lastName),
-      address: sanitizeInput(billingAddress.address),
-      barangay: sanitizeInput(billingAddress.barangay),
-      city: sanitizeInput(billingAddress.city),
-      state: sanitizeInput(billingAddress.state),
-      zipCode: billingAddress.zipCode,
-      country: billingAddress.country,
-    };
+    const finalBillingAddress = useSameAddress
+      ? {
+          firstName: sanitizeInput(customerInfo.firstName),
+          lastName: sanitizeInput(customerInfo.lastName),
+          address: sanitizeInput(customerInfo.address),
+          barangay: sanitizeInput(customerInfo.barangay),
+          city: sanitizeInput(customerInfo.city),
+          state: sanitizeInput(customerInfo.state),
+          zipCode: customerInfo.zipCode,
+          country: customerInfo.country,
+        }
+      : {
+          firstName: sanitizeInput(billingAddress.firstName),
+          lastName: sanitizeInput(billingAddress.lastName),
+          address: sanitizeInput(billingAddress.address),
+          barangay: sanitizeInput(billingAddress.barangay),
+          city: sanitizeInput(billingAddress.city),
+          state: sanitizeInput(billingAddress.state),
+          zipCode: billingAddress.zipCode,
+          country: billingAddress.country,
+        };
 
-    const reservationFee = isReservation ? total * (reservationPercentage / 100) : undefined;
+    const reservationFee = isReservation
+      ? total * (reservationPercentage / 100)
+      : undefined;
 
-    const order: Omit<Order, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'status'> = {
+    const order: Omit<
+      Order,
+      "id" | "userId" | "createdAt" | "updatedAt" | "status"
+    > = {
       items: orderItems,
       subtotal,
       couponCode: appliedCoupon?.code,
       couponDiscount: couponDiscount > 0 ? couponDiscount : undefined,
-      deliveryFee: deliveryMethod === 'staff-delivery' ? deliveryFee : undefined,
+      deliveryFee:
+        deliveryMethod === "staff-delivery" ? deliveryFee : undefined,
       reservationFee,
       reservationPercentage: isReservation ? reservationPercentage : undefined,
       total,
       deliveryMethod,
-      deliveryStatus: deliveryMethod === 'staff-delivery' ? 'preparing' : undefined,
+      deliveryStatus:
+        deliveryMethod === "staff-delivery" ? "preparing" : undefined,
       pickupDetails: {
         pickupPerson: sanitizeInput(pickupDetails.pickupPerson),
         pickupPhone: formatPhoneNumber(pickupDetails.pickupPhone),
-        deliveryService: pickupDetails.deliveryService ? sanitizeInput(pickupDetails.deliveryService) : undefined,
+        deliveryService: pickupDetails.deliveryService
+          ? sanitizeInput(pickupDetails.deliveryService)
+          : undefined,
       },
       shippingAddress: {
         firstName: sanitizeInput(customerInfo.firstName),
@@ -714,7 +869,8 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
         country: customerInfo.country,
         phone: formatPhoneNumber(customerInfo.phone), // Added customer phone
       },
-      billingAddress: deliveryMethod === 'staff-delivery' ? finalBillingAddress : undefined,
+      billingAddress:
+        deliveryMethod === "staff-delivery" ? finalBillingAddress : undefined,
       paymentMethod,
       paymentReference: paymentReference || undefined,
       paymentRecipient: paymentRecipient || undefined,
@@ -723,110 +879,122 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
     };
 
     onCreateOrder(order, selectedCustomer?.id);
-    
+
     // FIXED: Reload products after order creation to reflect stock changes
     setTimeout(() => {
       reloadProducts();
     }, 100);
-    
+
     // If this is a reservation, update inventory reserved quantities based on selected warehouse
     if (isReservation) {
-      orderItems.forEach(item => {
-        const product = products.find(p => p.id === item.productId);
+      orderItems.forEach((item) => {
+        const product = products.find((p) => p.id === item.productId);
         if (product && item.warehouseSource) {
           // NEW: Handle variant-based stock reservation
           if (item.variantId && product.variants) {
-            const variant = product.variants.find(v => v.id === item.variantId);
+            const variant = product.variants.find(
+              (v) => v.id === item.variantId,
+            );
             if (variant) {
-              const warehouse = variant.warehouseStock.find(ws => ws.warehouse === item.warehouseSource);
+              const warehouse = variant.warehouseStock.find(
+                (ws) => ws.warehouse === item.warehouseSource,
+              );
               if (warehouse) {
-                const availableToReserve = warehouse.quantity - warehouse.reserved;
+                const availableToReserve =
+                  warehouse.quantity - warehouse.reserved;
                 if (item.quantity <= availableToReserve) {
                   updateVariantStock(
                     product.id,
                     item.variantId,
                     item.warehouseSource,
                     warehouse.quantity,
-                    warehouse.reserved + item.quantity
+                    warehouse.reserved + item.quantity,
                   );
                 } else {
-                  toast.error(`Insufficient stock in ${item.warehouseSource} warehouse for ${product.name} (${variant.size || ''} ${variant.color})`);
+                  toast.error(
+                    `Insufficient stock in ${item.warehouseSource} warehouse for ${product.name} (${variant.size || ""} ${variant.color})`,
+                  );
                 }
               }
             }
           }
           // LEGACY: Old system support
           else {
-            const warehouse = product.warehouseStock?.find(ws => ws.warehouse === item.warehouseSource);
+            const warehouse = product.warehouseStock?.find(
+              (ws) => ws.warehouse === item.warehouseSource,
+            );
             if (warehouse) {
-              const availableToReserve = warehouse.quantity - warehouse.reserved;
+              const availableToReserve =
+                warehouse.quantity - warehouse.reserved;
               if (item.quantity <= availableToReserve) {
                 updateWarehouseStock(
                   product.id,
                   item.warehouseSource,
                   warehouse.quantity,
                   warehouse.reserved + item.quantity,
-                  item.size
+                  item.size,
                 );
               } else {
-                toast.error(`Insufficient stock in ${item.warehouseSource} warehouse for ${product.name}`);
+                toast.error(
+                  `Insufficient stock in ${item.warehouseSource} warehouse for ${product.name}`,
+                );
               }
             }
           }
         }
       });
     }
-    
+
     // Generate order ID for invoice (will be replaced by actual ID in parent)
-    const orderId = 'ORD-' + Date.now();
+    const orderId = "ORD-" + Date.now();
     setCreatedOrderId(orderId);
-    
+
     // Reset form
     setOrderItems([]);
     setSelectedCustomer(null);
-    setCustomerSearchTerm('');
+    setCustomerSearchTerm("");
     setCustomerInfo({
-      firstName: '',
-      lastName: '',
-      phone: '', // Added phone field
-      address: '',
-      barangay: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: 'Philippines',
+      firstName: "",
+      lastName: "",
+      phone: "", // Added phone field
+      address: "",
+      barangay: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      country: "Philippines",
     });
     setPickupDetails({
-      pickupPerson: '',
-      pickupPhone: '',
-      deliveryService: '',
+      pickupPerson: "",
+      pickupPhone: "",
+      deliveryService: "",
     });
     setBillingAddress({
-      firstName: '',
-      lastName: '',
-      address: '',
-      barangay: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: 'Philippines',
+      firstName: "",
+      lastName: "",
+      address: "",
+      barangay: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      country: "Philippines",
     });
     setUseSameAddress(true);
     setDeliveryFee(0);
-    setDeliveryMethod('store-pickup');
-    setPaymentReference('');
-    setPaymentRecipient('');
-    setPaymentRecipientName('');
-    setPaymentProof('');
-    setNotes('');
+    setDeliveryMethod("store-pickup");
+    setPaymentReference("");
+    setPaymentRecipient("");
+    setPaymentRecipientName("");
+    setPaymentProof("");
+    setNotes("");
     setIsReservation(false);
     setReservationPercentage(30);
-    setCouponCode('');
+    setCouponCode("");
     setAppliedCoupon(null);
-    setCouponError('');
-    
+    setCouponError("");
+
     // Don't show toast here - it's handled by the parent component
-    
+
     // Show option to print invoice
     setShowInvoice(true);
   };
@@ -852,29 +1020,43 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
 
         {orderItems.length === 0 ? (
           <div className="border-2 border-dashed rounded-lg p-8 text-center text-muted-foreground">
-            No products added. Click "Search & Add Product" to start building the order.
+            No products added. Click "Search & Add Product" to start building
+            the order.
           </div>
         ) : (
           <div className="space-y-4">
             {orderItems.map((item, index) => {
-              const product = products.find(p => p.id === item.productId);
-              
+              const product = products.find((p) => p.id === item.productId);
+
               // NEW: Get stock from specific variant if available
               let lorenzoStock, oroquietaStock;
               if (item.variantId && product?.variants) {
-                const variant = product.variants.find(v => v.id === item.variantId);
+                const variant = product.variants.find(
+                  (v) => v.id === item.variantId,
+                );
                 if (variant) {
-                  lorenzoStock = variant.warehouseStock.find(w => w.warehouse === 'Lorenzo');
-                  oroquietaStock = variant.warehouseStock.find(w => w.warehouse === 'Oroquieta');
+                  lorenzoStock = variant.warehouseStock.find(
+                    (w) => w.warehouse === "Lorenzo",
+                  );
+                  oroquietaStock = variant.warehouseStock.find(
+                    (w) => w.warehouse === "Oroquieta",
+                  );
                 }
               } else {
                 // LEGACY: Fall back to product-level stock
-                lorenzoStock = product?.warehouseStock.find(w => w.warehouse === 'Lorenzo');
-                oroquietaStock = product?.warehouseStock.find(w => w.warehouse === 'Oroquieta');
+                lorenzoStock = product?.warehouseStock.find(
+                  (w) => w.warehouse === "Lorenzo",
+                );
+                oroquietaStock = product?.warehouseStock.find(
+                  (w) => w.warehouse === "Oroquieta",
+                );
               }
-              
+
               return (
-                <div key={index} className="flex gap-4 p-4 border rounded-lg text-sm">
+                <div
+                  key={index}
+                  className="flex gap-4 p-4 border rounded-lg text-sm"
+                >
                   <div className="w-20 h-20 rounded overflow-hidden bg-secondary flex-shrink-0">
                     <ImageWithFallback
                       src={item.imageUrl}
@@ -885,16 +1067,23 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                   <div className="flex-1 space-y-3">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor={`product-${index}`} className="text-xs">Product</Label>
+                        <Label htmlFor={`product-${index}`} className="text-xs">
+                          Product
+                        </Label>
                         <Select
                           value={item.productId.toString()}
-                          onValueChange={(value) => handleProductChange(index, parseInt(value))}
+                          onValueChange={(value) =>
+                            handleProductChange(index, parseInt(value))
+                          }
                         >
-                          <SelectTrigger id={`product-${index}`} className="text-sm h-9">
+                          <SelectTrigger
+                            id={`product-${index}`}
+                            className="text-sm h-9"
+                          >
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            {products.map(p => (
+                            {products.map((p) => (
                               <SelectItem key={p.id} value={p.id.toString()}>
                                 {p.name}
                               </SelectItem>
@@ -903,47 +1092,83 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                         </Select>
                       </div>
                       <div>
-                        <Label htmlFor={`warehouse-${index}`} className="text-xs">Warehouse</Label>
-                        <Select
-                          value={item.warehouseSource || 'Lorenzo'}
-                          onValueChange={(value) => handleUpdateItem(index, 'warehouseSource', value)}
+                        <Label
+                          htmlFor={`warehouse-${index}`}
+                          className="text-xs"
                         >
-                          <SelectTrigger id={`warehouse-${index}`} className="text-sm h-9">
+                          Warehouse
+                        </Label>
+                        <Select
+                          value={item.warehouseSource || "Lorenzo"}
+                          onValueChange={(value) =>
+                            handleUpdateItem(index, "warehouseSource", value)
+                          }
+                        >
+                          <SelectTrigger
+                            id={`warehouse-${index}`}
+                            className="text-sm h-9"
+                          >
                             <SelectValue>
-                              {item.warehouseSource || 'Lorenzo'}
+                              {item.warehouseSource || "Lorenzo"}
                             </SelectValue>
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Lorenzo">
-                              Lorenzo ({(lorenzoStock?.quantity || 0) - (lorenzoStock?.reserved || 0)} available)
+                              Lorenzo (
+                              {(lorenzoStock?.quantity || 0) -
+                                (lorenzoStock?.reserved || 0)}{" "}
+                              available)
                             </SelectItem>
                             <SelectItem value="Oroquieta">
-                              Oroquieta ({(oroquietaStock?.quantity || 0) - (oroquietaStock?.reserved || 0)} available)
+                              Oroquieta (
+                              {(oroquietaStock?.quantity || 0) -
+                                (oroquietaStock?.reserved || 0)}{" "}
+                              available)
                             </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </div>
-                    
+
                     {/* Row 2: Size/Color or Color only */}
                     <div className="grid grid-cols-2 gap-4">
                       {/* NEW: Variant-based selectors */}
                       {product?.variants && product.variants.length > 0 ? (
                         <>
                           {/* Size selector - only show if product has size variations */}
-                          {product.variants.some(v => v.size !== null) ? (
+                          {product.variants.some((v) => v.size !== null) ? (
                             <div>
-                              <Label htmlFor={`size-${index}`} className="text-xs">Size</Label>
-                              <Select
-                                value={item.size || ''}
-                                onValueChange={(value) => handleUpdateItem(index, 'size', value)}
+                              <Label
+                                htmlFor={`size-${index}`}
+                                className="text-xs"
                               >
-                                <SelectTrigger id={`size-${index}`} className="text-sm h-9">
+                                Size
+                              </Label>
+                              <Select
+                                value={item.size || ""}
+                                onValueChange={(value) =>
+                                  handleUpdateItem(index, "size", value)
+                                }
+                              >
+                                <SelectTrigger
+                                  id={`size-${index}`}
+                                  className="text-sm h-9"
+                                >
                                   <SelectValue placeholder="Select size" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {Array.from(new Set(product.variants.filter(v => v.active && v.size !== null).map(v => v.size))).map(size => (
-                                    <SelectItem key={size!} value={size!}>{size}</SelectItem>
+                                  {Array.from(
+                                    new Set(
+                                      product.variants
+                                        .filter(
+                                          (v) => v.active && v.size !== null,
+                                        )
+                                        .map((v) => v.size),
+                                    ),
+                                  ).map((size) => (
+                                    <SelectItem key={size!} value={size!}>
+                                      {size}
+                                    </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -953,17 +1178,35 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                           )}
                           {/* Color selector */}
                           <div>
-                            <Label htmlFor={`color-${index}`} className="text-xs">Color</Label>
+                            <Label
+                              htmlFor={`color-${index}`}
+                              className="text-xs"
+                            >
+                              Color
+                            </Label>
                             <Select
                               value={item.color}
-                              onValueChange={(value) => handleUpdateItem(index, 'color', value)}
+                              onValueChange={(value) =>
+                                handleUpdateItem(index, "color", value)
+                              }
                             >
-                              <SelectTrigger id={`color-${index}`} className="text-sm h-9">
+                              <SelectTrigger
+                                id={`color-${index}`}
+                                className="text-sm h-9"
+                              >
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                {Array.from(new Set(product.variants.filter(v => v.active).map(v => v.color))).map(color => (
-                                  <SelectItem key={color} value={color}>{color}</SelectItem>
+                                {Array.from(
+                                  new Set(
+                                    product.variants
+                                      .filter((v) => v.active)
+                                      .map((v) => v.color),
+                                  ),
+                                ).map((color) => (
+                                  <SelectItem key={color} value={color}>
+                                    {color}
+                                  </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -972,19 +1215,37 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                       ) : (
                         <>
                           {/* LEGACY: Old system */}
-                          {product?.sizeOptions && product.sizeOptions.length > 0 ? (
+                          {product?.sizeOptions &&
+                          product.sizeOptions.length > 0 ? (
                             <div>
-                              <Label htmlFor={`size-${index}`} className="text-xs">Size</Label>
-                              <Select
-                                value={item.size || product.sizeOptions[0].label}
-                                onValueChange={(value) => handleUpdateItem(index, 'size', value)}
+                              <Label
+                                htmlFor={`size-${index}`}
+                                className="text-xs"
                               >
-                                <SelectTrigger id={`size-${index}`} className="text-sm h-9">
+                                Size
+                              </Label>
+                              <Select
+                                value={
+                                  item.size || product.sizeOptions[0].label
+                                }
+                                onValueChange={(value) =>
+                                  handleUpdateItem(index, "size", value)
+                                }
+                              >
+                                <SelectTrigger
+                                  id={`size-${index}`}
+                                  className="text-sm h-9"
+                                >
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {product.sizeOptions.map(size => (
-                                    <SelectItem key={size.label} value={size.label}>{size.label}</SelectItem>
+                                  {product.sizeOptions.map((size) => (
+                                    <SelectItem
+                                      key={size.label}
+                                      value={size.label}
+                                    >
+                                      {size.label}
+                                    </SelectItem>
                                   ))}
                                 </SelectContent>
                               </Select>
@@ -995,23 +1256,34 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                           <div>
                             <Label className="text-xs">Color</Label>
                             <div className="text-sm h-9 px-3 py-2 border rounded-md bg-muted">
-                              {item.color || 'Default'}
+                              {item.color || "Default"}
                             </div>
                           </div>
                         </>
                       )}
                     </div>
-                    
+
                     {/* Row 3: Quantity and Price */}
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor={`quantity-${index}`} className="text-xs">Quantity</Label>
+                        <Label
+                          htmlFor={`quantity-${index}`}
+                          className="text-xs"
+                        >
+                          Quantity
+                        </Label>
                         <Input
                           id={`quantity-${index}`}
                           type="number"
                           min="1"
                           value={item.quantity}
-                          onChange={(e) => handleUpdateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                          onChange={(e) =>
+                            handleUpdateItem(
+                              index,
+                              "quantity",
+                              parseInt(e.target.value) || 1,
+                            )
+                          }
                           className="text-sm h-9"
                         />
                       </div>
@@ -1032,8 +1304,12 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                     <div className="text-right">
-                      <p className="text-xs text-muted-foreground mb-1">Total</p>
-                      <p className="font-medium">₱{(item.price * item.quantity).toFixed(2)}</p>
+                      <p className="text-xs text-muted-foreground mb-1">
+                        Total
+                      </p>
+                      <p className="font-medium">
+                        ₱{(item.price * item.quantity).toFixed(2)}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -1088,7 +1364,7 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                         className="p-3 hover:bg-secondary cursor-pointer border-b last:border-b-0 transition-colors"
                         onClick={() => {
                           handleSelectCustomer(customer);
-                          setCustomerSearchTerm('');
+                          setCustomerSearchTerm("");
                         }}
                       >
                         <div className="flex items-start justify-between">
@@ -1096,9 +1372,13 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                             <p className="font-medium">
                               {customer.firstName} {customer.lastName}
                             </p>
-                            <p className="text-sm text-muted-foreground">{customer.email}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {customer.email}
+                            </p>
                             {customer.phone && (
-                              <p className="text-sm text-muted-foreground">{customer.phone}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {customer.phone}
+                              </p>
                             )}
                             {customer.address && (
                               <p className="text-xs text-muted-foreground mt-1">
@@ -1114,7 +1394,8 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                 )}
                 {customerSearchTerm && filteredCustomers.length === 0 && (
                   <div className="text-center py-4 text-muted-foreground text-sm">
-                    No customers found. Fill in the form below to create a new order.
+                    No customers found. Fill in the form below to create a new
+                    order.
                   </div>
                 )}
               </div>
@@ -1126,18 +1407,25 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="default" className="bg-green-600">Selected Customer</Badge>
+                    <Badge variant="default" className="bg-green-600">
+                      Selected Customer
+                    </Badge>
                   </div>
                   <p className="font-medium">
                     {selectedCustomer.firstName} {selectedCustomer.lastName}
                   </p>
-                  <p className="text-sm text-muted-foreground">{selectedCustomer.email}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedCustomer.email}
+                  </p>
                   {selectedCustomer.phone && (
-                    <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {selectedCustomer.phone}
+                    </p>
                   )}
                   {selectedCustomer.address && (
                     <p className="text-sm text-muted-foreground mt-1">
-                      {selectedCustomer.address}, {selectedCustomer.city}, {selectedCustomer.state} {selectedCustomer.zipCode}
+                      {selectedCustomer.address}, {selectedCustomer.city},{" "}
+                      {selectedCustomer.state} {selectedCustomer.zipCode}
                     </p>
                   )}
                 </div>
@@ -1159,12 +1447,16 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
         {/* Customer Information Fields */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="firstName" className="mb-1.5 block">First Name *</Label>
+            <Label htmlFor="firstName" className="mb-1.5 block">
+              First Name *
+            </Label>
             <Input
               id="firstName"
               value={customerInfo.firstName}
-              onChange={(e) => handleCustomerInfoChange('firstName', e.target.value)}
-              className={errors.firstName ? 'border-red-500' : ''}
+              onChange={(e) =>
+                handleCustomerInfoChange("firstName", e.target.value)
+              }
+              className={errors.firstName ? "border-red-500" : ""}
               placeholder="Juan"
               disabled={!!selectedCustomer}
             />
@@ -1173,12 +1465,16 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
             )}
           </div>
           <div>
-            <Label htmlFor="lastName" className="mb-1.5 block">Last Name *</Label>
+            <Label htmlFor="lastName" className="mb-1.5 block">
+              Last Name *
+            </Label>
             <Input
               id="lastName"
               value={customerInfo.lastName}
-              onChange={(e) => handleCustomerInfoChange('lastName', e.target.value)}
-              className={errors.lastName ? 'border-red-500' : ''}
+              onChange={(e) =>
+                handleCustomerInfoChange("lastName", e.target.value)
+              }
+              className={errors.lastName ? "border-red-500" : ""}
               placeholder="Dela Cruz"
               disabled={!!selectedCustomer}
             />
@@ -1188,12 +1484,16 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
           </div>
         </div>
         <div>
-          <Label htmlFor="address" className="mb-1.5 block">Street Address *</Label>
+          <Label htmlFor="address" className="mb-1.5 block">
+            Street Address *
+          </Label>
           <Input
             id="address"
             value={customerInfo.address}
-            onChange={(e) => handleCustomerInfoChange('address', e.target.value)}
-            className={errors.address ? 'border-red-500' : ''}
+            onChange={(e) =>
+              handleCustomerInfoChange("address", e.target.value)
+            }
+            className={errors.address ? "border-red-500" : ""}
             placeholder="123 Main Street"
             disabled={!!selectedCustomer}
           />
@@ -1202,12 +1502,16 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
           )}
         </div>
         <div>
-          <Label htmlFor="barangay" className="mb-1.5 block">Barangay *</Label>
+          <Label htmlFor="barangay" className="mb-1.5 block">
+            Barangay *
+          </Label>
           <Input
             id="barangay"
             value={customerInfo.barangay}
-            onChange={(e) => handleCustomerInfoChange('barangay', e.target.value)}
-            className={errors.barangay ? 'border-red-500' : ''}
+            onChange={(e) =>
+              handleCustomerInfoChange("barangay", e.target.value)
+            }
+            className={errors.barangay ? "border-red-500" : ""}
             placeholder="Barangay Name"
             disabled={!!selectedCustomer}
           />
@@ -1217,12 +1521,14 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
         </div>
         <div className="grid grid-cols-3 gap-4">
           <div>
-            <Label htmlFor="city" className="mb-1.5 block">City *</Label>
+            <Label htmlFor="city" className="mb-1.5 block">
+              City *
+            </Label>
             <Input
               id="city"
               value={customerInfo.city}
-              onChange={(e) => handleCustomerInfoChange('city', e.target.value)}
-              className={errors.city ? 'border-red-500' : ''}
+              onChange={(e) => handleCustomerInfoChange("city", e.target.value)}
+              className={errors.city ? "border-red-500" : ""}
               placeholder="Manila"
               disabled={!!selectedCustomer}
             />
@@ -1231,12 +1537,16 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
             )}
           </div>
           <div>
-            <Label htmlFor="state" className="mb-1.5 block">Province *</Label>
+            <Label htmlFor="state" className="mb-1.5 block">
+              Province *
+            </Label>
             <Input
               id="state"
               value={customerInfo.state}
-              onChange={(e) => handleCustomerInfoChange('state', e.target.value)}
-              className={errors.state ? 'border-red-500' : ''}
+              onChange={(e) =>
+                handleCustomerInfoChange("state", e.target.value)
+              }
+              className={errors.state ? "border-red-500" : ""}
               placeholder="Metro Manila"
               disabled={!!selectedCustomer}
             />
@@ -1245,12 +1555,16 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
             )}
           </div>
           <div>
-            <Label htmlFor="zipCode" className="mb-1.5 block">Postal Code *</Label>
+            <Label htmlFor="zipCode" className="mb-1.5 block">
+              Postal Code *
+            </Label>
             <Input
               id="zipCode"
               value={customerInfo.zipCode}
-              onChange={(e) => handleCustomerInfoChange('zipCode', e.target.value)}
-              className={errors.zipCode ? 'border-red-500' : ''}
+              onChange={(e) =>
+                handleCustomerInfoChange("zipCode", e.target.value)
+              }
+              className={errors.zipCode ? "border-red-500" : ""}
               placeholder="1000"
               maxLength={4}
               disabled={!!selectedCustomer}
@@ -1261,13 +1575,15 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
           </div>
         </div>
         <div>
-          <Label htmlFor="phone" className="mb-1.5 block">Phone Number *</Label>
+          <Label htmlFor="phone" className="mb-1.5 block">
+            Phone Number *
+          </Label>
           <Input
             id="phone"
             type="tel"
             value={customerInfo.phone}
-            onChange={(e) => handleCustomerInfoChange('phone', e.target.value)}
-            className={errors.phone ? 'border-red-500' : ''}
+            onChange={(e) => handleCustomerInfoChange("phone", e.target.value)}
+            className={errors.phone ? "border-red-500" : ""}
             placeholder="+63 XXX XXX XXXX"
             disabled={!!selectedCustomer}
           />
@@ -1280,28 +1596,38 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
       {/* Delivery Method */}
       <div className="space-y-4">
         <Label className="mb-1.5 block">Delivery Method</Label>
-        <Select value={deliveryMethod} onValueChange={(value: any) => setDeliveryMethod(value)}>
+        <Select
+          value={deliveryMethod}
+          onValueChange={(value: any) => setDeliveryMethod(value)}
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="store-pickup">Store Pickup</SelectItem>
-            <SelectItem value="customer-arranged">Customer Arranged Delivery</SelectItem>
-            <SelectItem value="staff-delivery">Staff Delivery (Facebook Order)</SelectItem>
+            <SelectItem value="customer-arranged">
+              Customer Arranged Delivery
+            </SelectItem>
+            <SelectItem value="staff-delivery">
+              Staff Delivery (Facebook Order)
+            </SelectItem>
           </SelectContent>
         </Select>
         <p className="text-sm text-muted-foreground">
-          {deliveryMethod === 'staff-delivery' && 'For Facebook inquiries with staff-arranged delivery'}
+          {deliveryMethod === "staff-delivery" &&
+            "For Facebook inquiries with staff-arranged delivery"}
         </p>
       </div>
 
       {/* Delivery Fee - Only for staff delivery */}
-      {deliveryMethod === 'staff-delivery' && (
+      {deliveryMethod === "staff-delivery" && (
         <div className="space-y-2">
-          <Label htmlFor="deliveryFee" className="mb-1.5 block">Delivery Fee (₱) *</Label>
+          <Label htmlFor="deliveryFee" className="mb-1.5 block">
+            Delivery Fee (₱) *
+          </Label>
           <Input
             id="deliveryFee"
-            value={deliveryFee || ''}
+            value={deliveryFee || ""}
             onChange={(e) => setDeliveryFee(parseFloat(e.target.value) || 0)}
             placeholder="0.00"
           />
@@ -1316,12 +1642,16 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
         <Label>Pickup/Contact Details</Label>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <Label htmlFor="pickupPerson" className="mb-1.5 block">Contact Person *</Label>
+            <Label htmlFor="pickupPerson" className="mb-1.5 block">
+              Contact Person *
+            </Label>
             <Input
               id="pickupPerson"
               value={pickupDetails.pickupPerson}
-              onChange={(e) => handlePickupDetailsChange('pickupPerson', e.target.value)}
-              className={errors.pickupPerson ? 'border-red-500' : ''}
+              onChange={(e) =>
+                handlePickupDetailsChange("pickupPerson", e.target.value)
+              }
+              className={errors.pickupPerson ? "border-red-500" : ""}
               placeholder="Juan Dela Cruz"
             />
             {errors.pickupPerson && (
@@ -1329,13 +1659,17 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
             )}
           </div>
           <div>
-            <Label htmlFor="pickupPhone" className="mb-1.5 block">Contact Phone *</Label>
+            <Label htmlFor="pickupPhone" className="mb-1.5 block">
+              Contact Phone *
+            </Label>
             <Input
               id="pickupPhone"
               type="tel"
               value={pickupDetails.pickupPhone}
-              onChange={(e) => handlePickupDetailsChange('pickupPhone', e.target.value)}
-              className={errors.pickupPhone ? 'border-red-500' : ''}
+              onChange={(e) =>
+                handlePickupDetailsChange("pickupPhone", e.target.value)
+              }
+              className={errors.pickupPhone ? "border-red-500" : ""}
               placeholder="+63 XXX XXX XXXX"
             />
             {errors.pickupPhone && (
@@ -1343,25 +1677,31 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
             )}
           </div>
         </div>
-        {deliveryMethod === 'customer-arranged' && (
+        {deliveryMethod === "customer-arranged" && (
           <div>
-            <Label htmlFor="deliveryService" className="mb-1.5 block">Delivery Service *</Label>
+            <Label htmlFor="deliveryService" className="mb-1.5 block">
+              Delivery Service *
+            </Label>
             <Input
               id="deliveryService"
               value={pickupDetails.deliveryService}
-              onChange={(e) => handlePickupDetailsChange('deliveryService', e.target.value)}
-              className={errors.deliveryService ? 'border-red-500' : ''}
+              onChange={(e) =>
+                handlePickupDetailsChange("deliveryService", e.target.value)
+              }
+              className={errors.deliveryService ? "border-red-500" : ""}
               placeholder="e.g., Lalamove, Grab Express"
             />
             {errors.deliveryService && (
-              <p className="text-xs text-red-500 mt-1">{errors.deliveryService}</p>
+              <p className="text-xs text-red-500 mt-1">
+                {errors.deliveryService}
+              </p>
             )}
           </div>
         )}
       </div>
 
       {/* Billing Address - Only for staff delivery */}
-      {deliveryMethod === 'staff-delivery' && (
+      {deliveryMethod === "staff-delivery" && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <Label>Billing Address</Label>
@@ -1395,97 +1735,139 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="billingFirstName" className="mb-1.5 block">First Name *</Label>
+                  <Label htmlFor="billingFirstName" className="mb-1.5 block">
+                    First Name *
+                  </Label>
                   <Input
                     id="billingFirstName"
                     value={billingAddress.firstName}
-                    onChange={(e) => handleBillingAddressChange('firstName', e.target.value)}
-                    className={errors.billingFirstName ? 'border-red-500' : ''}
+                    onChange={(e) =>
+                      handleBillingAddressChange("firstName", e.target.value)
+                    }
+                    className={errors.billingFirstName ? "border-red-500" : ""}
                     placeholder="Juan"
                   />
                   {errors.billingFirstName && (
-                    <p className="text-xs text-red-500 mt-1">{errors.billingFirstName}</p>
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.billingFirstName}
+                    </p>
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="billingLastName" className="mb-1.5 block">Last Name *</Label>
+                  <Label htmlFor="billingLastName" className="mb-1.5 block">
+                    Last Name *
+                  </Label>
                   <Input
                     id="billingLastName"
                     value={billingAddress.lastName}
-                    onChange={(e) => handleBillingAddressChange('lastName', e.target.value)}
-                    className={errors.billingLastName ? 'border-red-500' : ''}
+                    onChange={(e) =>
+                      handleBillingAddressChange("lastName", e.target.value)
+                    }
+                    className={errors.billingLastName ? "border-red-500" : ""}
                     placeholder="Dela Cruz"
                   />
                   {errors.billingLastName && (
-                    <p className="text-xs text-red-500 mt-1">{errors.billingLastName}</p>
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.billingLastName}
+                    </p>
                   )}
                 </div>
               </div>
               <div>
-                <Label htmlFor="billingAddress" className="mb-1.5 block">Street Address *</Label>
+                <Label htmlFor="billingAddress" className="mb-1.5 block">
+                  Street Address *
+                </Label>
                 <Input
                   id="billingAddress"
                   value={billingAddress.address}
-                  onChange={(e) => handleBillingAddressChange('address', e.target.value)}
-                  className={errors.billingAddress ? 'border-red-500' : ''}
+                  onChange={(e) =>
+                    handleBillingAddressChange("address", e.target.value)
+                  }
+                  className={errors.billingAddress ? "border-red-500" : ""}
                   placeholder="123 Main Street"
                 />
                 {errors.billingAddress && (
-                  <p className="text-xs text-red-500 mt-1">{errors.billingAddress}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.billingAddress}
+                  </p>
                 )}
               </div>
               <div>
-                <Label htmlFor="billingBarangay" className="mb-1.5 block">Barangay *</Label>
+                <Label htmlFor="billingBarangay" className="mb-1.5 block">
+                  Barangay *
+                </Label>
                 <Input
                   id="billingBarangay"
                   value={billingAddress.barangay}
-                  onChange={(e) => handleBillingAddressChange('barangay', e.target.value)}
-                  className={errors.billingBarangay ? 'border-red-500' : ''}
+                  onChange={(e) =>
+                    handleBillingAddressChange("barangay", e.target.value)
+                  }
+                  className={errors.billingBarangay ? "border-red-500" : ""}
                   placeholder="Barangay Name"
                 />
                 {errors.billingBarangay && (
-                  <p className="text-xs text-red-500 mt-1">{errors.billingBarangay}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.billingBarangay}
+                  </p>
                 )}
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="billingCity" className="mb-1.5 block">City *</Label>
+                  <Label htmlFor="billingCity" className="mb-1.5 block">
+                    City *
+                  </Label>
                   <Input
                     id="billingCity"
                     value={billingAddress.city}
-                    onChange={(e) => handleBillingAddressChange('city', e.target.value)}
-                    className={errors.billingCity ? 'border-red-500' : ''}
+                    onChange={(e) =>
+                      handleBillingAddressChange("city", e.target.value)
+                    }
+                    className={errors.billingCity ? "border-red-500" : ""}
                     placeholder="Manila"
                   />
                   {errors.billingCity && (
-                    <p className="text-xs text-red-500 mt-1">{errors.billingCity}</p>
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.billingCity}
+                    </p>
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="billingState" className="mb-1.5 block">Province *</Label>
+                  <Label htmlFor="billingState" className="mb-1.5 block">
+                    Province *
+                  </Label>
                   <Input
                     id="billingState"
                     value={billingAddress.state}
-                    onChange={(e) => handleBillingAddressChange('state', e.target.value)}
-                    className={errors.billingState ? 'border-red-500' : ''}
+                    onChange={(e) =>
+                      handleBillingAddressChange("state", e.target.value)
+                    }
+                    className={errors.billingState ? "border-red-500" : ""}
                     placeholder="Metro Manila"
                   />
                   {errors.billingState && (
-                    <p className="text-xs text-red-500 mt-1">{errors.billingState}</p>
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.billingState}
+                    </p>
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="billingZipCode" className="mb-1.5 block">Postal Code *</Label>
+                  <Label htmlFor="billingZipCode" className="mb-1.5 block">
+                    Postal Code *
+                  </Label>
                   <Input
                     id="billingZipCode"
                     value={billingAddress.zipCode}
-                    onChange={(e) => handleBillingAddressChange('zipCode', e.target.value)}
-                    className={errors.billingZipCode ? 'border-red-500' : ''}
+                    onChange={(e) =>
+                      handleBillingAddressChange("zipCode", e.target.value)
+                    }
+                    className={errors.billingZipCode ? "border-red-500" : ""}
                     placeholder="1000"
                     maxLength={4}
                   />
                   {errors.billingZipCode && (
-                    <p className="text-xs text-red-500 mt-1">{errors.billingZipCode}</p>
+                    <p className="text-xs text-red-500 mt-1">
+                      {errors.billingZipCode}
+                    </p>
                   )}
                 </div>
               </div>
@@ -1497,7 +1879,10 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
       {/* Payment Method */}
       <div className="space-y-4">
         <Label>Payment Method</Label>
-        <Select value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
+        <Select
+          value={paymentMethod}
+          onValueChange={(value: any) => setPaymentMethod(value)}
+        >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
@@ -1509,51 +1894,71 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
         </Select>
 
         {/* Payment Details for Digital Payments */}
-        {(paymentMethod === 'gcash' || paymentMethod === 'bank-transfer') && (
+        {(paymentMethod === "gcash" || paymentMethod === "bank-transfer") && (
           <div className="space-y-4">
             {/* Recipient Information */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="paymentRecipient" className="mb-1.5 block">
-                  {paymentMethod === 'gcash' ? 'GCash Number (Paid To) *' : 'Bank Account Number (Paid To) *'}
+                  {paymentMethod === "gcash"
+                    ? "GCash Number (Paid To) *"
+                    : "Bank Account Number (Paid To) *"}
                 </Label>
                 <Input
                   id="paymentRecipient"
                   value={paymentRecipient}
                   onChange={(e) => {
-                    setErrors(prev => ({ ...prev, paymentRecipient: '' }));
-                    setPaymentRecipient(e.target.value.replace(/[^0-9\s-]/g, ''));
+                    setErrors((prev) => ({ ...prev, paymentRecipient: "" }));
+                    setPaymentRecipient(
+                      e.target.value.replace(/[^0-9\s-]/g, ""),
+                    );
                   }}
-                  className={errors.paymentRecipient ? 'border-red-500' : ''}
-                  placeholder={paymentMethod === 'gcash' ? 'e.g., 09171234567' : 'e.g., 1234567890'}
+                  className={errors.paymentRecipient ? "border-red-500" : ""}
+                  placeholder={
+                    paymentMethod === "gcash"
+                      ? "e.g., 09171234567"
+                      : "e.g., 1234567890"
+                  }
                 />
                 {errors.paymentRecipient && (
-                  <p className="text-xs text-red-500 mt-1">{errors.paymentRecipient}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.paymentRecipient}
+                  </p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
-                  {paymentMethod === 'gcash' 
-                    ? 'Customer sent payment to this GCash number' 
-                    : 'Customer sent payment to this bank account'}
+                  {paymentMethod === "gcash"
+                    ? "Customer sent payment to this GCash number"
+                    : "Customer sent payment to this bank account"}
                 </p>
               </div>
 
               <div>
-                <Label htmlFor="paymentRecipientName" className="mb-1.5 block">Account Holder Name *</Label>
+                <Label htmlFor="paymentRecipientName" className="mb-1.5 block">
+                  Account Holder Name *
+                </Label>
                 <Input
                   id="paymentRecipientName"
                   value={paymentRecipientName}
                   onChange={(e) => {
-                    setErrors(prev => ({ ...prev, paymentRecipientName: '' }));
+                    setErrors((prev) => ({
+                      ...prev,
+                      paymentRecipientName: "",
+                    }));
                     setPaymentRecipientName(e.target.value);
                   }}
-                  className={errors.paymentRecipientName ? 'border-red-500' : ''}
+                  className={
+                    errors.paymentRecipientName ? "border-red-500" : ""
+                  }
                   placeholder="e.g., Juan Dela Cruz"
                 />
                 {errors.paymentRecipientName && (
-                  <p className="text-xs text-red-500 mt-1">{errors.paymentRecipientName}</p>
+                  <p className="text-xs text-red-500 mt-1">
+                    {errors.paymentRecipientName}
+                  </p>
                 )}
                 <p className="text-xs text-muted-foreground mt-1">
-                  Name of the {paymentMethod === 'gcash' ? 'GCash' : 'bank'} account holder
+                  Name of the {paymentMethod === "gcash" ? "GCash" : "bank"}{" "}
+                  account holder
                 </p>
               </div>
             </div>
@@ -1561,32 +1966,44 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
             {/* Payment Reference Number */}
             <div>
               <Label htmlFor="paymentReference" className="mb-1.5 block">
-                {paymentMethod === 'gcash' ? 'Transaction Reference Number *' : 'Bank Reference Number *'}
+                {paymentMethod === "gcash"
+                  ? "Transaction Reference Number *"
+                  : "Bank Reference Number *"}
               </Label>
               <Input
                 id="paymentReference"
                 value={paymentReference}
                 onChange={(e) => {
-                  setErrors(prev => ({ ...prev, paymentReference: '' }));
-                  setPaymentReference(e.target.value.replace(/[^0-9\s-]/g, '').slice(0, 13));
+                  setErrors((prev) => ({ ...prev, paymentReference: "" }));
+                  setPaymentReference(
+                    e.target.value.replace(/[^0-9\s-]/g, "").slice(0, 13),
+                  );
                 }}
-                className={errors.paymentReference ? 'border-red-500' : ''}
-                placeholder={paymentMethod === 'gcash' ? 'e.g., 1234567890123' : 'e.g., 1234567890'}
+                className={errors.paymentReference ? "border-red-500" : ""}
+                placeholder={
+                  paymentMethod === "gcash"
+                    ? "e.g., 1234567890123"
+                    : "e.g., 1234567890"
+                }
                 maxLength={13}
               />
               {errors.paymentReference && (
-                <p className="text-xs text-red-500 mt-1">{errors.paymentReference}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.paymentReference}
+                </p>
               )}
               <p className="text-xs text-muted-foreground mt-1">
-                {paymentMethod === 'gcash' 
-                  ? 'The 13-digit reference number from the GCash receipt' 
-                  : 'The reference number from the bank transfer confirmation'}
+                {paymentMethod === "gcash"
+                  ? "The 13-digit reference number from the GCash receipt"
+                  : "The reference number from the bank transfer confirmation"}
               </p>
             </div>
 
             {/* Payment Proof Upload */}
             <div>
-              <Label htmlFor="paymentProof" className="mb-1.5 block">Payment Proof * (Required for verification)</Label>
+              <Label htmlFor="paymentProof" className="mb-1.5 block">
+                Payment Proof * (Required for verification)
+              </Label>
               <p className="text-xs text-muted-foreground mb-2">
                 Upload screenshot of payment confirmation (Max 5MB)
               </p>
@@ -1601,11 +2018,13 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => document.getElementById('paymentProof')?.click()}
-                  className={`flex-1 justify-start gap-2 ${errors.paymentProof ? 'border-red-500' : ''}`}
+                  onClick={() =>
+                    document.getElementById("paymentProof")?.click()
+                  }
+                  className={`flex-1 justify-start gap-2 ${errors.paymentProof ? "border-red-500" : ""}`}
                 >
                   <Upload className="h-4 w-4" />
-                  {paymentProof ? 'Change Image' : 'Upload Image'}
+                  {paymentProof ? "Change Image" : "Upload Image"}
                 </Button>
                 {paymentProof && (
                   <>
@@ -1618,10 +2037,16 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                       <DialogContent className="max-w-7xl">
                         <DialogHeader>
                           <DialogTitle>Payment Proof</DialogTitle>
-                          <DialogDescription>Preview of uploaded payment confirmation</DialogDescription>
+                          <DialogDescription>
+                            Preview of uploaded payment confirmation
+                          </DialogDescription>
                         </DialogHeader>
                         <div className="max-h-[70vh] overflow-auto">
-                          <img src={paymentProof} alt="Payment proof full size" className="w-full h-auto" />
+                          <img
+                            src={paymentProof}
+                            alt="Payment proof full size"
+                            className="w-full h-auto"
+                          />
                         </div>
                       </DialogContent>
                     </Dialog>
@@ -1629,7 +2054,7 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                       type="button"
                       variant="outline"
                       size="icon"
-                      onClick={() => setPaymentProof('')}
+                      onClick={() => setPaymentProof("")}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -1637,7 +2062,9 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                 )}
               </div>
               {errors.paymentProof && (
-                <p className="text-xs text-red-500 mt-1">{errors.paymentProof}</p>
+                <p className="text-xs text-red-500 mt-1">
+                  {errors.paymentProof}
+                </p>
               )}
               {paymentProof && (
                 <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
@@ -1658,30 +2085,36 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
             <Checkbox
               id="isReservation"
               checked={isReservation}
-              onCheckedChange={(checked) => setIsReservation(checked as boolean)}
+              onCheckedChange={(checked) =>
+                setIsReservation(checked as boolean)
+              }
             />
             <Label htmlFor="isReservation" className="cursor-pointer">
               This is a Reservation
             </Label>
           </div>
         </div>
-        
+
         {isReservation && (
           <div className="p-4 bg-secondary rounded-lg space-y-3">
             <p className="text-sm text-muted-foreground">
-              Create a reservation order where the customer pays a partial amount upfront to reserve the items. 
-              The remaining balance will be due when they pick up or receive their order. Stock will be reserved from the selected warehouse.
+              Create a reservation order where the customer pays a partial
+              amount upfront to reserve the items. The remaining balance will be
+              due when they pick up or receive their order. Stock will be
+              reserved from the selected warehouse.
             </p>
             <div className="space-y-2">
-              <Label htmlFor="reservationPercentage" className="mb-1.5 block">Reservation Fee Percentage (%)</Label>
+              <Label htmlFor="reservationPercentage" className="mb-1.5 block">
+                Reservation Fee Percentage (%)
+              </Label>
               <Input
                 id="reservationPercentage"
                 type="text"
                 inputMode="numeric"
                 value={reservationPercentage}
                 onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, '');
-                  if (value === '') {
+                  const value = e.target.value.replace(/[^0-9]/g, "");
+                  if (value === "") {
                     setReservationPercentage(0); // Allow empty for typing
                   } else {
                     const numValue = Math.min(100, parseInt(value));
@@ -1690,8 +2123,8 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                 }}
                 onBlur={(e) => {
                   // On blur, ensure minimum of 30%
-                  const value = e.target.value.replace(/[^0-9]/g, '');
-                  if (value === '' || parseInt(value) < 30) {
+                  const value = e.target.value.replace(/[^0-9]/g, "");
+                  if (value === "" || parseInt(value) < 30) {
                     setReservationPercentage(30);
                   }
                 }}
@@ -1701,8 +2134,11 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                 className="bg-white border-[#8D6E63]"
               />
               <p className="text-xs text-muted-foreground">
-                Customer will pay {reservationPercentage || 30}% (₱{(total * ((reservationPercentage || 30) / 100)).toFixed(2)}) now, 
-                and ₱{(total * (1 - (reservationPercentage || 30) / 100)).toFixed(2)} upon pickup/delivery. Minimum 30%.
+                Customer will pay {reservationPercentage || 30}% (₱
+                {(total * ((reservationPercentage || 30) / 100)).toFixed(2)})
+                now, and ₱
+                {(total * (1 - (reservationPercentage || 30) / 100)).toFixed(2)}{" "}
+                upon pickup/delivery. Minimum 30%.
               </p>
             </div>
           </div>
@@ -1711,7 +2147,9 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
 
       {/* Notes */}
       <div className="space-y-2">
-        <Label htmlFor="notes" className="mb-1.5 block">Order Notes (Optional)</Label>
+        <Label htmlFor="notes" className="mb-1.5 block">
+          Order Notes (Optional)
+        </Label>
         <Textarea
           id="notes"
           value={notes}
@@ -1743,27 +2181,50 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
               </DialogHeader>
               <div className="space-y-3">
                 {getCoupons()
-                  .filter(c => c.isActive && new Date(c.expiryDate) > new Date() && c.usedCount < c.usageLimit)
-                  .map(coupon => (
-                    <div key={coupon.id} className="p-4 border rounded-lg space-y-2">
+                  .filter(
+                    (c) =>
+                      c.isActive &&
+                      new Date(c.expiryDate) > new Date() &&
+                      c.usedCount < c.usageLimit,
+                  )
+                  .map((coupon) => (
+                    <div
+                      key={coupon.id}
+                      className="p-4 border rounded-lg space-y-2"
+                    >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <Badge variant="default">{coupon.code}</Badge>
-                            {coupon.discountType === 'percentage' ? (
-                              <Badge variant="secondary">{coupon.discountValue}% OFF</Badge>
+                            {coupon.discountType === "percentage" ? (
+                              <Badge variant="secondary">
+                                {coupon.discountValue}% OFF
+                              </Badge>
                             ) : (
-                              <Badge variant="secondary">₱{coupon.discountValue} OFF</Badge>
+                              <Badge variant="secondary">
+                                ₱{coupon.discountValue} OFF
+                              </Badge>
                             )}
                           </div>
                           <p className="text-sm mt-2">{coupon.description}</p>
                           <div className="text-xs text-muted-foreground mt-2 space-y-1">
-                            <p>• Min. purchase: ₱{coupon.minPurchase.toFixed(2)}</p>
+                            <p>
+                              • Min. purchase: ₱{coupon.minPurchase.toFixed(2)}
+                            </p>
                             {coupon.maxDiscount && (
-                              <p>• Max. discount: ₱{coupon.maxDiscount.toFixed(2)}</p>
+                              <p>
+                                • Max. discount: ₱
+                                {coupon.maxDiscount.toFixed(2)}
+                              </p>
                             )}
-                            <p>• Valid until: {new Date(coupon.expiryDate).toLocaleDateString()}</p>
-                            <p>• Uses remaining: {coupon.usageLimit - coupon.usedCount}</p>
+                            <p>
+                              • Valid until:{" "}
+                              {new Date(coupon.expiryDate).toLocaleDateString()}
+                            </p>
+                            <p>
+                              • Uses remaining:{" "}
+                              {coupon.usageLimit - coupon.usedCount}
+                            </p>
                           </div>
                         </div>
                         <Button
@@ -1780,14 +2241,21 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                       </div>
                     </div>
                   ))}
-                {getCoupons().filter(c => c.isActive && new Date(c.expiryDate) > new Date() && c.usedCount < c.usageLimit).length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">No active coupons available</p>
+                {getCoupons().filter(
+                  (c) =>
+                    c.isActive &&
+                    new Date(c.expiryDate) > new Date() &&
+                    c.usedCount < c.usageLimit,
+                ).length === 0 && (
+                  <p className="text-center text-muted-foreground py-8">
+                    No active coupons available
+                  </p>
                 )}
               </div>
             </DialogContent>
           </Dialog>
         </div>
-        
+
         {!appliedCoupon ? (
           <div className="flex gap-2">
             <Input
@@ -1795,11 +2263,11 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
               value={couponCode}
               onChange={(e) => {
                 setCouponCode(e.target.value.toUpperCase());
-                setCouponError('');
+                setCouponError("");
               }}
-              className={couponError ? 'border-red-500' : ''}
+              className={couponError ? "border-red-500" : ""}
             />
-            <Button 
+            <Button
               onClick={handleApplyCoupon}
               variant="outline"
               disabled={!couponCode.trim() || orderItems.length === 0}
@@ -1810,25 +2278,25 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
         ) : (
           <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded">
             <div>
-              <p className="font-medium text-green-700 dark:text-green-400">{appliedCoupon.code}</p>
-              <p className="text-sm text-green-600 dark:text-green-500">{appliedCoupon.description}</p>
+              <p className="font-medium text-green-700 dark:text-green-400">
+                {appliedCoupon.code}
+              </p>
+              <p className="text-sm text-green-600 dark:text-green-500">
+                {appliedCoupon.description}
+              </p>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRemoveCoupon}
-            >
+            <Button variant="ghost" size="sm" onClick={handleRemoveCoupon}>
               <X className="h-4 w-4" />
             </Button>
           </div>
         )}
-        
-        {couponError && (
-          <p className="text-xs text-red-500">{couponError}</p>
-        )}
-        
+
+        {couponError && <p className="text-xs text-red-500">{couponError}</p>}
+
         {orderItems.length === 0 && (
-          <p className="text-xs text-muted-foreground">Add products to apply a coupon</p>
+          <p className="text-xs text-muted-foreground">
+            Add products to apply a coupon
+          </p>
         )}
       </div>
 
@@ -1844,7 +2312,7 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
             <span>-₱{calculateTotal().couponDiscount.toFixed(2)}</span>
           </div>
         )}
-        {deliveryMethod === 'staff-delivery' && deliveryFee > 0 && (
+        {deliveryMethod === "staff-delivery" && deliveryFee > 0 && (
           <div className="flex justify-between">
             <span className="text-muted-foreground">Delivery Fee:</span>
             <span>₱{deliveryFee.toFixed(2)}</span>
@@ -1858,11 +2326,16 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
           <>
             <div className="flex justify-between text-orange-600 border-t pt-2">
               <span>Reservation Fee ({reservationPercentage || 30}%):</span>
-              <span>₱{(total * ((reservationPercentage || 30) / 100)).toFixed(2)}</span>
+              <span>
+                ₱{(total * ((reservationPercentage || 30) / 100)).toFixed(2)}
+              </span>
             </div>
             <div className="flex justify-between text-muted-foreground">
               <span>Balance Due on Pickup:</span>
-              <span>₱{(total * (1 - (reservationPercentage || 30) / 100)).toFixed(2)}</span>
+              <span>
+                ₱
+                {(total * (1 - (reservationPercentage || 30) / 100)).toFixed(2)}
+              </span>
             </div>
           </>
         )}
@@ -1877,7 +2350,12 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
       {/* Invoice Print Option */}
       {showInvoice && (
         <div className="border-t pt-4">
-          <Button onClick={handlePrintInvoice} variant="outline" className="w-full" size="lg">
+          <Button
+            onClick={handlePrintInvoice}
+            variant="outline"
+            className="w-full"
+            size="lg"
+          >
             <Printer className="h-4 w-4 mr-2" />
             Print Invoice
           </Button>
@@ -1893,7 +2371,7 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
               Search and add products to the order
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             {/* Search and Filter */}
             <div className="flex gap-4">
@@ -1905,7 +2383,10 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                   autoFocus
                 />
               </div>
-              <Select value={categoryFilter} onValueChange={(value: any) => setCategoryFilter(value)}>
+              <Select
+                value={categoryFilter}
+                onValueChange={(value: any) => setCategoryFilter(value)}
+              >
                 <SelectTrigger className="w-[180px]">
                   <SelectValue />
                 </SelectTrigger>
@@ -1925,7 +2406,7 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4">
-                  {filteredProducts.map(product => (
+                  {filteredProducts.map((product) => (
                     <div
                       key={product.id}
                       className="border rounded-lg p-4 hover:bg-secondary hover:border-primary cursor-pointer transition-colors"
@@ -1941,9 +2422,15 @@ export function ManualOrderCreation({ onCreateOrder }: ManualOrderCreationProps)
                         </div>
                         <div className="flex-1 min-w-0">
                           <h4 className="truncate">{product.name}</h4>
-                          <p className="text-sm text-muted-foreground">{product.subCategory}</p>
-                          <p className="text-sm text-muted-foreground">{product.material}</p>
-                          <p className="text-primary mt-1">₱{product.price.toFixed(2)}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {product.subCategory}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {product.material}
+                          </p>
+                          <p className="text-primary mt-1">
+                            ₱{product.price.toFixed(2)}
+                          </p>
                         </div>
                       </div>
                     </div>

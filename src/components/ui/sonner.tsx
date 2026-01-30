@@ -7,22 +7,23 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme="light"
       className="toaster group"
+      position="top-center"
+      visibleToasts={1}
+      duration={4000}
       toastOptions={{
         unstyled: false,
-        style: {
-          background: '#FDFBF7',
-          color: '#5D4037',
-          border: '1px solid rgba(93, 64, 55, 0.2)',
-          fontSize: '14px',
-          fontWeight: '500',
-        },
         classNames: {
-          toast: '!bg-[#FDFBF7] !text-[#5D4037] !border-[#5D4037]/20',
-          title: '!text-[#5D4037]',
-          description: '!text-[#795548]',
-          actionButton: '!bg-[#5D4037] !text-[#FDFBF7]',
-          cancelButton: '!bg-[#EFEBE9] !text-[#5D4037]',
-          closeButton: '!bg-[#EFEBE9] !text-[#5D4037] !border-[#5D4037]/20',
+          toast:
+            "group toast !min-h-[60px] !rounded-lg !shadow-lg !px-4 !py-3 !flex !items-start !gap-3",
+          title: "!text-sm !font-semibold !m-0 !leading-snug",
+          description: "!text-xs !opacity-75 !mt-1 !leading-snug",
+          icon: "!w-6 !h-6 !mt-0 !flex-shrink-0 !rounded-full",
+          success: "toast-success",
+          error: "toast-error",
+          warning: "toast-warning",
+          info: "toast-info",
+          closeButton:
+            "!right-3 !top-3 !w-5 !h-5 !rounded-md !opacity-70 hover:!opacity-100 !transition-opacity",
         },
       }}
       {...props}

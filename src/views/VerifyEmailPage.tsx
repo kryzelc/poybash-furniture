@@ -1,11 +1,17 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { toast } from 'sonner';
-import { Mail, RefreshCw } from 'lucide-react';
-import { supabase } from '../utils/supabase/client';
+import { useState } from "react";
+import { Button } from "../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { toast } from "sonner";
+import { Mail, RefreshCw } from "lucide-react";
+import { supabase } from "../utils/supabase/client";
 
 interface VerifyEmailPageProps {
   email: string;
@@ -19,23 +25,22 @@ export function VerifyEmailPage({ email, onNavigate }: VerifyEmailPageProps) {
     setIsResending(true);
     try {
       const { error } = await supabase.auth.resend({
-        type: 'signup',
+        type: "signup",
         email: email,
       });
 
       if (error) {
-        toast.error('Failed to resend verification email', {
+        toast.error("Failed to resend verification email", {
           description: error.message,
           duration: 4000,
         });
       } else {
-        toast.success('Verification email sent! 📧', {
-          description: 'Please check your inbox.',
-          duration: 4000,
+        toast.success("Verification email sent", {
+          description: "Please check your inbox.",
         });
       }
     } catch (error) {
-      toast.error('An unexpected error occurred');
+      toast.error("An unexpected error occurred");
     } finally {
       setIsResending(false);
     }
@@ -60,7 +65,8 @@ export function VerifyEmailPage({ email, onNavigate }: VerifyEmailPageProps) {
             <CardContent className="space-y-4">
               <div className="p-4 bg-secondary/30 rounded-lg space-y-2">
                 <p className="text-center">
-                  Please check your email inbox and click the verification link to activate your account.
+                  Please check your email inbox and click the verification link
+                  to activate your account.
                 </p>
                 <p className="text-center text-muted-foreground">
                   The link will expire in 24 hours.
@@ -74,14 +80,16 @@ export function VerifyEmailPage({ email, onNavigate }: VerifyEmailPageProps) {
                   onClick={handleResendEmail}
                   disabled={isResending}
                 >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isResending ? 'animate-spin' : ''}`} />
-                  {isResending ? 'Sending...' : 'Resend Verification Email'}
+                  <RefreshCw
+                    className={`h-4 w-4 mr-2 ${isResending ? "animate-spin" : ""}`}
+                  />
+                  {isResending ? "Sending..." : "Resend Verification Email"}
                 </Button>
 
                 <Button
                   variant="ghost"
                   className="w-full"
-                  onClick={() => onNavigate('login')}
+                  onClick={() => onNavigate("login")}
                 >
                   Back to Login
                 </Button>

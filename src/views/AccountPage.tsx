@@ -1,102 +1,162 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Label } from '../components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Separator } from '../components/ui/separator';
-import { Badge } from '../components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
-import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { InvoiceReceipt } from '../components/InvoiceReceipt';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../components/ui/alert-dialog';
-import { Textarea } from '../components/ui/textarea';
-import { Alert, AlertDescription } from '../components/ui/alert';
-import { Checkbox } from '../components/ui/checkbox';
-import { User, Package, LogOut, Settings, FileText, MapPin, Plus, Edit, Trash2, AlertCircle, Key, Mail, Upload, QrCode } from 'lucide-react';
-import { toast } from 'sonner';
-import { supabase } from '../utils/supabase/client';
-import { validateEmail } from '../lib/validation';
-import { getProducts } from '../lib/products';
-import { QRCodeSVG } from 'qrcode.react';
-import type { Address } from '../contexts/AuthContext';
+import { useState, useEffect } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import { Separator } from "../components/ui/separator";
+import { Badge } from "../components/ui/badge";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { InvoiceReceipt } from "../components/InvoiceReceipt";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
+import { Textarea } from "../components/ui/textarea";
+import { Alert, AlertDescription } from "../components/ui/alert";
+import { Checkbox } from "../components/ui/checkbox";
+import {
+  User,
+  Package,
+  LogOut,
+  Settings,
+  FileText,
+  MapPin,
+  Plus,
+  Edit,
+  Trash2,
+  AlertCircle,
+  Key,
+  Mail,
+  Upload,
+  QrCode,
+} from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "../utils/supabase/client";
+import { validateEmail } from "../lib/validation";
+import { getProducts } from "../lib/products";
+import { QRCodeSVG } from "qrcode.react";
+import type { Address } from "../contexts/AuthContext";
 
 interface AccountPageProps {
   onNavigate: (page: string) => void;
 }
 
 export function AccountPage({ onNavigate }: AccountPageProps) {
-  const { user, logout, getOrders, addAddress, updateAddress, deleteAddress, setDefaultAddress, requestItemRefund, isAdmin, changePassword, cancelOrder } = useAuth();
+  const {
+    user,
+    logout,
+    getOrders,
+    addAddress,
+    updateAddress,
+    deleteAddress,
+    setDefaultAddress,
+    requestItemRefund,
+    isAdmin,
+    changePassword,
+    cancelOrder,
+  } = useAuth();
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showInvoice, setShowInvoice] = useState(false);
   const [showCancelOrderDialog, setShowCancelOrderDialog] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<any>(null);
-  const [orderFilter, setOrderFilter] = useState<string>('all');
-  
+  const [orderFilter, setOrderFilter] = useState<string>("all");
+
   // Get products to fetch correct images
   const products = getProducts();
-  
+
   // Helper function to get product image
   const getProductImage = (productId: number, fallbackUrl: string) => {
-    const product = products.find(p => p.id === productId);
+    const product = products.find((p) => p.id === productId);
     return product?.imageUrl || fallbackUrl;
   };
   const [showItemRefundDialog, setShowItemRefundDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [refundReason, setRefundReason] = useState('');
+  const [refundReason, setRefundReason] = useState("");
   const [refundAccountInfo, setRefundAccountInfo] = useState({
-    refundMethod: '',
-    gcashNumber: '',
-    bankName: '',
-    accountName: '',
-    accountNumber: '',
+    refundMethod: "",
+    gcashNumber: "",
+    bankName: "",
+    accountName: "",
+    accountNumber: "",
   });
   const [refundProofImages, setRefundProofImages] = useState<string[]>([]);
   const [editMode, setEditMode] = useState(false);
   const [showAddressDialog, setShowAddressDialog] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
-  const [showChangePasswordDialog, setShowChangePasswordDialog] = useState(false);
+  const [showChangePasswordDialog, setShowChangePasswordDialog] =
+    useState(false);
   const [showDeleteAccountDialog, setShowDeleteAccountDialog] = useState(false);
   const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
   const [showChangeEmailDialog, setShowChangeEmailDialog] = useState(false);
   const [emailData, setEmailData] = useState({
-    newEmail: '',
-    password: '',
+    newEmail: "",
+    password: "",
   });
-  const [emailChangeError, setEmailChangeError] = useState('');
+  const [emailChangeError, setEmailChangeError] = useState("");
   const [addressForm, setAddressForm] = useState({
-    label: '',
-    firstName: '',
-    lastName: '',
-    address: '',
-    barangay: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: 'Philippines',
-    phone: '',
+    label: "",
+    firstName: "",
+    lastName: "",
+    address: "",
+    barangay: "",
+    city: "",
+    state: "",
+    zipCode: "",
+    country: "Philippines",
+    phone: "",
     isDefault: false,
   });
   const [profileData, setProfileData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
   });
 
   useEffect(() => {
     if (!user) {
-      onNavigate('login');
+      onNavigate("login");
     } else if (isAdmin()) {
-      onNavigate('admin');
+      onNavigate("admin");
     }
   }, [user, onNavigate, isAdmin]);
 
@@ -109,31 +169,37 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
   // Calculate order statistics
   const orderStats = {
     all: orders.length,
-    pending: orders.filter(o => o.status === 'pending').length,
-    reserved: orders.filter(o => o.status === 'reserved').length,
-    processing: orders.filter(o => o.status === 'processing').length,
-    ready: orders.filter(o => o.status === 'ready-for-pickup').length,
-    completed: orders.filter(o => o.status === 'completed').length,
-    cancelled: orders.filter(o => o.status === 'cancelled').length,
-    refund: orders.filter(o => o.items.some(item => item.refundRequested)).length,
+    pending: orders.filter((o) => o.status === "pending").length,
+    reserved: orders.filter((o) => o.status === "reserved").length,
+    processing: orders.filter((o) => o.status === "processing").length,
+    ready: orders.filter((o) => o.status === "ready-for-pickup").length,
+    completed: orders.filter((o) => o.status === "completed").length,
+    cancelled: orders.filter((o) => o.status === "cancelled").length,
+    refund: orders.filter((o) => o.items.some((item) => item.refundRequested))
+      .length,
   };
 
   // Filter orders based on selected filter
-  const filteredOrders = orderFilter === 'all' 
-    ? orders 
-    : orderFilter === 'refund'
-    ? orders.filter(o => o.items.some(item => item.refundRequested))
-    : orders.filter(o => o.status === orderFilter);
+  const filteredOrders =
+    orderFilter === "all"
+      ? orders
+      : orderFilter === "refund"
+        ? orders.filter((o) => o.items.some((item) => item.refundRequested))
+        : orders.filter((o) => o.status === orderFilter);
 
   const handleLogout = () => {
     logout();
-    toast.success('Logged out successfully');
-    onNavigate('home');
+    toast.success("Signed out successfully", {
+      description: "You have been securely logged out of your account.",
+    });
+    onNavigate("home");
   };
 
   const handleProfileUpdate = () => {
     // In a real app, this would update the user profile
-    toast.success('Profile updated successfully');
+    toast.success("Profile updated successfully", {
+      description: "Your account information has been saved.",
+    });
     setEditMode(false);
   };
 
@@ -145,66 +211,76 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
   const handleRequestItemRefund = (order: any, item: any) => {
     setSelectedOrder(order);
     setSelectedItem(item);
-    setRefundReason('');
+    setRefundReason("");
     setRefundProofImages([]);
     setRefundAccountInfo({
-      refundMethod: order.paymentMethod === 'cash' ? 'cash' : '',
-      gcashNumber: '',
-      bankName: '',
-      accountName: '',
-      accountNumber: '',
+      refundMethod: order.paymentMethod === "cash" ? "cash" : "",
+      gcashNumber: "",
+      bankName: "",
+      accountName: "",
+      accountNumber: "",
     });
     setShowItemRefundDialog(true);
   };
 
   const handleSubmitItemRefund = () => {
     if (!refundReason.trim()) {
-      toast.error('Please provide a reason for the refund');
+      toast.error("Please provide a reason for the refund");
       return;
     }
 
     // Validate refund account info if not cash payment
-    if (selectedOrder?.paymentMethod !== 'cash') {
+    if (selectedOrder?.paymentMethod !== "cash") {
       if (!refundAccountInfo.refundMethod) {
-        toast.error('Please select a refund method');
+        toast.error("Please select a refund method");
         return;
       }
-      
-      if (refundAccountInfo.refundMethod === 'gcash' && !refundAccountInfo.gcashNumber) {
-        toast.error('Please provide your GCash number');
+
+      if (
+        refundAccountInfo.refundMethod === "gcash" &&
+        !refundAccountInfo.gcashNumber
+      ) {
+        toast.error("Please provide your GCash number");
         return;
       }
-      
-      if (refundAccountInfo.refundMethod === 'bank' && (!refundAccountInfo.bankName || !refundAccountInfo.accountName || !refundAccountInfo.accountNumber)) {
-        toast.error('Please provide complete bank account details');
+
+      if (
+        refundAccountInfo.refundMethod === "bank" &&
+        (!refundAccountInfo.bankName ||
+          !refundAccountInfo.accountName ||
+          !refundAccountInfo.accountNumber)
+      ) {
+        toast.error("Please provide complete bank account details");
         return;
       }
     }
 
     if (refundProofImages.length < 3) {
-      toast.error('Please upload at least 3 proof images showing the item condition/issue');
+      toast.error(
+        "Please upload at least 3 proof images showing the item condition/issue",
+      );
       return;
     }
 
     if (refundProofImages.length > 5) {
-      toast.error('Maximum 5 proof images allowed');
+      toast.error("Maximum 5 proof images allowed");
       return;
     }
 
     if (selectedOrder && selectedItem) {
       requestItemRefund(selectedOrder.id, selectedItem.productId, refundReason);
-      toast.success('Refund request submitted', {
-        description: 'We will review your request and get back to you soon.',
+      toast.success("Refund request submitted", {
+        description: "We will review your request and get back to you soon.",
       });
       setShowItemRefundDialog(false);
-      setRefundReason('');
+      setRefundReason("");
       setRefundProofImages([]);
       setRefundAccountInfo({
-        refundMethod: '',
-        gcashNumber: '',
-        bankName: '',
-        accountName: '',
-        accountNumber: '',
+        refundMethod: "",
+        gcashNumber: "",
+        bankName: "",
+        accountName: "",
+        accountNumber: "",
       });
       setSelectedOrder(null);
       setSelectedItem(null);
@@ -215,23 +291,23 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
     const files = e.target.files;
     if (files) {
       const fileArray = Array.from(files);
-      
+
       // Check if adding these files would exceed the limit
       if (refundProofImages.length + fileArray.length > 5) {
-        toast.error('Maximum 5 images allowed');
+        toast.error("Maximum 5 images allowed");
         return;
       }
 
       // Validate each file
       for (const file of fileArray) {
         if (file.size > 5 * 1024 * 1024) {
-          toast.error('Each image size should be less than 5MB');
+          toast.error("Each image size should be less than 5MB");
           return;
         }
       }
 
       // Convert all files to base64
-      const readPromises = fileArray.map(file => {
+      const readPromises = fileArray.map((file) => {
         return new Promise<string>((resolve) => {
           const reader = new FileReader();
           reader.onloadend = () => {
@@ -241,32 +317,32 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
         });
       });
 
-      Promise.all(readPromises).then(results => {
-        setRefundProofImages(prev => [...prev, ...results]);
+      Promise.all(readPromises).then((results) => {
+        setRefundProofImages((prev) => [...prev, ...results]);
       });
     }
-    
+
     // Reset input
-    e.target.value = '';
+    e.target.value = "";
   };
 
   const handleRemoveProofImage = (index: number) => {
-    setRefundProofImages(prev => prev.filter((_, i) => i !== index));
+    setRefundProofImages((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleAddAddress = () => {
     setEditingAddress(null);
     setAddressForm({
-      label: '',
-      firstName: user?.firstName || '',
-      lastName: user?.lastName || '',
-      address: '',
-      barangay: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: 'Philippines',
-      phone: user?.phone || '',
+      label: "",
+      firstName: user?.firstName || "",
+      lastName: user?.lastName || "",
+      address: "",
+      barangay: "",
+      city: "",
+      state: "",
+      zipCode: "",
+      country: "Philippines",
+      phone: user?.phone || "",
       isDefault: user.addresses.length === 0,
     });
     setShowAddressDialog(true);
@@ -280,104 +356,111 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
 
   const handleSaveAddress = () => {
     if (!addressForm.label || !addressForm.address || !addressForm.city) {
-      toast.error('Please fill in all required fields');
+      toast.error("Please fill in all required fields");
       return;
     }
 
     if (editingAddress) {
       updateAddress(editingAddress.id, addressForm);
-      toast.success('Address updated successfully');
+      toast.success("Address updated successfully");
     } else {
       addAddress(addressForm);
-      toast.success('Address added successfully');
+      toast.success("Address added successfully");
     }
 
     setShowAddressDialog(false);
   };
 
   const handleDeleteAddress = (id: string) => {
-    if (confirm('Are you sure you want to delete this address?')) {
+    if (confirm("Are you sure you want to delete this address?")) {
       deleteAddress(id);
-      toast.success('Address deleted successfully');
+      toast.success("Address deleted successfully");
     }
   };
 
   const handleSetDefaultAddress = (id: string) => {
     setDefaultAddress(id);
-    toast.success('Default address updated');
+    toast.success("Default address updated");
   };
 
   const handleChangePassword = async () => {
     // Validation
-    if (!passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword) {
-      toast.error('Please fill in all password fields');
+    if (
+      !passwordData.currentPassword ||
+      !passwordData.newPassword ||
+      !passwordData.confirmPassword
+    ) {
+      toast.error("Please fill in all password fields");
       return;
     }
 
     if (passwordData.newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters long');
+      toast.error("New password must be at least 6 characters long");
       return;
     }
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('New passwords do not match');
+      toast.error("New passwords do not match");
       return;
     }
 
     if (passwordData.currentPassword === passwordData.newPassword) {
-      toast.error('New password must be different from current password');
+      toast.error("New password must be different from current password");
       return;
     }
 
     // Attempt to change password
-    const success = await changePassword(passwordData.currentPassword, passwordData.newPassword);
+    const success = await changePassword(
+      passwordData.currentPassword,
+      passwordData.newPassword,
+    );
 
     if (success) {
-      toast.success('Password changed successfully', {
-        description: 'Your password has been updated.',
+      toast.success("Password changed successfully", {
+        description: "Your password has been updated.",
       });
       setShowChangePasswordDialog(false);
       setPasswordData({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
       });
     } else {
-      toast.error('Failed to change password', {
-        description: 'Current password is incorrect.',
+      toast.error("Failed to change password", {
+        description: "Current password is incorrect.",
       });
     }
   };
 
   const handleChangeEmail = async () => {
-    setEmailChangeError('');
+    setEmailChangeError("");
 
     // Validation
     if (!emailData.newEmail || !emailData.password) {
-      setEmailChangeError('Please fill in all fields');
+      setEmailChangeError("Please fill in all fields");
       return;
     }
 
     const emailValidation = validateEmail(emailData.newEmail);
     if (!emailValidation.valid) {
-      setEmailChangeError(emailValidation.error || 'Invalid email address');
+      setEmailChangeError(emailValidation.error || "Invalid email address");
       return;
     }
 
     if (emailData.newEmail === user?.email) {
-      setEmailChangeError('New email must be different from current email');
+      setEmailChangeError("New email must be different from current email");
       return;
     }
 
     try {
       // First verify the password
       const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user?.email || '',
+        email: user?.email || "",
         password: emailData.password,
       });
 
       if (signInError) {
-        setEmailChangeError('Incorrect password. Please try again.');
+        setEmailChangeError("Incorrect password. Please try again.");
         return;
       }
 
@@ -387,51 +470,54 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
       });
 
       if (error) {
-        setEmailChangeError(error.message || 'Failed to update email');
+        setEmailChangeError(error.message || "Failed to update email");
         return;
       }
 
-      toast.success('Verification email sent! 📧', {
-        description: 'Please check your new email inbox and click the verification link to complete the change.',
+      toast.success("Verification email sent! 📧", {
+        description:
+          "Please check your new email inbox and click the verification link to complete the change.",
         duration: 7000,
       });
 
       setShowChangeEmailDialog(false);
       setEmailData({
-        newEmail: '',
-        password: '',
+        newEmail: "",
+        password: "",
       });
     } catch (error) {
-      setEmailChangeError('An unexpected error occurred. Please try again.');
+      setEmailChangeError("An unexpected error occurred. Please try again.");
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
-        return 'bg-green-500/10 text-green-700 hover:bg-green-500/20';
-      case 'ready-for-pickup':
-        return 'bg-blue-500/10 text-blue-700 hover:bg-blue-500/20';
-      case 'processing':
-        return 'bg-yellow-500/10 text-yellow-700 hover:bg-yellow-500/20';
-      case 'pending':
-        return 'bg-orange-500/10 text-orange-700 hover:bg-orange-500/20';
-      case 'cancelled':
-        return 'bg-red-500/10 text-red-700 hover:bg-red-500/20';
-      case 'refund-requested':
-        return 'bg-purple-500/10 text-purple-700 hover:bg-purple-500/20';
-      case 'refunded':
-        return 'bg-purple-500/10 text-purple-700 hover:bg-purple-500/20';
+      case "completed":
+        return "bg-green-500/10 text-green-700 hover:bg-green-500/20";
+      case "ready-for-pickup":
+        return "bg-amber-500/10 text-amber-700 hover:bg-amber-500/20";
+      case "processing":
+        return "bg-yellow-500/10 text-yellow-700 hover:bg-yellow-500/20";
+      case "pending":
+        return "bg-orange-500/10 text-orange-700 hover:bg-orange-500/20";
+      case "cancelled":
+        return "bg-red-500/10 text-red-700 hover:bg-red-500/20";
+      case "refund-requested":
+        return "bg-purple-500/10 text-purple-700 hover:bg-purple-500/20";
+      case "refunded":
+        return "bg-purple-500/10 text-purple-700 hover:bg-purple-500/20";
       default:
-        return '';
+        return "";
     }
   };
 
   const canRequestItemRefund = (order: any, item: any) => {
     const orderDate = new Date(order.createdAt);
-    const daysSinceOrder = Math.floor((Date.now() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
+    const daysSinceOrder = Math.floor(
+      (Date.now() - orderDate.getTime()) / (1000 * 60 * 60 * 24),
+    );
     return (
-      order.status === 'completed' &&
+      order.status === "completed" &&
       daysSinceOrder <= 7 &&
       !item.refundRequested
     );
@@ -439,8 +525,8 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
 
   const handleCancelOrder = () => {
     if (orderToCancel) {
-      cancelOrder(orderToCancel.id, 'customer');
-      toast.success('Order cancelled successfully');
+      cancelOrder(orderToCancel.id, "customer");
+      toast.success("Order cancelled successfully");
       setShowCancelOrderDialog(false);
       setOrderToCancel(null);
     }
@@ -496,19 +582,38 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                       </CardDescription>
                     </div>
                     {orders.length > 0 && (
-                      <Select value={orderFilter} onValueChange={setOrderFilter}>
+                      <Select
+                        value={orderFilter}
+                        onValueChange={setOrderFilter}
+                      >
                         <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder="Filter orders" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Orders ({orderStats.all})</SelectItem>
-                          <SelectItem value="pending">Pending ({orderStats.pending})</SelectItem>
-                          <SelectItem value="reserved">Reserved ({orderStats.reserved})</SelectItem>
-                          <SelectItem value="processing">Processing ({orderStats.processing})</SelectItem>
-                          <SelectItem value="ready-for-pickup">Ready ({orderStats.ready})</SelectItem>
-                          <SelectItem value="completed">Completed ({orderStats.completed})</SelectItem>
-                          <SelectItem value="cancelled">Cancelled ({orderStats.cancelled})</SelectItem>
-                          <SelectItem value="refund">Refund ({orderStats.refund})</SelectItem>
+                          <SelectItem value="all">
+                            All Orders ({orderStats.all})
+                          </SelectItem>
+                          <SelectItem value="pending">
+                            Pending ({orderStats.pending})
+                          </SelectItem>
+                          <SelectItem value="reserved">
+                            Reserved ({orderStats.reserved})
+                          </SelectItem>
+                          <SelectItem value="processing">
+                            Processing ({orderStats.processing})
+                          </SelectItem>
+                          <SelectItem value="ready-for-pickup">
+                            Ready ({orderStats.ready})
+                          </SelectItem>
+                          <SelectItem value="completed">
+                            Completed ({orderStats.completed})
+                          </SelectItem>
+                          <SelectItem value="cancelled">
+                            Cancelled ({orderStats.cancelled})
+                          </SelectItem>
+                          <SelectItem value="refund">
+                            Refund ({orderStats.refund})
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     )}
@@ -518,8 +623,10 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                   {orders.length === 0 ? (
                     <div className="text-center py-12">
                       <Package className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground mb-4">No orders yet</p>
-                      <Button onClick={() => onNavigate('products')}>
+                      <p className="text-muted-foreground mb-4">
+                        No orders yet
+                      </p>
+                      <Button onClick={() => onNavigate("products")}>
                         Start Shopping
                       </Button>
                     </div>
@@ -530,17 +637,23 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                           <CardContent className="pt-6">
                             <div className="flex justify-between items-start mb-4">
                               <div>
-                                <p className="text-muted-foreground">Order {order.id}</p>
                                 <p className="text-muted-foreground">
-                                  {new Date(order.createdAt).toLocaleDateString()}
+                                  Order {order.id}
                                 </p>
                                 <p className="text-muted-foreground">
-                                  {order.deliveryMethod === 'store-pickup' ? 'Store Pickup' : 'Customer Arranged'}
+                                  {new Date(
+                                    order.createdAt,
+                                  ).toLocaleDateString()}
+                                </p>
+                                <p className="text-muted-foreground">
+                                  {order.deliveryMethod === "store-pickup"
+                                    ? "Store Pickup"
+                                    : "Customer Arranged"}
                                 </p>
                               </div>
                               <div className="flex flex-col items-end gap-2">
                                 <Badge className={getStatusColor(order.status)}>
-                                  {order.status.replace('-', ' ')}
+                                  {order.status.replace("-", " ")}
                                 </Badge>
                               </div>
                             </div>
@@ -553,7 +666,10 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                                   <div className="flex gap-4">
                                     <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
                                       <ImageWithFallback
-                                        src={getProductImage(item.productId, item.imageUrl)}
+                                        src={getProductImage(
+                                          item.productId,
+                                          item.imageUrl,
+                                        )}
                                         alt={item.name}
                                         className="w-full h-full object-cover"
                                       />
@@ -561,24 +677,35 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                                     <div className="flex-1">
                                       <p>{item.name}</p>
                                       <p className="text-muted-foreground">
-                                        {item.color}{item.size ? ` - ${item.size}` : ''} × {item.quantity}
+                                        {item.color}
+                                        {item.size
+                                          ? ` - ${item.size}`
+                                          : ""} × {item.quantity}
                                       </p>
                                       {item.refundRequested && (
-                                        <Badge variant="outline" className="mt-1">
+                                        <Badge
+                                          variant="outline"
+                                          className="mt-1"
+                                        >
                                           Refund {item.refundStatus}
                                         </Badge>
                                       )}
                                     </div>
                                     <div className="text-right">
                                       <p className="text-primary">
-                                        ₱{(item.price * item.quantity).toFixed(2)}
+                                        ₱
+                                        {(item.price * item.quantity).toFixed(
+                                          2,
+                                        )}
                                       </p>
                                       {canRequestItemRefund(order, item) && (
                                         <Button
                                           variant="ghost"
                                           size="sm"
                                           className="mt-1"
-                                          onClick={() => handleRequestItemRefund(order, item)}
+                                          onClick={() =>
+                                            handleRequestItemRefund(order, item)
+                                          }
                                         >
                                           <AlertCircle className="h-3 w-3 mr-1" />
                                           Request Refund
@@ -586,11 +713,14 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                                       )}
                                     </div>
                                   </div>
-                                  {item.refundRequested && item.refundReason && (
-                                    <div className="ml-20 mt-2 p-2 bg-secondary/30 rounded text-sm">
-                                      <p className="text-muted-foreground">Refund reason: {item.refundReason}</p>
-                                    </div>
-                                  )}
+                                  {item.refundRequested &&
+                                    item.refundReason && (
+                                      <div className="ml-20 mt-2 p-2 bg-secondary/30 rounded text-sm">
+                                        <p className="text-muted-foreground">
+                                          Refund reason: {item.refundReason}
+                                        </p>
+                                      </div>
+                                    )}
                                 </div>
                               ))}
                             </div>
@@ -600,7 +730,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                             <div className="flex justify-between items-center">
                               <div>
                                 <p className="text-muted-foreground">Total</p>
-                                <p className="text-primary">₱{order.total.toFixed(2)}</p>
+                                <p className="text-primary">
+                                  ₱{order.total.toFixed(2)}
+                                </p>
                               </div>
                               <div className="flex gap-2">
                                 <Button
@@ -611,7 +743,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                                   <FileText className="h-4 w-4 mr-2" />
                                   View Invoice
                                 </Button>
-                                {order.status === 'pending' && (
+                                {order.status === "pending" && (
                                   <Button
                                     variant="destructive"
                                     size="sm"
@@ -642,18 +774,23 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                   <div className="flex justify-between items-center">
                     <div>
                       <CardTitle>Profile Information</CardTitle>
-                      <CardDescription>
-                        Your personal details
-                      </CardDescription>
+                      <CardDescription>Your personal details</CardDescription>
                     </div>
                     {!editMode ? (
-                      <Button onClick={() => setEditMode(true)}>Edit Profile</Button>
+                      <Button onClick={() => setEditMode(true)}>
+                        Edit Profile
+                      </Button>
                     ) : (
                       <div className="flex gap-2">
-                        <Button variant="outline" onClick={() => setEditMode(false)}>
+                        <Button
+                          variant="outline"
+                          onClick={() => setEditMode(false)}
+                        >
                           Cancel
                         </Button>
-                        <Button onClick={handleProfileUpdate}>Save Changes</Button>
+                        <Button onClick={handleProfileUpdate}>
+                          Save Changes
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -664,7 +801,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                       <User className="h-10 w-10 text-primary" />
                     </div>
                     <div>
-                      <h3>{user.firstName} {user.lastName}</h3>
+                      <h3>
+                        {user.firstName} {user.lastName}
+                      </h3>
                       <p className="text-muted-foreground">{user.email}</p>
                       <Badge className="mt-2" variant="secondary">
                         Customer Account
@@ -681,7 +820,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                         <Input
                           id="firstName"
                           value={profileData.firstName}
-                          onChange={(e) => setProfileData({ ...profileData, firstName: e.target.value })}
+                          onChange={(e) =>
+                            setProfileData({
+                              ...profileData,
+                              firstName: e.target.value,
+                            })
+                          }
                         />
                       </div>
                       <div className="space-y-2">
@@ -689,7 +833,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                         <Input
                           id="lastName"
                           value={profileData.lastName}
-                          onChange={(e) => setProfileData({ ...profileData, lastName: e.target.value })}
+                          onChange={(e) =>
+                            setProfileData({
+                              ...profileData,
+                              lastName: e.target.value,
+                            })
+                          }
                         />
                       </div>
                       <div className="space-y-2">
@@ -702,7 +851,8 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                           className="bg-secondary/50 cursor-not-allowed"
                         />
                         <p className="text-xs text-muted-foreground">
-                          Email cannot be changed here. Use the Security section to change your email.
+                          Email cannot be changed here. Use the Security section
+                          to change your email.
                         </p>
                       </div>
                       <div className="space-y-2">
@@ -710,7 +860,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                         <Input
                           id="phone"
                           value={profileData.phone}
-                          onChange={(e) => setProfileData({ ...profileData, phone: e.target.value })}
+                          onChange={(e) =>
+                            setProfileData({
+                              ...profileData,
+                              phone: e.target.value,
+                            })
+                          }
                         />
                       </div>
                     </div>
@@ -722,14 +877,18 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                       </div>
                       <div>
                         <p className="text-muted-foreground mb-1">Phone</p>
-                        <p>{user.phone || 'Not provided'}</p>
+                        <p>{user.phone || "Not provided"}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground mb-1">Member Since</p>
+                        <p className="text-muted-foreground mb-1">
+                          Member Since
+                        </p>
                         <p>{new Date(user.createdAt).toLocaleDateString()}</p>
                       </div>
                       <div>
-                        <p className="text-muted-foreground mb-1">Total Orders</p>
+                        <p className="text-muted-foreground mb-1">
+                          Total Orders
+                        </p>
                         <p>{orders.length}</p>
                       </div>
                     </div>
@@ -759,7 +918,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                   {user.addresses.length === 0 ? (
                     <div className="text-center py-12">
                       <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground mb-4">No saved addresses</p>
+                      <p className="text-muted-foreground mb-4">
+                        No saved addresses
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -774,23 +935,36 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                                     <Badge variant="secondary">Default</Badge>
                                   )}
                                 </div>
-                                <p>{address.firstName} {address.lastName}</p>
-                                <p className="text-muted-foreground">{address.address}</p>
+                                <p>
+                                  {address.firstName} {address.lastName}
+                                </p>
+                                <p className="text-muted-foreground">
+                                  {address.address}
+                                </p>
                                 {address.barangay && (
-                                  <p className="text-muted-foreground">Brgy. {address.barangay}</p>
+                                  <p className="text-muted-foreground">
+                                    Brgy. {address.barangay}
+                                  </p>
                                 )}
                                 <p className="text-muted-foreground">
-                                  {address.city}, {address.state} {address.zipCode}
+                                  {address.city}, {address.state}{" "}
+                                  {address.zipCode}
                                 </p>
-                                <p className="text-muted-foreground">{address.country}</p>
-                                <p className="text-muted-foreground">Phone: {address.phone}</p>
+                                <p className="text-muted-foreground">
+                                  {address.country}
+                                </p>
+                                <p className="text-muted-foreground">
+                                  Phone: {address.phone}
+                                </p>
                               </div>
                               <div className="flex gap-2">
                                 {!address.isDefault && (
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => handleSetDefaultAddress(address.id)}
+                                    onClick={() =>
+                                      handleSetDefaultAddress(address.id)
+                                    }
                                   >
                                     Set Default
                                   </Button>
@@ -805,7 +979,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleDeleteAddress(address.id)}
+                                  onClick={() =>
+                                    handleDeleteAddress(address.id)
+                                  }
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -834,29 +1010,31 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                     <div>
                       <h4 className="mb-2">Change Email Address</h4>
                       <p className="text-muted-foreground mb-2">
-                        Update your email address. You'll need to verify the new email.
+                        Update your email address. You'll need to verify the new
+                        email.
                       </p>
                       <p className="text-muted-foreground mb-4">
-                        Current email: <span className="text-foreground">{user.email}</span>
+                        Current email:{" "}
+                        <span className="text-foreground">{user.email}</span>
                       </p>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => setShowChangeEmailDialog(true)}
                       >
                         <Mail className="h-4 w-4 mr-2" />
                         Change Email
                       </Button>
                     </div>
-                    
+
                     <Separator />
-                    
+
                     <div>
                       <h4 className="mb-2">Change Password</h4>
                       <p className="text-muted-foreground mb-4">
                         Update your password to keep your account secure
                       </p>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         onClick={() => setShowChangePasswordDialog(true)}
                       >
                         <Key className="h-4 w-4 mr-2" />
@@ -879,7 +1057,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                       <p className="text-muted-foreground mb-4">
                         Permanently delete your account and all associated data
                       </p>
-                      <Button variant="destructive" onClick={() => setShowDeleteAccountDialog(true)}>Delete Account</Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => setShowDeleteAccountDialog(true)}
+                      >
+                        Delete Account
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -894,9 +1077,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
         <DialogContent className="max-w-6xl max-h-[95vh]">
           <DialogHeader>
             <DialogTitle>Order Details</DialogTitle>
-            <DialogDescription>
-              Order {selectedOrder?.id}
-            </DialogDescription>
+            <DialogDescription>Order {selectedOrder?.id}</DialogDescription>
           </DialogHeader>
           {selectedOrder && (
             <div className="overflow-y-auto max-h-[calc(95vh-120px)] space-y-6 invoice-scroll pb-8">
@@ -906,7 +1087,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                   <div className="flex flex-col md:flex-row items-center gap-6">
                     <div className="flex-shrink-0">
                       <div className="p-4 bg-white rounded-lg border-2 border-primary/30">
-                        <QRCodeSVG 
+                        <QRCodeSVG
                           value={`POYBASH-ORDER-${selectedOrder.id}`}
                           size={150}
                           level="H"
@@ -920,17 +1101,21 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                         <h4>Pickup Verification QR</h4>
                       </div>
                       <p className="text-sm text-muted-foreground mb-2">
-                        <span className="font-semibold">Pickup Code:</span>{' '}
-                        <span className="font-mono text-lg text-foreground">{selectedOrder.id}</span>
+                        <span className="font-semibold">Pickup Code:</span>{" "}
+                        <span className="font-mono text-lg text-foreground">
+                          {selectedOrder.id}
+                        </span>
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        You will need this QR code for store pickup verification. Show this to our staff when collecting your order.
+                        You will need this QR code for store pickup
+                        verification. Show this to our staff when collecting
+                        your order.
                       </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-              
+
               {/* Invoice */}
               <InvoiceReceipt order={selectedOrder} />
             </div>
@@ -939,7 +1124,10 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
       </Dialog>
 
       {/* Item Refund Request Dialog */}
-      <Dialog open={showItemRefundDialog} onOpenChange={setShowItemRefundDialog}>
+      <Dialog
+        open={showItemRefundDialog}
+        onOpenChange={setShowItemRefundDialog}
+      >
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Request Item Refund</DialogTitle>
@@ -952,7 +1140,10 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
               <div className="flex gap-4 p-3 bg-secondary/30 rounded-lg">
                 <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
                   <ImageWithFallback
-                    src={getProductImage(selectedItem.productId, selectedItem.imageUrl)}
+                    src={getProductImage(
+                      selectedItem.productId,
+                      selectedItem.imageUrl,
+                    )}
                     alt={selectedItem.name}
                     className="w-full h-full object-cover"
                   />
@@ -966,7 +1157,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                     ₱{(selectedItem.price * selectedItem.quantity).toFixed(2)}
                   </p>
                   <p className="text-muted-foreground mt-1">
-                    Payment Method: {selectedOrder?.paymentMethod === 'cash' ? 'Cash on Pickup' : selectedOrder?.paymentMethod === 'gcash' ? 'GCash' : 'Bank Transfer'}
+                    Payment Method:{" "}
+                    {selectedOrder?.paymentMethod === "cash"
+                      ? "Cash on Pickup"
+                      : selectedOrder?.paymentMethod === "gcash"
+                        ? "GCash"
+                        : "Bank Transfer"}
                   </p>
                 </div>
               </div>
@@ -986,9 +1182,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="proofImages">Upload Proof Images * (3-5 images required)</Label>
+              <Label htmlFor="proofImages">
+                Upload Proof Images * (3-5 images required)
+              </Label>
               <p className="text-muted-foreground text-xs mb-2">
-                Please upload 3-5 photos showing the item condition/issue from different angles (max 5MB each)
+                Please upload 3-5 photos showing the item condition/issue from
+                different angles (max 5MB each)
               </p>
               <input
                 id="proofImages"
@@ -1001,23 +1200,26 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => document.getElementById('proofImages')?.click()}
+                onClick={() => document.getElementById("proofImages")?.click()}
                 className="w-full justify-start gap-2"
                 disabled={refundProofImages.length >= 5}
               >
                 <Upload className="h-4 w-4" />
-                {refundProofImages.length === 0 
-                  ? 'Upload Images (3-5 required)' 
+                {refundProofImages.length === 0
+                  ? "Upload Images (3-5 required)"
                   : `Add More Images (${refundProofImages.length}/5)`}
               </Button>
-              
+
               {refundProofImages.length > 0 && (
                 <div className="mt-2 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-muted-foreground">
-                      Uploaded: {refundProofImages.length} image{refundProofImages.length !== 1 ? 's' : ''}
+                      Uploaded: {refundProofImages.length} image
+                      {refundProofImages.length !== 1 ? "s" : ""}
                       {refundProofImages.length < 3 && (
-                        <span className="text-destructive ml-2">(Minimum 3 required)</span>
+                        <span className="text-destructive ml-2">
+                          (Minimum 3 required)
+                        </span>
                       )}
                     </span>
                   </div>
@@ -1048,13 +1250,15 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
               )}
             </div>
 
-            {selectedOrder?.paymentMethod !== 'cash' && (
+            {selectedOrder?.paymentMethod !== "cash" && (
               <>
                 <Separator />
                 <div className="space-y-4">
                   <div>
                     <h4 className="mb-2">Refund Account Information</h4>
-                    <p className="text-muted-foreground">Please provide your account details for the refund</p>
+                    <p className="text-muted-foreground">
+                      Please provide your account details for the refund
+                    </p>
                   </div>
 
                   <div className="space-y-2">
@@ -1062,49 +1266,81 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                     <div className="grid grid-cols-2 gap-4">
                       <Button
                         type="button"
-                        variant={refundAccountInfo.refundMethod === 'gcash' ? 'default' : 'outline'}
-                        onClick={() => setRefundAccountInfo({ ...refundAccountInfo, refundMethod: 'gcash' })}
+                        variant={
+                          refundAccountInfo.refundMethod === "gcash"
+                            ? "default"
+                            : "outline"
+                        }
+                        onClick={() =>
+                          setRefundAccountInfo({
+                            ...refundAccountInfo,
+                            refundMethod: "gcash",
+                          })
+                        }
                         className="h-auto py-3"
                       >
                         <div>
                           <div>GCash</div>
-                          <div className="text-xs text-muted-foreground">Instant refund</div>
+                          <div className="text-xs text-muted-foreground">
+                            Instant refund
+                          </div>
                         </div>
                       </Button>
                       <Button
                         type="button"
-                        variant={refundAccountInfo.refundMethod === 'bank' ? 'default' : 'outline'}
-                        onClick={() => setRefundAccountInfo({ ...refundAccountInfo, refundMethod: 'bank' })}
+                        variant={
+                          refundAccountInfo.refundMethod === "bank"
+                            ? "default"
+                            : "outline"
+                        }
+                        onClick={() =>
+                          setRefundAccountInfo({
+                            ...refundAccountInfo,
+                            refundMethod: "bank",
+                          })
+                        }
                         className="h-auto py-3"
                       >
                         <div>
                           <div>Bank Transfer</div>
-                          <div className="text-xs text-muted-foreground">2-3 business days</div>
+                          <div className="text-xs text-muted-foreground">
+                            2-3 business days
+                          </div>
                         </div>
                       </Button>
                     </div>
                   </div>
 
-                  {refundAccountInfo.refundMethod === 'gcash' && (
+                  {refundAccountInfo.refundMethod === "gcash" && (
                     <div className="space-y-2">
                       <Label htmlFor="gcashNumber">GCash Mobile Number *</Label>
                       <Input
                         id="gcashNumber"
                         value={refundAccountInfo.gcashNumber}
-                        onChange={(e) => setRefundAccountInfo({ ...refundAccountInfo, gcashNumber: e.target.value })}
+                        onChange={(e) =>
+                          setRefundAccountInfo({
+                            ...refundAccountInfo,
+                            gcashNumber: e.target.value,
+                          })
+                        }
                         placeholder="+63 XXX XXX XXXX"
                       />
                     </div>
                   )}
 
-                  {refundAccountInfo.refundMethod === 'bank' && (
+                  {refundAccountInfo.refundMethod === "bank" && (
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="bankName">Bank Name *</Label>
                         <Input
                           id="bankName"
                           value={refundAccountInfo.bankName}
-                          onChange={(e) => setRefundAccountInfo({ ...refundAccountInfo, bankName: e.target.value })}
+                          onChange={(e) =>
+                            setRefundAccountInfo({
+                              ...refundAccountInfo,
+                              bankName: e.target.value,
+                            })
+                          }
                           placeholder="e.g., BDO, BPI, Metrobank"
                         />
                       </div>
@@ -1113,7 +1349,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                         <Input
                           id="accountName"
                           value={refundAccountInfo.accountName}
-                          onChange={(e) => setRefundAccountInfo({ ...refundAccountInfo, accountName: e.target.value })}
+                          onChange={(e) =>
+                            setRefundAccountInfo({
+                              ...refundAccountInfo,
+                              accountName: e.target.value,
+                            })
+                          }
                           placeholder="Full name as shown in bank account"
                         />
                       </div>
@@ -1122,7 +1363,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                         <Input
                           id="accountNumber"
                           value={refundAccountInfo.accountNumber}
-                          onChange={(e) => setRefundAccountInfo({ ...refundAccountInfo, accountNumber: e.target.value })}
+                          onChange={(e) =>
+                            setRefundAccountInfo({
+                              ...refundAccountInfo,
+                              accountNumber: e.target.value,
+                            })
+                          }
                           placeholder="Bank account number"
                         />
                       </div>
@@ -1132,25 +1378,44 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
               </>
             )}
 
-            {selectedOrder?.paymentMethod === 'cash' && (
-              <div className="p-4 bg-blue-500/10 text-blue-700 rounded-lg">
-                <p>Since you paid with Cash on Pickup, your refund will be processed as cash pickup at our store.</p>
+            {selectedOrder?.paymentMethod === "cash" && (
+              <div className="p-4 bg-amber-50 text-amber-900 rounded-lg border border-amber-200">
+                <p>
+                  Since you paid with Cash on Pickup, your refund will be
+                  processed as cash pickup at our store.
+                </p>
               </div>
             )}
 
             <div className="p-4 bg-secondary/30 rounded-lg">
               <h4 className="mb-2">Refund Policy</h4>
               <ul className="text-muted-foreground space-y-1">
-                <li>• Refund requests are accepted within 7 days of order completion</li>
-                <li>• Items must be in original condition with tags attached</li>
-                <li>• Refunds will be processed within 5-7 business days after approval</li>
-                <li>• 3-5 proof images are REQUIRED to validate the refund request</li>
-                <li>• Images should clearly show the item condition/issue from different angles</li>
+                <li>
+                  • Refund requests are accepted within 7 days of order
+                  completion
+                </li>
+                <li>
+                  • Items must be in original condition with tags attached
+                </li>
+                <li>
+                  • Refunds will be processed within 5-7 business days after
+                  approval
+                </li>
+                <li>
+                  • 3-5 proof images are REQUIRED to validate the refund request
+                </li>
+                <li>
+                  • Images should clearly show the item condition/issue from
+                  different angles
+                </li>
               </ul>
             </div>
 
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowItemRefundDialog(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setShowItemRefundDialog(false)}
+              >
                 Cancel
               </Button>
               <Button onClick={handleSubmitItemRefund}>
@@ -1165,9 +1430,13 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
       <Dialog open={showAddressDialog} onOpenChange={setShowAddressDialog}>
         <DialogContent className="max-w-5xl">
           <DialogHeader>
-            <DialogTitle>{editingAddress ? 'Edit Address' : 'Add New Address'}</DialogTitle>
+            <DialogTitle>
+              {editingAddress ? "Edit Address" : "Add New Address"}
+            </DialogTitle>
             <DialogDescription>
-              {editingAddress ? 'Update your address details' : 'Add a new delivery address'}
+              {editingAddress
+                ? "Update your address details"
+                : "Add a new delivery address"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -1176,7 +1445,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
               <Input
                 id="addressLabel"
                 value={addressForm.label}
-                onChange={(e) => setAddressForm({ ...addressForm, label: e.target.value })}
+                onChange={(e) =>
+                  setAddressForm({ ...addressForm, label: e.target.value })
+                }
                 placeholder="e.g., Home, Office, etc."
               />
             </div>
@@ -1186,7 +1457,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 <Input
                   id="addrFirstName"
                   value={addressForm.firstName}
-                  onChange={(e) => setAddressForm({ ...addressForm, firstName: e.target.value })}
+                  onChange={(e) =>
+                    setAddressForm({
+                      ...addressForm,
+                      firstName: e.target.value,
+                    })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -1194,7 +1470,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 <Input
                   id="addrLastName"
                   value={addressForm.lastName}
-                  onChange={(e) => setAddressForm({ ...addressForm, lastName: e.target.value })}
+                  onChange={(e) =>
+                    setAddressForm({ ...addressForm, lastName: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -1203,7 +1481,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
               <Input
                 id="addrAddress"
                 value={addressForm.address}
-                onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
+                onChange={(e) =>
+                  setAddressForm({ ...addressForm, address: e.target.value })
+                }
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
@@ -1212,7 +1492,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 <Input
                   id="addrBarangay"
                   value={addressForm.barangay}
-                  onChange={(e) => setAddressForm({ ...addressForm, barangay: e.target.value })}
+                  onChange={(e) =>
+                    setAddressForm({ ...addressForm, barangay: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -1220,7 +1502,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 <Input
                   id="addrCity"
                   value={addressForm.city}
-                  onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
+                  onChange={(e) =>
+                    setAddressForm({ ...addressForm, city: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -1230,7 +1514,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 <Input
                   id="addrState"
                   value={addressForm.state}
-                  onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
+                  onChange={(e) =>
+                    setAddressForm({ ...addressForm, state: e.target.value })
+                  }
                 />
               </div>
               <div className="space-y-2">
@@ -1238,7 +1524,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 <Input
                   id="addrZip"
                   value={addressForm.zipCode}
-                  onChange={(e) => setAddressForm({ ...addressForm, zipCode: e.target.value })}
+                  onChange={(e) =>
+                    setAddressForm({ ...addressForm, zipCode: e.target.value })
+                  }
                 />
               </div>
             </div>
@@ -1247,7 +1535,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
               <Input
                 id="addrCountry"
                 value={addressForm.country}
-                onChange={(e) => setAddressForm({ ...addressForm, country: e.target.value })}
+                onChange={(e) =>
+                  setAddressForm({ ...addressForm, country: e.target.value })
+                }
               />
             </div>
             <div className="space-y-2">
@@ -1255,25 +1545,35 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
               <Input
                 id="addrPhone"
                 value={addressForm.phone}
-                onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
+                onChange={(e) =>
+                  setAddressForm({ ...addressForm, phone: e.target.value })
+                }
               />
             </div>
             <div className="flex items-center gap-2">
               <Checkbox
                 id="addrDefault"
                 checked={addressForm.isDefault}
-                onCheckedChange={(checked) => setAddressForm({ ...addressForm, isDefault: checked as boolean })}
+                onCheckedChange={(checked) =>
+                  setAddressForm({
+                    ...addressForm,
+                    isDefault: checked as boolean,
+                  })
+                }
               />
               <Label htmlFor="addrDefault" className="cursor-pointer">
                 Set as default address
               </Label>
             </div>
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowAddressDialog(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setShowAddressDialog(false)}
+              >
                 Cancel
               </Button>
               <Button onClick={handleSaveAddress}>
-                {editingAddress ? 'Update Address' : 'Add Address'}
+                {editingAddress ? "Update Address" : "Add Address"}
               </Button>
             </div>
           </div>
@@ -1281,13 +1581,14 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
       </Dialog>
 
       {/* Change Password Dialog */}
-      <Dialog open={showChangePasswordDialog} onOpenChange={setShowChangePasswordDialog}>
+      <Dialog
+        open={showChangePasswordDialog}
+        onOpenChange={setShowChangePasswordDialog}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Change Password</DialogTitle>
-            <DialogDescription>
-              Update your account password
-            </DialogDescription>
+            <DialogDescription>Update your account password</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -1296,7 +1597,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 id="currentPassword"
                 type="password"
                 value={passwordData.currentPassword}
-                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    currentPassword: e.target.value,
+                  })
+                }
                 placeholder="Enter current password"
               />
             </div>
@@ -1306,7 +1612,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 id="newPassword"
                 type="password"
                 value={passwordData.newPassword}
-                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    newPassword: e.target.value,
+                  })
+                }
                 placeholder="Enter new password (min. 6 characters)"
               />
             </div>
@@ -1316,7 +1627,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 id="confirmPassword"
                 type="password"
                 value={passwordData.confirmPassword}
-                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                onChange={(e) =>
+                  setPasswordData({
+                    ...passwordData,
+                    confirmPassword: e.target.value,
+                  })
+                }
                 placeholder="Confirm new password"
               />
             </div>
@@ -1326,30 +1642,31 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 onClick={() => {
                   setShowChangePasswordDialog(false);
                   setPasswordData({
-                    currentPassword: '',
-                    newPassword: '',
-                    confirmPassword: '',
+                    currentPassword: "",
+                    newPassword: "",
+                    confirmPassword: "",
                   });
                 }}
               >
                 Cancel
               </Button>
-              <Button onClick={handleChangePassword}>
-                Change Password
-              </Button>
+              <Button onClick={handleChangePassword}>Change Password</Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
       {/* Change Email Dialog */}
-      <Dialog open={showChangeEmailDialog} onOpenChange={(open) => {
-        setShowChangeEmailDialog(open);
-        if (!open) {
-          setEmailData({ newEmail: '', password: '' });
-          setEmailChangeError('');
-        }
-      }}>
+      <Dialog
+        open={showChangeEmailDialog}
+        onOpenChange={(open) => {
+          setShowChangeEmailDialog(open);
+          if (!open) {
+            setEmailData({ newEmail: "", password: "" });
+            setEmailChangeError("");
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Change Email Address</DialogTitle>
@@ -1364,11 +1681,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 <AlertDescription>{emailChangeError}</AlertDescription>
               </Alert>
             )}
-            
+
             <Alert>
               <Mail className="h-4 w-4" />
               <AlertDescription>
-                A verification email will be sent to your new email address. You must click the verification link to complete the change.
+                A verification email will be sent to your new email address. You
+                must click the verification link to complete the change.
               </AlertDescription>
             </Alert>
 
@@ -1377,7 +1695,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
               <Input
                 id="currentEmail"
                 type="email"
-                value={user?.email || ''}
+                value={user?.email || ""}
                 disabled
                 className="bg-secondary"
               />
@@ -1391,7 +1709,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 value={emailData.newEmail}
                 onChange={(e) => {
                   setEmailData({ ...emailData, newEmail: e.target.value });
-                  setEmailChangeError('');
+                  setEmailChangeError("");
                 }}
                 placeholder="your.new.email@example.com"
               />
@@ -1405,7 +1723,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 value={emailData.password}
                 onChange={(e) => {
                   setEmailData({ ...emailData, password: e.target.value });
-                  setEmailChangeError('');
+                  setEmailChangeError("");
                 }}
                 placeholder="Enter your current password"
               />
@@ -1419,8 +1737,8 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 variant="outline"
                 onClick={() => {
                   setShowChangeEmailDialog(false);
-                  setEmailData({ newEmail: '', password: '' });
-                  setEmailChangeError('');
+                  setEmailData({ newEmail: "", password: "" });
+                  setEmailChangeError("");
                 }}
               >
                 Cancel
@@ -1434,38 +1752,42 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
       </Dialog>
 
       {/* Delete Account Dialog */}
-      <AlertDialog open={showDeleteAccountDialog} onOpenChange={setShowDeleteAccountDialog}>
+      <AlertDialog
+        open={showDeleteAccountDialog}
+        onOpenChange={setShowDeleteAccountDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your account and remove your data from our servers.
+              This action cannot be undone. This will permanently delete your
+              account and remove your data from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction>
-              Delete Account
-            </AlertDialogAction>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction>Delete Account</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Cancel Order Dialog */}
-      <AlertDialog open={showCancelOrderDialog} onOpenChange={setShowCancelOrderDialog}>
+      <AlertDialog
+        open={showCancelOrderDialog}
+        onOpenChange={setShowCancelOrderDialog}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to cancel this order?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Are you sure you want to cancel this order?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently cancel your order and remove it from your order history.
+              This action cannot be undone. This will permanently cancel your
+              order and remove it from your order history.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleCancelOrder}>
               Cancel Order
             </AlertDialogAction>

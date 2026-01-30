@@ -1,17 +1,24 @@
-'use client';
+"use client";
 
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { useCart } from '../contexts/CartContext';
-import { ImageWithFallback } from './figma/ImageWithFallback';
-import { Minus, Plus, X, Tag, Trash2 } from 'lucide-react';
-import { Separator } from './ui/separator';
-import { Checkbox } from './ui/checkbox';
-import { validateCoupon, calculateDiscount } from '../lib/coupons';
-import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "./ui/sheet";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
+import { useCart } from "../contexts/CartContext";
+import { ImageWithFallback } from "./figma/ImageWithFallback";
+import { Minus, Plus, X, Tag, ChevronDown, ChevronUp } from "lucide-react";
+import { Separator } from "./ui/separator";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { useState, useEffect } from "react";
+import { getCoupons, validateCoupon, calculateDiscount } from "../lib/coupons";
+import { products, getVariantById, getVariantStock } from "../lib/products";
+import { Checkbox } from "./ui/checkbox";
 
 interface CartDrawerProps {
   open: boolean;
@@ -19,96 +26,153 @@ interface CartDrawerProps {
 }
 
 export function CartDrawer({ open, onClose }: CartDrawerProps) {
-  const { items, updateQuantity, removeFromCart, clearCart, appliedCoupon, setAppliedCoupon } = useCart();
+  const {
+    items,
+    updateQuantity,
+    removeFromCart,
+    removeLine,
+    appliedCoupon,
+    setAppliedCoupon,
+  } = useCart();
   const router = useRouter();
-  const [couponCode, setCouponCode] = useState('');
+  const [couponCode, setCouponCode] = useState("");
   const [isCouponLoading, setIsCouponLoading] = useState(false);
+  const [showAvailableCoupons, setShowAvailableCoupons] = useState(false);
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
 
-  // Generate unique key for each cart item
-  const getItemKey = (item: typeof items[0]) => {
-    return `${item.id}-${item.selectedColor}-${item.selectedSize || 'no-size'}`;
-  };
-
-  // Select all items by default when cart opens or items change
+  // Initialize all items as selected when cart opens or items change
   useEffect(() => {
     if (open && items.length > 0) {
-      setSelectedItems(new Set(items.map(getItemKey)));
+      const allItemKeys = items.map((item) => item.lineKey);
+      const currentSelectedKeys = Array.from(selectedItems);
+
+      // Only update if the item keys have actually changed
+      const keysChanged =
+        allItemKeys.length !== currentSelectedKeys.length ||
+        !allItemKeys.every((key) => selectedItems.has(key));
+
+      if (keysChanged) {
+        setSelectedItems(new Set(allItemKeys));
+      }
+    } else if (items.length === 0) {
+      setSelectedItems(new Set());
     }
   }, [open, items]);
 
-  // Calculate total for selected items only
-  const getSelectedItemsTotal = () => {
-    return items.reduce((total, item) => {
-      const itemKey = getItemKey(item);
-      if (selectedItems.has(itemKey)) {
-        return total + (item.price * item.quantity);
-      }
-      return total;
-    }, 0);
-  };
+  // Get available coupons that meet the minimum purchase requirement
+  const availableCoupons = getCoupons().filter(
+    (coupon) =>
+      coupon.isActive &&
+      new Date(coupon.expiryDate) > new Date() &&
+      coupon.usedCount < coupon.usageLimit,
+  );
 
-  const subtotal = getSelectedItemsTotal();
-  const discount = appliedCoupon ? calculateDiscount(appliedCoupon, subtotal) : 0;
+  // Calculate total for selected items only
+  const subtotal = items.reduce((total, item) => {
+    const itemKey = item.lineKey;
+    if (selectedItems.has(itemKey)) {
+      return total + item.price * item.quantity;
+    }
+    return total;
+  }, 0);
+
+  const discount = appliedCoupon
+    ? calculateDiscount(appliedCoupon, subtotal)
+    : 0;
   const total = subtotal - discount;
 
-  const allSelected = items.length > 0 && selectedItems.size === items.length;
-  const someSelected = selectedItems.size > 0 && selectedItems.size < items.length;
+  // Helper functions for selection
+  const toggleItemSelection = (itemKey: string) => {
+    setSelectedItems((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemKey)) {
+        newSet.delete(itemKey);
+      } else {
+        newSet.add(itemKey);
+      }
+      return newSet;
+    });
+  };
 
-  const handleSelectAll = () => {
-    if (allSelected) {
+  const toggleSelectAll = () => {
+    if (selectedItems.size === items.length) {
       setSelectedItems(new Set());
     } else {
-      setSelectedItems(new Set(items.map(getItemKey)));
+      const allItemKeys = items.map((item) => item.lineKey);
+      setSelectedItems(new Set(allItemKeys));
     }
   };
 
-  const handleSelectItem = (itemKey: string) => {
-    const newSelected = new Set(selectedItems);
-    if (newSelected.has(itemKey)) {
-      newSelected.delete(itemKey);
-    } else {
-      newSelected.add(itemKey);
-    }
-    setSelectedItems(newSelected);
-  };
+  // Filter applicable coupons based on current subtotal
+  const applicableCoupons = availableCoupons.filter(
+    (coupon) => subtotal >= coupon.minPurchase,
+  );
+  // Helper function to get available stock for a cart item
+  const getItemAvailableStock = (item: (typeof items)[0]): number => {
+    const product = products.find((p) => p.id === item.id);
+    if (!product) return 0;
 
-  const handleRemoveSelected = () => {
-    if (selectedItems.size === 0) {
-      toast.error('No items selected');
+    // New variant system
+    if (item.selectedVariantId && product.variants) {
+      const variant = getVariantById(product, item.selectedVariantId);
+      if (variant) {
+        return getVariantStock(variant);
+      }
+    }
+
+    // Legacy: Size options system (for tables)
+    if (product.sizeOptions && item.selectedSize) {
+      const sizeOption = product.sizeOptions.find(
+        (s) => s.label === item.selectedSize,
+      );
+      if (sizeOption) {
+        return sizeOption.warehouseStock.reduce(
+          (sum, ws) => sum + (ws.quantity - ws.reserved),
+          0,
+        );
+      }
+    }
+
+    // Legacy: Warehouse stock for products without size (chairs)
+    if (product.warehouseStock) {
+      return product.warehouseStock.reduce(
+        (sum, ws) => sum + (ws.quantity - ws.reserved),
+        0,
+      );
+    }
+
+    return 0;
+  };
+  const handleApplyCoupon = () => {
+    // Input validation
+    if (!couponCode.trim()) {
+      toast.error("Enter coupon code");
       return;
     }
 
-    items.forEach((item) => {
-      const itemKey = getItemKey(item);
-      if (selectedItems.has(itemKey)) {
-        removeFromCart(item.id, item.selectedColor, item.selectedSize);
-      }
-    });
+    // Sanitize input (prevent XSS)
+    const sanitizedCode = couponCode
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "");
 
-    setSelectedItems(new Set());
-    toast.success(`Removed ${selectedItems.size} item(s) from cart`);
-  };
-
-  const handleApplyCoupon = () => {
-    if (!couponCode.trim()) {
-      toast.error('Please enter a coupon code');
+    if (sanitizedCode.length === 0) {
+      toast.error("Invalid coupon format");
       return;
     }
 
     setIsCouponLoading(true);
-    const validation = validateCoupon(couponCode, subtotal);
-    
+
+    // Simulate API delay for better UX
     setTimeout(() => {
+      const validation = validateCoupon(sanitizedCode, subtotal);
+
       if (validation.valid && validation.coupon) {
         setAppliedCoupon(validation.coupon);
-        toast.success('Coupon applied successfully!', {
-          description: `You saved ₱${calculateDiscount(validation.coupon, subtotal).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`,
-        });
+        setCouponCode("");
+        toast.success("Coupon applied");
       } else {
-        toast.error('Invalid coupon', {
-          description: validation.error,
-        });
+        toast.error("Invalid coupon");
       }
       setIsCouponLoading(false);
     }, 300);
@@ -116,31 +180,83 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
 
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null);
-    setCouponCode('');
-    toast.info('Coupon removed');
+    toast.info("Coupon removed");
+  };
+
+  const handleApplySuggestedCoupon = (code: string) => {
+    setCouponCode(code);
+    setShowAvailableCoupons(false);
+    // Auto-apply after short delay
+    setTimeout(() => {
+      handleApplyCoupon();
+    }, 100);
   };
 
   const handleCheckout = () => {
-    if (selectedItems.size === 0) {
-      toast.error('Please select at least one item to checkout');
+    // Validate cart is not empty
+    if (items.length === 0) {
+      toast.error("Cart is empty");
       return;
     }
+
+    // Validate all items have valid quantities
+    const hasInvalidQuantity = items.some((item) => item.quantity <= 0);
+    if (hasInvalidQuantity) {
+      toast.error("Invalid quantity");
+      return;
+    }
+
+    // Validate total amount is reasonable (prevent manipulation)
+    if (subtotal <= 0 || total < 0) {
+      toast.error("Invalid total");
+      return;
+    }
+
+    // Validate discount doesn't exceed subtotal
+    if (discount > subtotal) {
+      toast.error("Invalid discount");
+      setAppliedCoupon(null);
+      return;
+    }
+
+    // Check for potential stock issues (basic validation)
+    const hasHighQuantity = items.some((item) => item.quantity > 100);
+    if (hasHighQuantity) {
+      toast.error("Quantity limit exceeded");
+      return;
+    }
+
+    // Re-validate coupon if applied
+    if (appliedCoupon) {
+      const validation = validateCoupon(appliedCoupon.code, subtotal);
+      if (!validation.valid) {
+        toast.error("Coupon expired");
+        setAppliedCoupon(null);
+        return;
+      }
+    }
+
     onClose();
-    router.push('/checkout');
+    router.push("/checkout");
   };
 
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-md flex flex-col p-0 h-full overflow-hidden" aria-describedby="cart-description">
-        <SheetHeader className="px-6 pt-6 pb-4 space-y-2 flex-shrink-0">
-          <SheetTitle>Shopping Cart ({items.length})</SheetTitle>
+      <SheetContent
+        className="w-full sm:max-w-md flex flex-col p-0 h-full overflow-hidden"
+        aria-describedby="cart-description"
+      >
+        <SheetHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 space-y-0.5 flex-shrink-0">
+          <SheetTitle className="text-base sm:text-lg">
+            Shopping Cart
+          </SheetTitle>
           <SheetDescription id="cart-description">
             Review your items and proceed to checkout
           </SheetDescription>
         </SheetHeader>
 
         {items.length === 0 ? (
-          <div className="flex-1 flex items-center justify-center px-6">
+          <div className="flex-1 flex items-center justify-center px-4 sm:px-6">
             <div className="text-center space-y-4">
               <p className="text-muted-foreground">Your cart is empty</p>
               <Button onClick={onClose}>Continue Shopping</Button>
@@ -148,53 +264,47 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
           </div>
         ) : (
           <>
-            {/* Selection Controls */}
-            <div className="px-6 py-3 border-b bg-secondary/20 flex-shrink-0">
-              <div className="flex items-center justify-between">
+            <div className="flex-1 overflow-y-auto px-4 sm:px-6 min-h-0">
+              {/* Select All Section */}
+              <div className="sticky top-0 bg-background z-10 py-1.5 border-b">
                 <div className="flex items-center gap-2">
                   <Checkbox
                     id="select-all"
-                    checked={allSelected}
-                    onCheckedChange={handleSelectAll}
-                    className={someSelected ? 'data-[state=checked]:bg-primary' : ''}
+                    checked={
+                      selectedItems.size === items.length && items.length > 0
+                    }
+                    onCheckedChange={toggleSelectAll}
                   />
-                  <label htmlFor="select-all" className="text-sm cursor-pointer">
-                    {allSelected ? 'Deselect All' : 'Select All'}
+                  <label
+                    htmlFor="select-all"
+                    className="text-sm font-medium cursor-pointer"
+                  >
+                    Select All
                   </label>
                 </div>
-                {selectedItems.size > 0 && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleRemoveSelected}
-                    className="gap-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Remove ({selectedItems.size})
-                  </Button>
-                )}
               </div>
-            </div>
 
-            <div className="flex-1 overflow-y-auto px-6 min-h-0">
-              <div className="space-y-4 pb-4 pt-4">
+              <div className="space-y-2 sm:space-y-2.5 pb-4 pt-3 sm:pt-4">
                 {items.map((item) => {
-                  const itemKey = getItemKey(item);
+                  const itemKey = item.lineKey;
                   const isSelected = selectedItems.has(itemKey);
-                  
+
                   return (
-                    <div 
-                      key={itemKey} 
-                      className={`flex gap-3 p-4 rounded-lg border bg-card transition-colors ${
-                        isSelected ? 'ring-2 ring-primary' : ''
+                    <div
+                      key={itemKey}
+                      className={`flex gap-2 p-2 sm:p-2.5 rounded-lg border transition-colors ${
+                        isSelected ? "bg-white" : "bg-muted/30"
                       }`}
                     >
-                      <Checkbox
-                        checked={isSelected}
-                        onCheckedChange={() => handleSelectItem(itemKey)}
-                        className="mt-1"
-                      />
-                      <div className="w-20 h-20 rounded-md overflow-hidden bg-secondary flex-shrink-0">
+                      {/* Checkbox for item selection */}
+                      <div className="flex items-start pt-1">
+                        <Checkbox
+                          checked={isSelected}
+                          onCheckedChange={() => toggleItemSelection(itemKey)}
+                        />
+                      </div>
+
+                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-md overflow-hidden bg-secondary flex-shrink-0">
                         <ImageWithFallback
                           src={item.imageUrl}
                           alt={item.name}
@@ -202,16 +312,28 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                         />
                       </div>
 
-                      <div className="flex-1 min-w-0 space-y-2">
-                        <div className="flex justify-between gap-2">
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex justify-between gap-1">
                           <div className="flex-1 min-w-0">
-                            <h4 className="line-clamp-2 leading-tight">{item.name}</h4>
-                            <p className="text-muted-foreground mt-1">
-                              Color: {item.selectedColor}
+                            <h4 className="line-clamp-2 leading-tight text-xs sm:text-sm">
+                              {item.name}
+                            </h4>
+                            <p className="text-muted-foreground text-[10px] sm:text-xs mt-0.5">
+                              <span className="text-[10px] sm:text-xs">
+                                Color:
+                              </span>{" "}
+                              <span className="text-[10px] sm:text-xs">
+                                {item.selectedColor}
+                              </span>
                               {item.selectedSize && (
                                 <>
                                   <br />
-                                  Size: {item.selectedSize}
+                                  <span className="text-[10px] sm:text-xs">
+                                    Size:
+                                  </span>{" "}
+                                  <span className="text-[10px] sm:text-xs">
+                                    {item.selectedSize}
+                                  </span>
                                 </>
                               )}
                             </p>
@@ -219,34 +341,99 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 flex-shrink-0"
-                            onClick={() => removeFromCart(item.id, item.selectedColor, item.selectedSize, item.selectedVariantId)}
+                            className="h-6 w-6 sm:h-7 sm:w-7 flex-shrink-0 hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() => {
+                              try {
+                                removeLine(item.lineKey);
+                                toast.success("Removed");
+
+                                // Update selected items to remove the deleted item
+                                setSelectedItems((prev) => {
+                                  const newSet = new Set(prev);
+                                  newSet.delete(item.lineKey);
+                                  return newSet;
+                                });
+                              } catch (error) {
+                                toast.error("Removal failed");
+                              }
+                            }}
                           >
-                            <X className="h-4 w-4" />
+                            <X className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
                           </Button>
                         </div>
 
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-1">
+                        <div className="flex items-center justify-between gap-1.5">
+                          <div className="flex items-center gap-0.5">
                             <Button
                               variant="outline"
                               size="icon"
-                              className="h-7 w-7"
-                              onClick={() => updateQuantity(item.id, item.selectedColor, item.quantity - 1, item.selectedSize, item.selectedVariantId)}
+                              className="h-6 w-6"
+                              onClick={() => {
+                                if (item.quantity <= 1) {
+                                  toast.error("Use X to remove item");
+                                  return;
+                                }
+                                updateQuantity(
+                                  item.id,
+                                  item.selectedColor,
+                                  item.quantity - 1,
+                                  item.selectedSize,
+                                  item.selectedVariantId,
+                                );
+                              }}
+                              disabled={item.quantity <= 1}
                             >
-                              <Minus className="h-3 w-3" />
+                              <Minus className="h-2.5 w-2.5" />
                             </Button>
-                            <span className="w-10 text-center">{item.quantity}</span>
+                            <span className="w-8 text-center text-xs">
+                              {item.quantity}
+                            </span>
                             <Button
                               variant="outline"
                               size="icon"
-                              className="h-7 w-7"
-                              onClick={() => updateQuantity(item.id, item.selectedColor, item.quantity + 1, item.selectedSize, item.selectedVariantId)}
+                              className="h-6 w-6"
+                              onClick={() => {
+                                const availableStock =
+                                  getItemAvailableStock(item);
+
+                                if (item.quantity >= availableStock) {
+                                  toast.error(
+                                    `Only ${availableStock} in stock`,
+                                  );
+                                  return;
+                                }
+
+                                if (item.quantity >= 100) {
+                                  toast.error("Max 100 items");
+                                  return;
+                                }
+
+                                updateQuantity(
+                                  item.id,
+                                  item.selectedColor,
+                                  item.quantity + 1,
+                                  item.selectedSize,
+                                  item.selectedVariantId,
+                                );
+                              }}
+                              disabled={
+                                item.quantity >= 100 ||
+                                item.quantity >= getItemAvailableStock(item)
+                              }
                             >
-                              <Plus className="h-3 w-3" />
+                              <Plus className="h-2.5 w-2.5" />
                             </Button>
                           </div>
-                          <p className="text-primary whitespace-nowrap">₱{(item.price * item.quantity).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                          <p className="text-primary whitespace-nowrap text-xs sm:text-sm font-medium">
+                            ₱
+                            {(item.price * item.quantity).toLocaleString(
+                              "en-PH",
+                              {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              },
+                            )}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -255,16 +442,19 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
               </div>
             </div>
 
-            <div className="border-t bg-background px-6 py-4 space-y-4 flex-shrink-0">
-              {/* Coupon Input */}
+            <div className="border-t bg-background px-4 sm:px-6 py-3 flex-shrink-0 space-y-3">
+              {/* Coupon Section */}
               <div className="space-y-2">
                 <div className="flex gap-2">
                   <Input
                     type="text"
                     placeholder="Enter coupon code"
                     value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    disabled={!!appliedCoupon}
+                    onChange={(e) =>
+                      setCouponCode(e.target.value.toUpperCase())
+                    }
+                    disabled={!!appliedCoupon || isCouponLoading}
+                    maxLength={20}
                     className="flex-1"
                   />
                   {!appliedCoupon ? (
@@ -275,9 +465,25 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       className="gap-2"
                     >
                       {isCouponLoading ? (
-                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.928l3-2.647z"></path>
+                        <svg
+                          className="animate-spin h-4 w-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.928l3-2.647z"
+                          />
                         </svg>
                       ) : (
                         <Tag className="h-4 w-4" />
@@ -295,46 +501,117 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                     </Button>
                   )}
                 </div>
+
+                {/* Applied Coupon Badge */}
                 {appliedCoupon && (
                   <div className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-950 rounded-lg">
-                    <Tag className="h-4 w-4 text-green-600" />
-                    <p className="text-sm text-green-600 dark:text-green-400">
-                      {appliedCoupon.code} applied: {appliedCoupon.description}
+                    <Tag className="h-4 w-4 text-green-600 flex-shrink-0" />
+                    <p className="text-sm text-green-600 dark:text-green-400 flex-1">
+                      {appliedCoupon.code} - {appliedCoupon.description}
                     </p>
                   </div>
                 )}
-              </div>
 
-              <Separator />
+                {/* Available Coupons Section */}
+                {!appliedCoupon && applicableCoupons.length > 0 && (
+                  <div className="border rounded-lg">
+                    <button
+                      onClick={() =>
+                        setShowAvailableCoupons(!showAvailableCoupons)
+                      }
+                      className="w-full flex items-center justify-between p-3 hover:bg-accent/50 transition-colors rounded-lg"
+                    >
+                      <div className="flex items-center gap-2">
+                        <Tag className="h-4 w-4 text-primary" />
+                        <span className="text-sm font-medium">
+                          {applicableCoupons.length} Available Coupon
+                          {applicableCoupons.length > 1 ? "s" : ""}
+                        </span>
+                      </div>
+                      {showAvailableCoupons ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </button>
 
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <p className="text-muted-foreground">Subtotal</p>
-                  <p>₱{subtotal.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                </div>
-                {appliedCoupon && discount > 0 && (
-                  <div className="flex justify-between text-sm">
-                    <p className="text-green-600 dark:text-green-400">Discount ({appliedCoupon.code})</p>
-                    <p className="text-green-600 dark:text-green-400">-₱{discount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    {showAvailableCoupons && (
+                      <div className="border-t max-h-48 overflow-y-auto">
+                        {applicableCoupons.map((coupon) => (
+                          <div
+                            key={coupon.id}
+                            className="p-3 border-b last:border-b-0 hover:bg-accent/30 transition-colors"
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-sm text-primary">
+                                  {coupon.code}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {coupon.description}
+                                </p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  Min. purchase: ₱
+                                  {coupon.minPurchase.toLocaleString("en-PH")}
+                                  {coupon.maxDiscount &&
+                                    ` • Max discount: ₱${coupon.maxDiscount.toLocaleString("en-PH")}`}
+                                </p>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  handleApplySuggestedCoupon(coupon.code)
+                                }
+                                className="text-xs"
+                              >
+                                Apply
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-              
+
               <Separator />
-              
+
+              {/* Pricing Summary */}
+              {appliedCoupon && discount > 0 && (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <p className="text-green-600 dark:text-green-400">
+                      Discount
+                    </p>
+                    <p className="text-green-600 dark:text-green-400">
+                      -₱
+                      {discount.toLocaleString("en-PH", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {appliedCoupon && discount > 0 && <Separator />}
+
               <div className="flex justify-between items-center">
-                <p>Total</p>
-                <p className="text-primary">₱{total.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <p className="text-sm font-medium">Total</p>
+                <p className="text-base sm:text-lg font-semibold text-primary">
+                  ₱
+                  {total.toLocaleString("en-PH", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </p>
               </div>
 
-              <div className="flex flex-col gap-2 pt-2">
-                <Button className="w-full" size="lg" onClick={handleCheckout}>
-                  Proceed to Checkout
-                </Button>
-                <Button variant="outline" className="w-full" onClick={onClose}>
-                  Continue Shopping
-                </Button>
-              </div>
+              <Button className="w-full" onClick={handleCheckout}>
+                Proceed to Checkout
+              </Button>
             </div>
           </>
         )}
