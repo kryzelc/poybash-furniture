@@ -10,10 +10,10 @@
 
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    email VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE CHECK (email ~* '^[A-Za-z0-9._+%-]+@[A-Za-z0-9.-]+[.][A-Za-z]+$'),
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
-    phone VARCHAR(20),
+    phone VARCHAR(20) CHECK (phone ~* '^[+0-9() -]+$'),
     role user_role NOT NULL DEFAULT 'customer',
     active BOOLEAN DEFAULT true,
     email_verified BOOLEAN DEFAULT false,
@@ -35,7 +35,7 @@ CREATE TABLE addresses (
     state VARCHAR(100),
     zip_code VARCHAR(20),
     country VARCHAR(100) DEFAULT 'Philippines',
-    phone VARCHAR(20) NOT NULL,
+    phone VARCHAR(20) NOT NULL CHECK (phone ~* '^[+0-9() -]+$'),
     is_default BOOLEAN DEFAULT false,
     active BOOLEAN DEFAULT true,
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -143,12 +143,13 @@ CREATE TABLE inventory_batches (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     warehouse_stock_id UUID NOT NULL REFERENCES warehouse_stock(id) ON DELETE CASCADE,
     batch_id VARCHAR(100),
-    received_at TIMESTAMPTZ NOT NULL,
+    received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     quantity INTEGER NOT NULL CHECK (quantity >= 0),
     reserved INTEGER NOT NULL DEFAULT 0 CHECK (reserved >= 0 AND reserved <= quantity),
     available INTEGER GENERATED ALWAYS AS (quantity - reserved) STORED,
     notes TEXT,
-    created_at TIMESTAMPTZ DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    CHECK (reserved <= quantity)
 );
 
 -- ============================================
@@ -174,6 +175,32 @@ CREATE TABLE coupons (
         discount_type = 'fixed'
     ),
     CHECK (usage_limit IS NULL OR used_count <= usage_limit)
+);
+
+-- ============================================
+-- SHOPPING CART
+-- ============================================
+
+CREATE TABLE shopping_carts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    session_id VARCHAR(255),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    expires_at TIMESTAMPTZ DEFAULT NOW() + INTERVAL '30 days',
+    CONSTRAINT cart_user_or_session CHECK (
+        (user_id IS NOT NULL AND session_id IS NULL) OR
+        (user_id IS NULL AND session_id IS NOT NULL)
+    )
+);
+
+CREATE TABLE cart_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cart_id UUID NOT NULL REFERENCES shopping_carts(id) ON DELETE CASCADE,
+    variant_id UUID NOT NULL REFERENCES product_variants(id) ON DELETE CASCADE,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    added_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (cart_id, variant_id)
 );
 
 -- ============================================
@@ -204,6 +231,7 @@ CREATE TABLE orders (
     verified_by UUID REFERENCES users(id) ON DELETE SET NULL,
     is_manual_order BOOLEAN DEFAULT false,
     created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    completed_at TIMESTAMPTZ,
     notes TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
@@ -216,19 +244,41 @@ CREATE TABLE orders (
 CREATE TABLE order_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_id UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
-    variant_id UUID REFERENCES product_variants(id) ON DELETE RESTRICT,
+    
+    -- References (can be NULL if product deleted)
+    product_id BIGINT REFERENCES products(id) ON DELETE SET NULL,
+    variant_id UUID REFERENCES product_variants(id) ON DELETE SET NULL,
+    
+    -- SNAPSHOT: Complete product data at time of purchase (immutable)
+    sku VARCHAR(100) NOT NULL,
     name VARCHAR(255) NOT NULL,
+    description TEXT,
     price DECIMAL(10, 2) NOT NULL CHECK (price >= 0),
     quantity INTEGER NOT NULL CHECK (quantity > 0),
-    color VARCHAR(50),
+    
+    -- SNAPSHOT: Variant details
     size VARCHAR(50),
+    color_name VARCHAR(50),
+    color_hex VARCHAR(7),
+    material_name VARCHAR(100),
+    dimensions JSONB,
+    
+    -- SNAPSHOT: Category for historical reporting
+    category_name VARCHAR(100),
+    sub_category_name VARCHAR(100),
+    
+    -- Display
     image_url TEXT,
+    
+    -- Fulfillment
     warehouse_source UUID REFERENCES warehouses(id) ON DELETE RESTRICT,
+    
+    -- Refunds
     refund_requested BOOLEAN DEFAULT false,
     refund_reason TEXT,
     refund_status refund_status,
     refund_proof TEXT,
+    
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -245,6 +295,21 @@ CREATE TABLE order_refunds (
     refund_proof TEXT,
     admin_notes TEXT,
     items_refunded UUID[],
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE order_shipping_addresses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    order_id UUID NOT NULL UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    address TEXT NOT NULL,
+    barangay VARCHAR(100),
+    city VARCHAR(100) NOT NULL,
+    state VARCHAR(100),
+    zip_code VARCHAR(20),
+    country VARCHAR(100) DEFAULT 'Philippines',
+    phone VARCHAR(20) NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -299,7 +364,7 @@ BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SET search_path = public;
 
 -- Apply trigger to all tables with updated_at
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
@@ -340,3 +405,94 @@ CREATE TRIGGER update_order_items_updated_at BEFORE UPDATE ON order_items
 
 CREATE TRIGGER update_notifications_updated_at BEFORE UPDATE ON user_notifications
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- ORDER COMPLETION TRACKING
+-- ============================================
+
+-- Function to set completed_at when order status changes to 'completed'
+CREATE OR REPLACE FUNCTION set_order_completed_at()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- If status is changing to 'completed' and completed_at is not set
+    IF NEW.status = 'completed' AND OLD.status != 'completed' AND NEW.completed_at IS NULL THEN
+        NEW.completed_at = NOW();
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SET search_path = public;
+
+CREATE TRIGGER trigger_set_order_completed_at BEFORE UPDATE ON orders
+    FOR EACH ROW EXECUTE FUNCTION set_order_completed_at();
+
+-- ============================================
+-- PRICE VALIDATION (SECURITY)
+-- ============================================
+
+-- Validate order total matches items (prevents price manipulation)
+CREATE OR REPLACE FUNCTION validate_order_total()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_calculated_subtotal DECIMAL(10, 2);
+BEGIN
+    -- Calculate subtotal from order items
+    SELECT COALESCE(SUM(price * quantity), 0) INTO v_calculated_subtotal
+    FROM order_items
+    WHERE order_id = NEW.id;
+    
+    -- Validate subtotal matches (allow 1 cent rounding difference)
+    IF ABS(v_calculated_subtotal - NEW.subtotal) > 0.01 THEN
+        RAISE EXCEPTION 'Order subtotal mismatch. Expected: %, Got: %', 
+            v_calculated_subtotal, NEW.subtotal;
+    END IF;
+    
+    -- Validate total calculation
+    IF ABS((NEW.subtotal + NEW.delivery_fee - NEW.coupon_discount) - NEW.total) > 0.01 THEN
+        RAISE EXCEPTION 'Order total calculation error';
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SET search_path = public;
+
+CREATE TRIGGER trigger_validate_order_total 
+    AFTER INSERT OR UPDATE ON orders
+    FOR EACH ROW EXECUTE FUNCTION validate_order_total();
+
+-- ============================================
+-- REFUND VALIDATION (SECURITY)
+-- ============================================
+
+-- Prevent refund amount exceeding order total
+CREATE OR REPLACE FUNCTION validate_refund_amount()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_order_total DECIMAL(10, 2);
+    v_total_refunded DECIMAL(10, 2);
+BEGIN
+    -- Get order total
+    SELECT total INTO v_order_total FROM orders WHERE id = NEW.order_id;
+    
+    -- Calculate total already refunded
+    SELECT COALESCE(SUM(refund_amount), 0) INTO v_total_refunded
+    FROM order_refunds
+    WHERE order_id = NEW.order_id AND id != COALESCE(NEW.id, '00000000-0000-0000-0000-000000000000'::UUID);
+    
+    -- Validate refund amount is positive
+    IF NEW.refund_amount <= 0 THEN
+        RAISE EXCEPTION 'Refund amount must be positive';
+    END IF;
+    
+    -- Validate total refunds don't exceed order total
+    IF (v_total_refunded + NEW.refund_amount) > v_order_total THEN
+        RAISE EXCEPTION 'Total refunds (%) cannot exceed order total (%)', 
+            v_total_refunded + NEW.refund_amount, v_order_total;
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SET search_path = public;
+
+CREATE TRIGGER trigger_validate_refund_amount
+    BEFORE INSERT OR UPDATE ON order_refunds
+    FOR EACH ROW EXECUTE FUNCTION validate_refund_amount();

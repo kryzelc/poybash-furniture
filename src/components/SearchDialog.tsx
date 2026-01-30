@@ -1,11 +1,16 @@
-'use client';
+"use client";
 
-import { useState, useMemo } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
-import { Input } from './ui/input';
-import { products } from '../lib/products';
-import { ImageWithFallback } from './figma/ImageWithFallback';
-import { Search } from 'lucide-react';
+import { useState, useMemo } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
+import { Input } from "./ui/input";
+import { products } from "../lib/products";
+import { Search } from "lucide-react";
 
 interface SearchDialogProps {
   open: boolean;
@@ -13,8 +18,12 @@ interface SearchDialogProps {
   onProductClick: (productId: number) => void;
 }
 
-export function SearchDialog({ open, onClose, onProductClick }: SearchDialogProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+export function SearchDialog({
+  open,
+  onClose,
+  onProductClick,
+}: SearchDialogProps) {
+  const [searchQuery, setSearchQuery] = useState("");
 
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) return [];
@@ -27,12 +36,12 @@ export function SearchDialog({ open, onClose, onProductClick }: SearchDialogProp
       const words = searchTerm.split(/\s+/);
 
       // Check if all search words appear in the text
-      return words.every(word => textLower.includes(word));
+      return words.every((word) => textLower.includes(word));
     };
 
     // Score products based on match quality
     const scoredProducts = products
-      .map(product => {
+      .map((product) => {
         let score = 0;
         const nameLower = product.name.toLowerCase();
         const descLower = product.description.toLowerCase();
@@ -59,9 +68,9 @@ export function SearchDialog({ open, onClose, onProductClick }: SearchDialogProp
 
         return { product, score };
       })
-      .filter(item => item.score > 0)
+      .filter((item) => item.score > 0)
       .sort((a, b) => b.score - a.score)
-      .map(item => item.product);
+      .map((item) => item.product);
 
     return scoredProducts.slice(0, 6);
   }, [searchQuery]);
@@ -69,7 +78,7 @@ export function SearchDialog({ open, onClose, onProductClick }: SearchDialogProp
   const handleProductClick = (productId: number) => {
     onProductClick(productId);
     onClose();
-    setSearchQuery('');
+    setSearchQuery("");
   };
 
   return (
@@ -89,7 +98,7 @@ export function SearchDialog({ open, onClose, onProductClick }: SearchDialogProp
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 pr-4 h-16 pt-5 pb-5 rounded-2xl border-2 focus-visible:ring-0 focus-visible:ring-offset-0 text-base"
-              style={{ lineHeight: '1.5' }}
+              style={{ lineHeight: "1.5" }}
               autoFocus
             />
           </div>
@@ -108,7 +117,7 @@ export function SearchDialog({ open, onClose, onProductClick }: SearchDialogProp
                     className="w-full flex items-center gap-4 p-3 rounded-lg hover:bg-secondary transition-colors text-left"
                   >
                     <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
-                      <ImageWithFallback
+                      <img
                         src={product.imageUrl}
                         alt={product.name}
                         className="w-full h-full object-cover"
@@ -116,7 +125,9 @@ export function SearchDialog({ open, onClose, onProductClick }: SearchDialogProp
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="truncate">{product.name}</h4>
-                      <p className="text-muted-foreground">{product.subCategory}</p>
+                      <p className="text-muted-foreground">
+                        {product.subCategory}
+                      </p>
                     </div>
                     <p className="text-primary">₱{product.price.toFixed(2)}</p>
                   </button>

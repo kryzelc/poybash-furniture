@@ -284,7 +284,7 @@ export function SalesDashboard({ orders, products, onViewOrder, onQuickFilter }:
                 stats.topProducts.map((item, index) => (
                   <div key={item.product.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary/30 transition-colors">
                     <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
-                      <ImageWithFallback
+                      <img
                         src={item.product.images[0] || ''}
                         alt={item.product.name}
                         className="w-full h-full object-cover"

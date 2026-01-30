@@ -665,7 +665,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                                 <div key={index}>
                                   <div className="flex gap-4">
                                     <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
-                                      <ImageWithFallback
+                                      <img
                                         src={getProductImage(
                                           item.productId,
                                           item.imageUrl,
@@ -1139,7 +1139,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
             {selectedItem && (
               <div className="flex gap-4 p-3 bg-secondary/30 rounded-lg">
                 <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
-                  <ImageWithFallback
+                  <img
                     src={getProductImage(
                       selectedItem.productId,
                       selectedItem.imageUrl,
@@ -1226,7 +1226,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                   <div className="grid grid-cols-3 gap-2">
                     {refundProofImages.map((image, index) => (
                       <div key={index} className="relative group">
-                        <ImageWithFallback
+                        <img
                           src={image}
                           alt={`Refund proof ${index + 1}`}
                           className="w-full h-24 object-cover rounded border"

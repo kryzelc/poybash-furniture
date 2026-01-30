@@ -1,10 +1,11 @@
-'use client';
+"use client";
+import Link from "next/link";
+import { Facebook, Phone } from "lucide-react";
 
-import { ImageWithFallback } from './figma/ImageWithFallback';
-import Link from 'next/link';
-import { Facebook, Phone } from 'lucide-react';
-
-const poybashLogo = "/images/d5402509ea28f1255409df1863e03ad909a38d15.png";
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  "https://ktcadsqclaszdyymftvf.supabase.co";
+const poybashLogo = `${SUPABASE_URL}/storage/v1/object/public/assets/logos/poybash-logo.png`;
 
 export function Footer() {
   return (
@@ -14,7 +15,7 @@ export function Footer() {
           {/* Brand */}
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3">
-              <ImageWithFallback
+              <img
                 src={poybashLogo}
                 alt="PoyBash Furniture"
                 className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 flex-shrink-0"
@@ -50,7 +51,9 @@ export function Footer() {
 
           {/* Shop Links */}
           <div>
-            <h4 className="mb-2 sm:mb-3 font-semibold text-sm sm:text-base">Shop</h4>
+            <h4 className="mb-2 sm:mb-3 font-semibold text-sm sm:text-base">
+              Shop
+            </h4>
             <ul className="space-y-1.5 sm:space-y-2">
               <li>
                 <Link
@@ -65,7 +68,9 @@ export function Footer() {
 
           {/* Company Links */}
           <div>
-            <h4 className="mb-2 sm:mb-3 font-semibold text-sm sm:text-base">Company</h4>
+            <h4 className="mb-2 sm:mb-3 font-semibold text-sm sm:text-base">
+              Company
+            </h4>
             <ul className="space-y-1.5 sm:space-y-2">
               <li>
                 <Link
@@ -88,7 +93,9 @@ export function Footer() {
 
           {/* Account Links */}
           <div>
-            <h4 className="mb-2 sm:mb-3 font-semibold text-sm sm:text-base">Account</h4>
+            <h4 className="mb-2 sm:mb-3 font-semibold text-sm sm:text-base">
+              Account
+            </h4>
             <ul className="space-y-1.5 sm:space-y-2">
               <li>
                 <Link

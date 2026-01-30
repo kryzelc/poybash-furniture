@@ -1,31 +1,38 @@
-'use client';
-
-import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { Leaf, Recycle, TreePine, Droplet } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+"use client";
+import { Leaf, Recycle, TreePine, Droplet } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 
 export function SustainabilityPage() {
   const initiatives = [
     {
       icon: TreePine,
-      title: 'Responsible Sourcing',
-      description: 'We source wood from certified sustainable forests and work with suppliers who share our commitment to environmental responsibility.'
+      title: "Responsible Sourcing",
+      description:
+        "We source wood from certified sustainable forests and work with suppliers who share our commitment to environmental responsibility.",
     },
     {
       icon: Recycle,
-      title: 'Waste Reduction',
-      description: 'Our manufacturing process maximizes material usage and recycles wood scraps into smaller products or biofuel.'
+      title: "Waste Reduction",
+      description:
+        "Our manufacturing process maximizes material usage and recycles wood scraps into smaller products or biofuel.",
     },
     {
       icon: Droplet,
-      title: 'Water-Based Finishes',
-      description: 'We use eco-friendly, water-based stains and finishes that reduce harmful emissions and are safer for our workers and customers.'
+      title: "Water-Based Finishes",
+      description:
+        "We use eco-friendly, water-based stains and finishes that reduce harmful emissions and are safer for our workers and customers.",
     },
     {
       icon: Leaf,
-      title: 'Carbon Neutral Shipping',
-      description: 'We partner with logistics providers committed to reducing carbon emissions and offer consolidated shipping options.'
-    }
+      title: "Carbon Neutral Shipping",
+      description:
+        "We partner with logistics providers committed to reducing carbon emissions and offer consolidated shipping options.",
+    },
   ];
 
   return (
@@ -39,8 +46,8 @@ export function SustainabilityPage() {
             </div>
             <h1 className="mb-4">Sustainability</h1>
             <p className="text-muted-foreground">
-              Building a greener future, one piece of furniture at a time. Our commitment to 
-              sustainability guides every decision we make.
+              Building a greener future, one piece of furniture at a time. Our
+              commitment to sustainability guides every decision we make.
             </p>
           </div>
         </div>
@@ -54,18 +61,20 @@ export function SustainabilityPage() {
             <div className="space-y-6">
               <h2>Our Environmental Commitment</h2>
               <p className="text-muted-foreground leading-relaxed">
-                At PoyBash Furniture, we believe that creating beautiful furniture shouldn't come 
-                at the expense of our planet. That's why sustainability is woven into every aspect 
-                of our business, from the materials we choose to how we package and ship our products.
+                At PoyBash Furniture, we believe that creating beautiful
+                furniture shouldn't come at the expense of our planet. That's
+                why sustainability is woven into every aspect of our business,
+                from the materials we choose to how we package and ship our
+                products.
               </p>
               <p className="text-muted-foreground leading-relaxed">
-                We're continuously working to reduce our environmental footprint and are committed 
-                to achieving carbon neutrality by 2030. This isn't just a goal—it's our responsibility 
-                to future generations.
+                We're continuously working to reduce our environmental footprint
+                and are committed to achieving carbon neutrality by 2030. This
+                isn't just a goal—it's our responsibility to future generations.
               </p>
             </div>
             <div className="aspect-[4/3] rounded-lg overflow-hidden bg-secondary">
-              <ImageWithFallback
+              <img
                 src="https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=800"
                 alt="Sustainable forest"
                 className="w-full h-full object-cover"
@@ -78,7 +87,8 @@ export function SustainabilityPage() {
             <div className="text-center max-w-2xl mx-auto">
               <h2 className="mb-4">Our Green Initiatives</h2>
               <p className="text-muted-foreground">
-                We've implemented comprehensive sustainability practices across our entire operation.
+                We've implemented comprehensive sustainability practices across
+                our entire operation.
               </p>
             </div>
 
@@ -136,9 +146,10 @@ export function SustainabilityPage() {
           <div className="text-center max-w-2xl mx-auto space-y-4">
             <h3>Join Us in Making a Difference</h3>
             <p className="text-muted-foreground">
-              When you choose PoyBash Furniture, you're not just buying quality furniture—you're 
-              supporting sustainable practices and helping build a greener future. Together, we 
-              can make a positive impact on our environment.
+              When you choose PoyBash Furniture, you're not just buying quality
+              furniture—you're supporting sustainable practices and helping
+              build a greener future. Together, we can make a positive impact on
+              our environment.
             </p>
           </div>
         </div>

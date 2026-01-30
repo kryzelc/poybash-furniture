@@ -195,7 +195,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
           {/* Images */}
           <div className="space-y-4">
             <div className="aspect-square rounded-lg overflow-hidden bg-secondary">
-              <ImageWithFallback
+              <img
                 src={product.imageUrl}
                 alt={product.name}
                 className="w-full h-full object-cover"
@@ -484,7 +484,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
                     className="cursor-pointer block"
                   >
                     <div className="aspect-square rounded-lg overflow-hidden bg-secondary mb-4">
-                      <ImageWithFallback
+                      <img
                         src={relatedProduct.imageUrl}
                         alt={relatedProduct.name}
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"

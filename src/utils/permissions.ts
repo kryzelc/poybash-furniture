@@ -3,7 +3,12 @@
  * Following e-commerce industry best practices
  */
 
-export type UserRole = 'customer' | 'staff' | 'inventory-clerk' | 'admin' | 'owner';
+export type UserRole =
+  | "customer"
+  | "staff"
+  | "inventory-clerk"
+  | "admin"
+  | "owner";
 
 export interface RolePermissions {
   // Order Management
@@ -14,7 +19,7 @@ export interface RolePermissions {
   cancelOrder: boolean;
   processRefunds: boolean;
   viewRefundRequests: boolean;
-  
+
   // Product & Inventory Management
   viewProducts: boolean;
   createProduct: boolean;
@@ -24,7 +29,7 @@ export interface RolePermissions {
   viewInventoryLevels: boolean;
   transferStock: boolean;
   fulfillOrders: boolean;
-  
+
   // User & Account Management
   viewAllUsers: boolean;
   createCustomerAccount: boolean;
@@ -33,22 +38,22 @@ export interface RolePermissions {
   createAdminAccount: boolean;
   updateUserAccount: boolean;
   deactivateUserAccount: boolean;
-  
+
   // Coupon Management
   viewCoupons: boolean;
   createCoupon: boolean;
   updateCoupon: boolean;
   deleteCoupon: boolean;
-  
+
   // Financial & Reporting
   viewRevenue: boolean;
   viewDetailedAnalytics: boolean;
   exportReports: boolean;
-  
+
   // Customer Service
   viewCustomerInfo: boolean;
   contactCustomers: boolean;
-  
+
   // System Administration
   accessAdminPanel: boolean;
   manageSystemSettings: boolean;
@@ -71,7 +76,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     cancelOrder: true, // Can cancel own orders
     processRefunds: false,
     viewRefundRequests: false,
-    
+
     // Product & Inventory
     viewProducts: true,
     createProduct: false,
@@ -81,7 +86,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     viewInventoryLevels: true, // Can see stock availability
     transferStock: false,
     fulfillOrders: false,
-    
+
     // User & Account Management
     viewAllUsers: false,
     createCustomerAccount: false,
@@ -90,22 +95,22 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     createAdminAccount: false,
     updateUserAccount: false, // Can only update own account
     deactivateUserAccount: false,
-    
+
     // Coupon Management
     viewCoupons: true, // Can view available coupons
     createCoupon: false,
     updateCoupon: false,
     deleteCoupon: false,
-    
+
     // Financial & Reporting
     viewRevenue: false,
     viewDetailedAnalytics: false,
     exportReports: false,
-    
+
     // Customer Service
     viewCustomerInfo: false,
     contactCustomers: false,
-    
+
     // System Administration
     accessAdminPanel: false,
     manageSystemSettings: false,
@@ -125,7 +130,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     cancelOrder: true,
     processRefunds: true, // ✅ ENABLED: Process refunds with full audit trail
     viewRefundRequests: true,
-    
+
     // Product & Inventory
     viewProducts: true,
     createProduct: false,
@@ -135,7 +140,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     viewInventoryLevels: true, // Can check stock to inform customers
     transferStock: false,
     fulfillOrders: false, // Fulfillment is warehouse responsibility
-    
+
     // User & Account Management
     viewAllUsers: true, // View customers for order creation
     createCustomerAccount: true, // Can register walk-in customers
@@ -144,22 +149,22 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     createAdminAccount: false,
     updateUserAccount: false,
     deactivateUserAccount: false,
-    
+
     // Coupon Management
     viewCoupons: true,
     createCoupon: false,
     updateCoupon: false,
     deleteCoupon: false,
-    
+
     // Financial & Reporting
     viewRevenue: true, // Can see sales metrics for motivation
     viewDetailedAnalytics: false,
     exportReports: false,
-    
+
     // Customer Service
     viewCustomerInfo: true,
     contactCustomers: true,
-    
+
     // System Administration
     accessAdminPanel: true, // Limited access to orders and customers
     manageSystemSettings: false,
@@ -170,7 +175,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
    * Primary focus: Stock management, inventory control, and order fulfillment
    * NOT customer-facing, so no refund processing
    */
-  'inventory-clerk': {
+  "inventory-clerk": {
     // Order Management
     viewAllOrders: true,
     viewOwnOrders: true,
@@ -179,7 +184,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     cancelOrder: false, // Cannot cancel orders
     processRefunds: false, // ❌ NOT customer-facing role
     viewRefundRequests: false,
-    
+
     // Product & Inventory
     viewProducts: true,
     createProduct: false,
@@ -189,7 +194,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     viewInventoryLevels: true,
     transferStock: true, // Transfer between warehouses
     fulfillOrders: true, // ✅ Primary responsibility
-    
+
     // User & Account Management
     viewAllUsers: false,
     createCustomerAccount: false,
@@ -198,22 +203,22 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     createAdminAccount: false,
     updateUserAccount: false,
     deactivateUserAccount: false,
-    
+
     // Coupon Management
     viewCoupons: false,
     createCoupon: false,
     updateCoupon: false,
     deleteCoupon: false,
-    
+
     // Financial & Reporting
     viewRevenue: false,
     viewDetailedAnalytics: false,
     exportReports: true, // Can export inventory reports
-    
+
     // Customer Service
     viewCustomerInfo: true, // For shipping labels
     contactCustomers: false,
-    
+
     // System Administration
     accessAdminPanel: true, // Limited access to inventory and fulfillment
     manageSystemSettings: false,
@@ -233,7 +238,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     cancelOrder: true,
     processRefunds: true,
     viewRefundRequests: true,
-    
+
     // Product & Inventory
     viewProducts: true,
     createProduct: true,
@@ -243,7 +248,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     viewInventoryLevels: true,
     transferStock: true,
     fulfillOrders: true,
-    
+
     // User & Account Management
     viewAllUsers: true,
     createCustomerAccount: true,
@@ -252,22 +257,22 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     createAdminAccount: false, // Only Owner can create Admins
     updateUserAccount: true,
     deactivateUserAccount: true,
-    
+
     // Coupon Management
     viewCoupons: true,
     createCoupon: true,
     updateCoupon: true,
     deleteCoupon: true,
-    
+
     // Financial & Reporting
     viewRevenue: true,
     viewDetailedAnalytics: true,
     exportReports: true,
-    
+
     // Customer Service
     viewCustomerInfo: true,
     contactCustomers: true,
-    
+
     // System Administration
     accessAdminPanel: true,
     manageSystemSettings: true, // Limited system settings
@@ -287,7 +292,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     cancelOrder: true,
     processRefunds: true,
     viewRefundRequests: true,
-    
+
     // Product & Inventory
     viewProducts: true,
     createProduct: true,
@@ -297,7 +302,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     viewInventoryLevels: true,
     transferStock: true,
     fulfillOrders: true,
-    
+
     // User & Account Management
     viewAllUsers: true,
     createCustomerAccount: true,
@@ -306,22 +311,22 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     createAdminAccount: true, // ✅ Only Owner can create Admins
     updateUserAccount: true,
     deactivateUserAccount: true,
-    
+
     // Coupon Management
     viewCoupons: true,
     createCoupon: true,
     updateCoupon: true,
     deleteCoupon: true,
-    
+
     // Financial & Reporting
     viewRevenue: true,
     viewDetailedAnalytics: true,
     exportReports: true,
-    
+
     // Customer Service
     viewCustomerInfo: true,
     contactCustomers: true,
-    
+
     // System Administration
     accessAdminPanel: true,
     manageSystemSettings: true, // Full system control
@@ -338,7 +343,10 @@ export function getPermissions(role: UserRole): RolePermissions {
 /**
  * Check if a role has a specific permission
  */
-export function hasPermission(role: UserRole, permission: keyof RolePermissions): boolean {
+export function hasPermission(
+  role: UserRole,
+  permission: keyof RolePermissions,
+): boolean {
   return ROLE_PERMISSIONS[role][permission];
 }
 
@@ -347,7 +355,7 @@ export function hasPermission(role: UserRole, permission: keyof RolePermissions)
  */
 export function canPerformAction(
   userRole: UserRole | undefined,
-  permission: keyof RolePermissions
+  permission: keyof RolePermissions,
 ): boolean {
   if (!userRole) return false;
   return hasPermission(userRole, permission);
@@ -358,11 +366,11 @@ export function canPerformAction(
  */
 export function getRoleDisplayName(role: UserRole): string {
   const roleNames: Record<UserRole, string> = {
-    customer: 'Customer',
-    staff: 'Sales Staff',
-    'inventory-clerk': 'Inventory Clerk',
-    admin: 'Administrator',
-    owner: 'Owner',
+    customer: "Customer",
+    staff: "Sales Staff",
+    "inventory-clerk": "Inventory Clerk",
+    admin: "Administrator",
+    owner: "Owner",
   };
   return roleNames[role];
 }
@@ -372,11 +380,13 @@ export function getRoleDisplayName(role: UserRole): string {
  */
 export function getRoleDescription(role: UserRole): string {
   const descriptions: Record<UserRole, string> = {
-    customer: 'Browse products, place orders, and manage personal account',
-    staff: 'Customer-facing sales, order creation, and refund processing',
-    'inventory-clerk': 'Warehouse operations, stock management, and order fulfillment',
-    admin: 'Full operational management including users, products, and orders',
-    owner: 'Complete system access with strategic oversight and business management',
+    customer: "Browse products, place orders, and manage personal account",
+    staff: "Customer-facing sales, order creation, and refund processing",
+    "inventory-clerk":
+      "Warehouse operations, stock management, and order fulfillment",
+    admin: "Full operational management including users, products, and orders",
+    owner:
+      "Complete system access with strategic oversight and business management",
   };
   return descriptions[role];
 }
@@ -387,11 +397,12 @@ export function getRoleDescription(role: UserRole): string {
 export function getCreatableRoles(creatorRole: UserRole): UserRole[] {
   const permissions = getPermissions(creatorRole);
   const creatableRoles: UserRole[] = [];
-  
-  if (permissions.createCustomerAccount) creatableRoles.push('customer');
-  if (permissions.createStaffAccount) creatableRoles.push('staff');
-  if (permissions.createInventoryClerkAccount) creatableRoles.push('inventory-clerk');
-  if (permissions.createAdminAccount) creatableRoles.push('admin');
-  
+
+  if (permissions.createCustomerAccount) creatableRoles.push("customer");
+  if (permissions.createStaffAccount) creatableRoles.push("staff");
+  if (permissions.createInventoryClerkAccount)
+    creatableRoles.push("inventory-clerk");
+  if (permissions.createAdminAccount) creatableRoles.push("admin");
+
   return creatableRoles;
 }

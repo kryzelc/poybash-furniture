@@ -1088,7 +1088,7 @@ export function CheckoutPage() {
                                   Remove
                                 </Button>
                               </div>
-                              <ImageWithFallback
+                              <img
                                 src={paymentProof}
                                 alt="Payment proof"
                                 className="max-h-40 mx-auto rounded"
@@ -1242,7 +1242,7 @@ export function CheckoutPage() {
                                   Remove
                                 </Button>
                               </div>
-                              <ImageWithFallback
+                              <img
                                 src={paymentProof}
                                 alt="Payment proof"
                                 className="max-h-40 mx-auto rounded"
@@ -1271,7 +1271,7 @@ export function CheckoutPage() {
                         className="flex gap-3"
                       >
                         <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
-                          <ImageWithFallback
+                          <img
                             src={item.imageUrl}
                             alt={item.name}
                             className="w-full h-full object-cover"

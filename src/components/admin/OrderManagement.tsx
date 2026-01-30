@@ -910,7 +910,7 @@ function OrderDetailsView({
                       </DialogDescription>
                     </DialogHeader>
                     <div className="max-h-[70vh] overflow-auto">
-                      <ImageWithFallback
+                      <img
                         src={order.paymentProof}
                         alt="Payment proof full size"
                         className="w-full h-auto"
@@ -992,7 +992,7 @@ function OrderDetailsView({
           {order.items.map((item, index) => (
             <div key={`item-${item.productId}-${item.variantId || item.color}-${index}`} className="flex gap-4 p-3 border rounded-lg">
               <div className="w-20 h-20 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
-                <ImageWithFallback
+                <img
                   src={getProductImage(item.productId, item.imageUrl)}
                   alt={item.name}
                   className="w-full h-full object-cover"
@@ -1029,7 +1029,7 @@ function OrderDetailsView({
                 <div key={`refund-${item.productId}-${item.variantId || item.color}-${index}`} className="p-4 bg-white border border-purple-200 rounded-lg">
                   <div className="flex gap-4">
                     <div className="w-16 h-16 rounded overflow-hidden bg-secondary flex-shrink-0">
-                      <ImageWithFallback
+                      <img
                         src={getProductImage(item.productId, item.imageUrl)}
                         alt={item.name}
                         className="w-full h-full object-cover"
@@ -1063,7 +1063,7 @@ function OrderDetailsView({
                                 </DialogDescription>
                               </DialogHeader>
                               <div className="max-h-[70vh] overflow-auto">
-                                <ImageWithFallback
+                                <img
                                   src={item.refundProof}
                                   alt="Customer refund proof"
                                   className="w-full h-auto"
@@ -1197,7 +1197,7 @@ function OrderDetailsView({
                               </DialogDescription>
                             </DialogHeader>
                             <div className="max-h-[70vh] overflow-auto">
-                              <ImageWithFallback
+                              <img
                                 src={order.refundDetails.refundProof}
                                 alt="Refund proof full size"
                                 className="w-full h-auto"

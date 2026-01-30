@@ -1,24 +1,33 @@
-'use client';
+"use client";
 
-import { ShoppingCart, Search, Menu, User, X } from 'lucide-react';
-import { Button } from './ui/button';
-import { useCart } from '../contexts/CartContext';
-import { useAuth } from '../contexts/AuthContext';
+import { ShoppingCart, Search, Menu, User, X } from "lucide-react";
+import { Button } from "./ui/button";
+import { useCart } from "../contexts/CartContext";
+import { useAuth } from "../contexts/AuthContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from './ui/dropdown-menu';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
-import { SearchDialog } from './SearchDialog';
-import { useState, useEffect } from 'react';
-import { ImageWithFallback } from './figma/ImageWithFallback';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+} from "./ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "./ui/sheet";
+import { SearchDialog } from "./SearchDialog";
+import { useState, useEffect } from "react";
 
-const poybashLogo = "/images/d5402509ea28f1255409df1863e03ad909a38d15.png";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  "https://ktcadsqclaszdyymftvf.supabase.co";
+const poybashLogo = `${SUPABASE_URL}/storage/v1/object/public/assets/logos/poybash-logo.png`;
 
 interface HeaderProps {
   onCartOpen: () => void;
@@ -44,7 +53,7 @@ export function Header({ onCartOpen }: HeaderProps) {
 
   const handleLogout = () => {
     logout();
-    router.push('/');
+    router.push("/");
   };
 
   return (
@@ -66,11 +75,18 @@ export function Header({ onCartOpen }: HeaderProps) {
                 className="lg:hidden h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 flex-shrink-0"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
-                {mobileMenuOpen ? <X className="h-4 w-4 sm:h-5 sm:w-5" /> : <Menu className="h-4 w-4 sm:h-5 sm:w-5" />}
+                {mobileMenuOpen ? (
+                  <X className="h-4 w-4 sm:h-5 sm:w-5" />
+                ) : (
+                  <Menu className="h-4 w-4 sm:h-5 sm:w-5" />
+                )}
               </Button>
 
-              <Link href="/" className="flex items-center gap-1 sm:gap-1.5 md:gap-2 lg:gap-3 group min-w-0 flex-shrink">
-                <ImageWithFallback
+              <Link
+                href="/"
+                className="flex items-center gap-1 sm:gap-1.5 md:gap-2 lg:gap-3 group min-w-0 flex-shrink"
+              >
+                <img
                   src={poybashLogo}
                   alt="PoyBash Furniture"
                   className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-10 lg:h-10 transition-transform duration-200 group-hover:scale-105 flex-shrink-0"
@@ -84,13 +100,22 @@ export function Header({ onCartOpen }: HeaderProps) {
 
             {/* Center: Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-              <Link href="/products" className="text-sm font-medium transition-colors hover:text-primary">
+              <Link
+                href="/products"
+                className="text-sm font-medium transition-colors hover:text-primary"
+              >
                 Shop
               </Link>
-              <Link href="/about" className="text-sm font-medium transition-colors hover:text-primary">
+              <Link
+                href="/about"
+                className="text-sm font-medium transition-colors hover:text-primary"
+              >
                 About
               </Link>
-              <Link href="/help" className="text-sm font-medium transition-colors hover:text-primary">
+              <Link
+                href="/help"
+                className="text-sm font-medium transition-colors hover:text-primary"
+              >
                 Help
               </Link>
             </nav>
@@ -110,7 +135,11 @@ export function Header({ onCartOpen }: HeaderProps) {
               {/* Account */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-11 lg:w-11">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-11 lg:w-11"
+                  >
                     <User className="h-4 w-4 sm:h-5 sm:w-5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -147,7 +176,12 @@ export function Header({ onCartOpen }: HeaderProps) {
               </DropdownMenu>
 
               {/* Cart */}
-              <Button variant="ghost" size="icon" className="relative h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-11 lg:w-11" onClick={onCartOpen}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative h-8 w-8 sm:h-9 sm:w-9 md:h-10 md:w-10 lg:h-11 lg:w-11"
+                onClick={onCartOpen}
+              >
                 <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
                 {cartCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 sm:-top-1 sm:-right-1 h-4 w-4 sm:h-5 sm:w-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[9px] sm:text-xs font-medium">
@@ -160,7 +194,11 @@ export function Header({ onCartOpen }: HeaderProps) {
 
           {/* Mobile/Tablet Menu Sheet */}
           <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-            <SheetContent side="left" className="w-full sm:max-w-md flex flex-col p-0 h-full overflow-hidden lg:hidden" aria-describedby="mobile-menu-description">
+            <SheetContent
+              side="left"
+              className="w-full sm:max-w-md flex flex-col p-0 h-full overflow-hidden lg:hidden"
+              aria-describedby="mobile-menu-description"
+            >
               <SheetHeader className="px-6 pt-6 pb-4 space-y-2 flex-shrink-0">
                 <SheetTitle>Menu</SheetTitle>
                 <SheetDescription id="mobile-menu-description">
@@ -196,7 +234,6 @@ export function Header({ onCartOpen }: HeaderProps) {
                   >
                     Help
                   </Link>
-
 
                   {/* My Account / Login */}
                   {!isAuthenticated() ? (

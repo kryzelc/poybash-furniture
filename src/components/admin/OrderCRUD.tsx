@@ -927,7 +927,7 @@ export function CreateOrderDialog({
                     
                     return (
                       <div key={index} className={`flex items-center gap-4 p-2 rounded ${hasStockIssue ? 'bg-red-50 border border-red-300' : 'bg-secondary'}`}>
-                        <ImageWithFallback
+                        <img
                           src={item.imageUrl}
                           alt={item.name}
                           className="w-12 h-12 object-cover rounded"
@@ -1488,7 +1488,7 @@ export function EditOrderDialog({
               <div className="space-y-2">
                 {items.map((item, index) => (
                   <div key={index} className="flex items-center gap-4 p-3 bg-secondary rounded-lg">
-                    <ImageWithFallback
+                    <img
                       src={item.imageUrl}
                       alt={item.name}
                       className="w-16 h-16 object-cover rounded"

@@ -1,31 +1,43 @@
-// Product image paths (stored in public/images)
-const shelliChair = "/images/ce19ae448e38bc55a409889246b7a54dfe7d70dc.png";
-const sashaChair = "/images/187be32eaf2e75f1d410890c9a95336474fb9069.png";
-const shaylaChair = "/images/861276f00ab2e639580a80826f7572703c39b395.png";
-const sherileeChair = "/images/81d2a2fabfad203d5b830eae5ae514f0daedeb24.png";
-const samiraChair = "/images/0f370efba5337107110b1a93b411d7a4cf90948a.png";
-const samiChair = "/images/53f6634b65fe28de1f5ee2c691b2fc802a26a987.png";
-const sadeChair = "/images/07955b4e7140256061db4d2caea61a0c82ef86a4.png";
-const sadahChair = "/images/c9acd930445cbaccb222c664628640bcb8153cb1.png";
-const sedraChair = "/images/996d552632e616a24b1e9897ed08f84e5336eefe.png";
-const sarahChair = "/images/dcec4bdfe2f0908b206748bdd9669e8b2e317af1.png";
-const sageChair = "/images/35b8f13cc47c03877f51a56d907c6b18a8277d01.png";
-const secoyaChair = "/images/61d4d1cedb83aa22fd7c1a99f6071dd34678d1a8.png";
-const sammyChair = "/images/4f292cf3d607539c720d757808d52baede60c91e.png";
-const sarinaChair = "/images/b7223188a8cd77deb7d46db692bc94f388852eda.png";
-const sallyStool = "/images/b66a3a610d817304e2a8191ff2f7b0ae3d8fd6a6.png";
-const sebBench = "/images/86b90ebb8842cb1676eea6b7c231991c3cf94cbf.png";
-const scarletHighChair = "/images/6e09ca5f90e9914a812888b096bcf57d9f725cee.png";
-const scarlaHighChair = "/images/08a6d4d867e66c1e8e80e3d2bff9ede806c7506c.png";
-const scottHighChair = "/images/941937352f3f009bb9864931bdcd7d822e24dea5.png";
-const stellaSquareTable =
-  "/images/cafea32ebc488e26329ba24518ef60ab0f0d869f.png";
-const stellaRoundTable = "/images/8efe6cab17d329bc3776f1784c468ea08b106c9e.png";
-const stellaRectangularTable =
-  "/images/fcb68d4d6adabadc137201919584671787bf2758.png";
-const serahHighTable = "/images/257d451842e1008f35cd8e216337142a1608f4a2.png";
-const senoHighTable = "/images/78d8323b5662ac9055fa1d9039c726bb13b919e4.png";
-const senaHighTable = "/images/f9806cdc1b94a033ed9681ff4605103e469f6121.png";
+// Helper function to get image URL from Supabase storage
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://ktcadsqclaszdyymftvf.supabase.co";
+
+const getStorageUrl = (
+  folder: "chairs" | "tables",
+  fileName: string,
+): string => {
+  return `${SUPABASE_URL}/storage/v1/object/public/assets/${folder}/${fileName}`;
+};
+
+// Product image paths (from Supabase storage bucket)
+const shelliChair = getStorageUrl("chairs", "shelli-chair.png");
+const sashaChair = getStorageUrl("chairs", "sasha-chair.png");
+const shaylaChair = getStorageUrl("chairs", "shayla-chair.png");
+const sherleeChair = getStorageUrl("chairs", "sherlee-chair.png");
+const samiraChair = getStorageUrl("chairs", "samira-chair.png");
+const samiChair = getStorageUrl("chairs", "sami-chair.png");
+const sadeChair = getStorageUrl("chairs", "sade-chair.png");
+const sadahChair = getStorageUrl("chairs", "sadah-chair.png");
+const sedraChair = getStorageUrl("chairs", "sedra-chair.png");
+const sarahChair = getStorageUrl("chairs", "sarah-chair.png");
+const sageChair = getStorageUrl("chairs", "sage-chair.png");
+const secoyaChair = getStorageUrl("chairs", "secoya-chair.png");
+const sammyChair = getStorageUrl("chairs", "sammy-chair.png");
+const sarinaChair = getStorageUrl("chairs", "sarina-chair.png");
+const sallyStool = getStorageUrl("chairs", "sally-chair.png");
+const sebBench = getStorageUrl("chairs", "seb-bench-chair.png");
+const scarletHighChair = getStorageUrl("chairs", "scarlet-high-chair.png");
+const scarlaHighChair = getStorageUrl("chairs", "scarla-high-chair.png");
+const scottHighChair = getStorageUrl("chairs", "scott-high-chair.png");
+const stellaSquareTable = getStorageUrl("tables", "stella-square-table.png");
+const stellaRoundTable = getStorageUrl("tables", "stella-round-table.png");
+const stellaRectangularTable = getStorageUrl(
+  "tables",
+  "stella-rectangular-table.png",
+);
+const serahHighTable = getStorageUrl("tables", "serah-high-table.png");
+const senoHighTable = getStorageUrl("tables", "seno-high-table.png");
+const senaHighTable = getStorageUrl("tables", "sena-high-table.png");
 
 export interface WarehouseStock {
   warehouse: "Lorenzo" | "Oroquieta";
@@ -287,8 +299,8 @@ const defaultProducts: Product[] = [
       "Stunning solid wood chair with woven cane back and seat. Features traditional craftsmanship with natural woven details for a breezy, tropical aesthetic. Heritage Collection.",
     category: "chairs",
     subCategory: "Dining Chairs",
-    imageUrl: sherileeChair,
-    images: [sherileeChair],
+    imageUrl: sherleeChair,
+    images: [sherleeChair],
     material: "Solid Wood & Woven Cane",
     dimensions: { width: 48, height: 89, depth: 54 },
     variants: [

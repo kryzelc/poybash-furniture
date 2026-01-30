@@ -233,7 +233,7 @@ export function ManualRefundDialog({
                   <div className="space-y-2">
                     <span className="text-muted-foreground text-xs">Customer's Payment Proof:</span>
                     <div className="p-2 bg-background rounded-lg border">
-                      <ImageWithFallback
+                      <img
                         src={order.paymentProof}
                         alt="Customer payment proof"
                         className="max-h-32 mx-auto rounded cursor-pointer hover:opacity-80 transition-opacity"
@@ -291,7 +291,7 @@ export function ManualRefundDialog({
                       />
                       <div className="flex-1 flex items-center gap-3">
                         <div className="w-12 h-12 rounded bg-secondary overflow-hidden flex-shrink-0">
-                          <ImageWithFallback
+                          <img
                             src={item.imageUrl}
                             alt={item.name}
                             className="w-full h-full object-cover"
@@ -421,7 +421,7 @@ export function ManualRefundDialog({
                     Remove
                   </Button>
                 </div>
-                <ImageWithFallback
+                <img
                   src={refundProof}
                   alt="Refund proof"
                   className="max-h-48 mx-auto rounded border"

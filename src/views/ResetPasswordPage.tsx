@@ -13,7 +13,10 @@ import {
 } from "../components/ui/card";
 import { toast } from "sonner";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-const poybashLogo = "/images/d5402509ea28f1255409df1863e03ad909a38d15.png";
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  "https://ktcadsqclaszdyymftvf.supabase.co";
+const poybashLogo = `${SUPABASE_URL}/storage/v1/object/public/assets/logos/poybash-logo.png`;
 import { supabase } from "../utils/supabase/client";
 import { CheckCircle } from "lucide-react";
 import { validatePassword } from "../lib/validation";
@@ -137,7 +140,7 @@ export function ResetPasswordPage({ onNavigate }: ResetPasswordPageProps) {
           <Card>
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
-                <ImageWithFallback
+                <img
                   src={poybashLogo}
                   alt="PoyBash Furniture"
                   className="w-16 h-16"

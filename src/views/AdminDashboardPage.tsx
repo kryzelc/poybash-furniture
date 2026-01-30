@@ -60,7 +60,10 @@ import { InvoiceReceipt } from "../components/InvoiceReceipt";
 import { addAuditLog } from "../lib/auditLog";
 import { useAuditLog } from "../hooks/useAuditLog";
 import { toast } from "sonner";
-const poybashLogo = "/images/d5402509ea28f1255409df1863e03ad909a38d15.png";
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  "https://ktcadsqclaszdyymftvf.supabase.co";
+const poybashLogo = `${SUPABASE_URL}/storage/v1/object/public/assets/logos/poybash-logo.png`;
 import {
   Package,
   Users,
@@ -516,7 +519,7 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-4">
-            <ImageWithFallback
+            <img
               src={poybashLogo}
               alt="PoyBash Furniture"
               className="w-10 h-10"
@@ -895,7 +898,7 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
                           className="flex items-center gap-4 p-3 rounded-lg hover:bg-secondary/30 transition-colors"
                         >
                           <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
-                            <ImageWithFallback
+                            <img
                               src={item.product.images[0] || ""}
                               alt={item.product.name}
                               className="w-full h-full object-cover"
@@ -1267,7 +1270,7 @@ function OrderDetailsDialog({
             {order.items.map((item, index) => (
               <div key={index} className="flex gap-4 p-4 border rounded-lg">
                 <div className="w-20 h-20 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
-                  <ImageWithFallback
+                  <img
                     src={item.imageUrl}
                     alt={item.name}
                     className="w-full h-full object-cover"

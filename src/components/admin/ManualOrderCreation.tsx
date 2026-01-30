@@ -1058,7 +1058,7 @@ export function ManualOrderCreation({
                   className="flex gap-4 p-4 border rounded-lg text-sm"
                 >
                   <div className="w-20 h-20 rounded overflow-hidden bg-secondary flex-shrink-0">
-                    <ImageWithFallback
+                    <img
                       src={item.imageUrl}
                       alt={item.name}
                       className="w-full h-full object-cover"
@@ -2414,7 +2414,7 @@ export function ManualOrderCreation({
                     >
                       <div className="flex gap-4">
                         <div className="w-20 h-20 rounded overflow-hidden bg-secondary flex-shrink-0">
-                          <ImageWithFallback
+                          <img
                             src={product.imageUrl}
                             alt={product.name}
                             className="w-full h-full object-cover"

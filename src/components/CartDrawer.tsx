@@ -305,7 +305,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                       </div>
 
                       <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-md overflow-hidden bg-secondary flex-shrink-0">
-                        <ImageWithFallback
+                        <img
                           src={item.imageUrl}
                           alt={item.name}
                           className="w-full h-full object-cover"

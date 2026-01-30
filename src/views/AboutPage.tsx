@@ -2,6 +2,12 @@
 
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Card, CardContent } from "../components/ui/card";
+
+const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  "https://ktcadsqclaszdyymftvf.supabase.co";
+const aboutImage = `${SUPABASE_URL}/storage/v1/object/public/assets/web/about.png`;
+
 import {
   Award,
   Users,
@@ -190,8 +196,8 @@ export function AboutPage() {
             <div className="relative group">
               <div className="absolute -inset-4 bg-[#6B4E3D]/10 rounded-3xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
               <div className="relative rounded-3xl overflow-hidden shadow-2xl h-[400px] sm:h-[450px] lg:h-[550px] border border-[#6B4E3D]/10">
-                <ImageWithFallback
-                  src="/about_furniture_scene.png"
+                <img
+                  src={aboutImage}
                   alt="Quality Furniture Display"
                   className="w-full h-full object-cover"
                 />

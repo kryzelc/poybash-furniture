@@ -855,7 +855,7 @@ export function ProductManagement({
                         <TableCell className="py-2">
                           <div className="flex items-center gap-2.5">
                             <div className="w-10 h-10 rounded overflow-hidden bg-secondary flex-shrink-0">
-                              <ImageWithFallback
+                              <img
                                 src={product.imageUrl}
                                 alt={product.name}
                                 className="w-full h-full object-cover"
@@ -967,7 +967,7 @@ export function ProductManagement({
                     key={index}
                     className="relative aspect-square border rounded-lg overflow-hidden group"
                   >
-                    <ImageWithFallback
+                    <img
                       src={image}
                       alt={`Product image ${index + 1}`}
                       className="w-full h-full object-cover"
