@@ -420,70 +420,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return null;
 
     try {
-      // Reserve stock for all items
-      const stockReservation = reserveStock(
-        orderData.items.map((item: OrderItem) => ({
-          productId: item.productId,
-          variantId:
-            item.variantId ||
-            `one-size-${item.color.toLowerCase().replace(/\s+/g, "-")}`,
-          quantity: item.quantity,
-          warehouseSource: item.warehouseSource || "Lorenzo",
-        })),
-      );
+      // Get auth session for edge function
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (!stockReservation.success) {
-        throw new Error(stockReservation.errors.join(", "));
+      if (!session) {
+        throw new Error("No active session");
       }
 
-      // Create order in database
-      const { data: orderRecord, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          user_id: user.id,
-          order_number: `ORD-${Date.now()}`,
-          status: orderData.isReservation ? "reserved" : "pending",
-          subtotal: orderData.subtotal,
-          delivery_fee: orderData.deliveryFee || 0,
-          coupon_discount: orderData.couponDiscount || 0,
-          coupon_id: orderData.couponId,
-          total: orderData.total,
-          is_reservation: orderData.isReservation || false,
-          reservation_fee: orderData.reservationFee,
-          reservation_percentage: orderData.reservationPercentage,
+      // Prepare items for edge function format
+      const edgeFunctionItems = orderData.items.map((item: OrderItem) => ({
+        product_id: item.productId,
+        variant_id:
+          item.variantId ||
+          `one-size-${item.color.toLowerCase().replace(/\s+/g, "-")}`,
+        quantity: item.quantity,
+        warehouse_source: item.warehouseSource || "Lorenzo",
+        price: item.price,
+        name: item.name,
+        color: item.color,
+        size: item.size,
+        image_url: item.imageUrl,
+      }));
+
+      // Call edge function for secure server-side order processing
+      const { data, error } = await supabase.functions.invoke("place-order", {
+        body: {
+          items: edgeFunctionItems,
           fulfillment:
             orderData.deliveryMethod === "store-pickup" ? "pickup" : "delivery",
           pickup_details: orderData.pickupDetails,
           shipping_address: orderData.shippingAddress,
           payment_method: orderData.paymentMethod,
-          payment_status: "pending",
-        })
-        .select()
-        .single();
+          payment_proof: orderData.paymentProof,
+          coupon_code: orderData.couponCode,
+          is_reservation: orderData.isReservation || false,
+          reservation_percentage: orderData.reservationPercentage,
+          subtotal: orderData.subtotal,
+          delivery_fee: orderData.deliveryFee || 0,
+          total: orderData.total,
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
-      if (orderError) throw orderError;
+      if (error) {
+        console.error("Edge function error:", error);
+        throw new Error(error.message || "Failed to place order");
+      }
 
-      // Create order items
-      const orderItems = orderData.items.map((item: OrderItem) => ({
-        order_id: orderRecord.id,
-        product_id: item.productId,
-        variant_id: item.variantId,
-        product_name: item.name,
-        quantity: item.quantity,
-        price_at_time: item.price,
-        color: item.color,
-        size: item.size,
-        image_url: item.imageUrl,
-        warehouse_source: item.warehouseSource,
-      }));
+      if (!data || !data.success) {
+        throw new Error(data?.error || "Order placement failed");
+      }
 
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
-      // Reload orders
+      // Reload orders to get the new order
       await loadUserOrders(user.id);
 
       // Add audit log
@@ -497,31 +489,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
         targetEntity: {
           type: "order",
-          id: orderRecord.id,
-          name: `Order ${orderRecord.order_number}`,
+          id: data.order_id,
+          name: `Order ${data.order_number}`,
         },
         metadata: {
-          orderNumber: orderRecord.order_number,
+          orderNumber: data.order_number,
+          total: data.total,
           notes: `Order placed with ${orderData.items.length} items`,
         },
       });
 
-      return orderRecord.id;
+      return data.order_id;
     } catch (error) {
       console.error("Place order error:", error);
-
-      // Unreserve stock on error
-      unreserveStock(
-        orderData.items.map((item: OrderItem) => ({
-          productId: item.productId,
-          variantId:
-            item.variantId ||
-            `one-size-${item.color.toLowerCase().replace(/\s+/g, "-")}`,
-          quantity: item.quantity,
-          warehouseSource: item.warehouseSource || "Lorenzo",
-        })),
-      );
-
       return null;
     }
   };

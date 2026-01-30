@@ -246,6 +246,7 @@ Stock is tracked separately at each warehouse with real-time availability.
 
 - Node.js 18.17 or later
 - npm or yarn
+- Supabase CLI (optional, for local development)
 
 ### Installation:
 
@@ -276,6 +277,105 @@ npm start
 
 ---
 
+## 🔌 Backend Integration
+
+### Architecture
+
+The application uses **Supabase** as the backend-as-a-service platform, providing:
+
+- **PostgreSQL Database** - Stores all application data (users, products, orders, inventory)
+- **Authentication** - Handles user signup, login, and session management
+- **Edge Functions** - Server-side functions for secure operations
+- **Storage** - File storage for images and payment proofs
+- **Real-time Subscriptions** - Live updates for order status changes
+
+### Edge Functions
+
+The application uses Supabase Edge Functions for secure server-side processing:
+
+#### 1. **place-order**
+
+**Purpose:** Securely process order placement with inventory validation
+
+**Called from:** `AuthContext.placeOrder()`
+
+**What it does:**
+
+- Validates user authentication
+- Reserves inventory from warehouses using FIFO allocation
+- Applies coupon codes with server-side validation
+- Creates order and order items in database
+- Calculates totals including delivery fees
+- Returns order ID and details
+
+**Endpoint:** `supabase.functions.invoke('place-order')`
+
+#### 2. **validate-coupon**
+
+**Purpose:** Server-side coupon validation with rate limiting
+
+**Called from:** `CheckoutPage.handleApplyCoupon()`
+
+**What it does:**
+
+- Validates coupon code exists and is active
+- Checks expiry dates and usage limits
+- Verifies minimum purchase requirements
+- Calculates discount amount
+- Prevents coupon abuse with rate limiting
+
+**Endpoint:** `supabase.functions.invoke('validate-coupon')`
+
+#### 3. **verify-payment**
+
+**Purpose:** Verify payment proof and update order status
+
+**What it does:**
+
+- Validates payment screenshots/references
+- Updates order payment status
+- Triggers order confirmation workflows
+
+### Database Functions
+
+The application uses PostgreSQL functions for complex operations:
+
+- `create_order_transaction()` - Atomic order creation with inventory reservation
+- `apply_coupon()` - Server-side coupon validation and application
+- `reserve_stock()` - FIFO warehouse stock reservation
+- `generate_order_number()` - Unique order number generation
+
+### Local Development with Supabase
+
+To run Supabase locally (optional):
+
+```bash
+# Install Supabase CLI
+npm install -g supabase
+
+# Start local Supabase instance
+supabase start
+
+# Run database migrations
+supabase db push
+
+# Deploy edge functions locally
+supabase functions serve
+```
+
+The `supabase/config.toml` file is already configured for local development.
+
+### Environment Variables
+
+Required variables in `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
+```
+
+---
+
 ## 📚 Tech Stack
 
 | Layer                  | Technology                                     |
@@ -284,7 +384,9 @@ npm start
 | **Language**           | TypeScript                                     |
 | **Styling**            | TailwindCSS + Shadcn/UI                        |
 | **State Management**   | React Context API + localStorage               |
-| **Backend**            | Supabase (PostgreSQL + Auth + Storage)         |
+| **Backend**            | Supabase (PostgreSQL + Auth + Edge Functions)  |
+| **Database**           | PostgreSQL 15 with Row-Level Security          |
+| **Edge Runtime**       | Deno-based Supabase Edge Functions             |
 | **Charts & Analytics** | Recharts                                       |
 | **Additional Tools**   | QR Code scanning, PDF generation, Date pickers |
 
@@ -300,7 +402,22 @@ This project uses environment variables to manage sensitive configuration. A tem
 
 ## 📝 Project Status
 
-This is project is currently in development. There will be more improvements to come. Backend integration with Supabase handles authentication, database operations, and data persistence.
+This project is currently in development with a fully integrated backend. The Supabase backend handles:
+
+- ✅ User authentication and session management
+- ✅ Database operations via PostgreSQL
+- ✅ Edge Functions for secure server-side processing
+- ✅ Order placement with inventory reservation
+- ✅ Coupon validation with rate limiting
+- ✅ Real-time order status updates
+- ✅ File storage for payment proofs and product images
+
+**Recent Improvements:**
+
+- Migrated order placement to use Edge Functions for better security
+- Added server-side coupon validation via Edge Functions
+- Configured local development environment with `supabase/config.toml`
+- Implemented comprehensive error handling and audit logging
 
 ---
 

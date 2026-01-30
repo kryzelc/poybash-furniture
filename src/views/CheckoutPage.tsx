@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import {
   validateCoupon,
+  validateCouponViaEdgeFunction,
   calculateDiscount,
   useCoupon,
   Coupon,
@@ -242,7 +243,7 @@ export function CheckoutPage() {
     }
   };
 
-  const handleApplyCoupon = () => {
+  const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
       toast.error("Coupon code required", {
         description: "Please enter a coupon code to apply.",
@@ -251,21 +252,49 @@ export function CheckoutPage() {
     }
 
     setIsCouponLoading(true);
-    const validation = validateCoupon(couponCode, subtotal);
 
-    setTimeout(() => {
+    try {
+      // Use edge function for server-side validation
+      const validation = await validateCouponViaEdgeFunction(
+        couponCode,
+        subtotal,
+      );
+
       if (validation.valid && validation.coupon) {
-        setAppliedCoupon(validation.coupon);
+        // Create coupon object with discount from server
+        const coupon: Coupon = {
+          id: validation.coupon.id,
+          code: couponCode,
+          description: "Validated coupon",
+          discountType: "fixed", // We get the actual amount from server
+          discountValue: validation.discount || 0,
+          minPurchase: 0,
+          expiryDate: new Date().toISOString(),
+          usageLimit: 1,
+          usedCount: 0,
+          isActive: true,
+          createdAt: new Date().toISOString(),
+        };
+
+        setAppliedCoupon(coupon);
         toast.success("Coupon applied successfully", {
-          description: `₱${validation.coupon.discountValue} discount applied to your order.`,
+          description: `₱${validation.discount?.toFixed(2)} discount applied to your order.`,
         });
       } else {
         toast.error("Invalid coupon code", {
-          description: "This coupon is expired, invalid, or already used.",
+          description:
+            validation.error ||
+            "This coupon is expired, invalid, or already used.",
         });
       }
+    } catch (error) {
+      console.error("Coupon validation error:", error);
+      toast.error("Validation failed", {
+        description: "Unable to validate coupon. Please try again.",
+      });
+    } finally {
       setIsCouponLoading(false);
-    }, 300);
+    }
   };
 
   const handleRemoveCoupon = () => {
@@ -413,7 +442,8 @@ export function CheckoutPage() {
 
       if (!stockValidation.success) {
         toast.error("Item out of stock", {
-          description: "One or more items in your cart are no longer available.",
+          description:
+            "One or more items in your cart are no longer available.",
         });
         return;
       }

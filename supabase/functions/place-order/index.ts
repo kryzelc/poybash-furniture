@@ -41,14 +41,18 @@ serve(async (req) => {
 
     // Parse request body
     const {
-      items, // [{ variant_id, quantity, warehouse_id }]
+      items, // [{ product_id, variant_id, quantity, warehouse_source, price, name, color, size, image_url }]
       fulfillment,
+      pickup_details,
       shipping_address,
       payment_method,
       payment_proof,
       coupon_code,
       is_reservation,
       reservation_percentage,
+      subtotal,
+      delivery_fee,
+      total,
     } = await req.json();
 
     // Validate required fields
@@ -56,17 +60,24 @@ serve(async (req) => {
       throw new Error("Order must contain at least one item");
     }
 
+    // Transform items to match database function format
+    const dbItems = items.map((item: any) => ({
+      variant_id: item.variant_id,
+      quantity: item.quantity,
+      warehouse_id: item.warehouse_source || "Lorenzo", // Default warehouse
+    }));
+
     // Start transaction by calling database function
     const { data: order, error: orderError } = await supabaseClient.rpc(
       "create_order_transaction",
       {
         p_user_id: user.id,
-        p_items: items,
+        p_items: dbItems,
         p_fulfillment: fulfillment,
         p_shipping_address: shipping_address,
         p_payment_method: payment_method,
-        p_payment_proof: payment_proof,
-        p_coupon_code: coupon_code,
+        p_payment_proof: payment_proof || null,
+        p_coupon_code: coupon_code || null,
         p_is_reservation: is_reservation || false,
         p_reservation_percentage: reservation_percentage || null,
       },
