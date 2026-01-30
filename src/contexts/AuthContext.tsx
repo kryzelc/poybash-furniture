@@ -120,6 +120,8 @@ interface AuthContextType {
   user: User | null;
   orders: Order[];
   loading: boolean;
+  hasAdminAccess: () => boolean;
+  isAuthenticated: () => boolean;
   register: (userData: {
     email: string;
     password: string;
@@ -744,10 +746,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const hasAdminAccess = () => {
+    if (!user) return false;
+    return ["admin", "owner", "staff", "inventory-clerk"].includes(user.role);
+  };
+
+  const isAuthenticated = () => {
+    return user !== null;
+  };
+
   const value = {
     user,
     orders,
     loading,
+    hasAdminAccess,
+    isAuthenticated,
     register,
     login,
     logout,
