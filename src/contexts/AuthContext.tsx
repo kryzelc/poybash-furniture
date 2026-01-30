@@ -421,14 +421,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     try {
       // Reserve stock for all items
-      for (const item of orderData.items) {
-        await reserveStock(
-          item.productId,
-          item.variantId ||
+      const stockReservation = reserveStock(
+        orderData.items.map((item: OrderItem) => ({
+          productId: item.productId,
+          variantId:
+            item.variantId ||
             `one-size-${item.color.toLowerCase().replace(/\s+/g, "-")}`,
-          item.quantity,
-          item.warehouseSource || "Lorenzo",
-        );
+          quantity: item.quantity,
+          warehouseSource: item.warehouseSource || "Lorenzo",
+        })),
+      );
+
+      if (!stockReservation.success) {
+        throw new Error(stockReservation.errors.join(", "));
       }
 
       // Create order in database
@@ -483,11 +488,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Add audit log
       await addAuditLog({
-        userId: user.id,
-        action: "ORDER_PLACED",
-        entityType: "order",
-        entityId: orderRecord.id,
-        details: `Order placed with ${orderData.items.length} items`,
+        actionType: "order_created",
+        performedBy: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+          name: `${user.firstName} ${user.lastName}`,
+        },
+        targetEntity: {
+          type: "order",
+          id: orderRecord.id,
+          name: `Order ${orderRecord.order_number}`,
+        },
+        metadata: {
+          orderNumber: orderRecord.order_number,
+          notes: `Order placed with ${orderData.items.length} items`,
+        },
       });
 
       return orderRecord.id;
@@ -495,15 +511,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Place order error:", error);
 
       // Unreserve stock on error
-      for (const item of orderData.items) {
-        await unreserveStock(
-          item.productId,
-          item.variantId ||
+      unreserveStock(
+        orderData.items.map((item: OrderItem) => ({
+          productId: item.productId,
+          variantId:
+            item.variantId ||
             `one-size-${item.color.toLowerCase().replace(/\s+/g, "-")}`,
-          item.quantity,
-          item.warehouseSource || "Lorenzo",
-        );
-      }
+          quantity: item.quantity,
+          warehouseSource: item.warehouseSource || "Lorenzo",
+        })),
+      );
 
       return null;
     }
@@ -529,15 +546,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
 
       // Unreserve stock
-      for (const item of order.items) {
-        await unreserveStock(
-          item.productId,
-          item.variantId ||
+      unreserveStock(
+        order.items.map((item) => ({
+          productId: item.productId,
+          variantId:
+            item.variantId ||
             `one-size-${item.color.toLowerCase().replace(/\s+/g, "-")}`,
-          item.quantity,
-          item.warehouseSource || "Lorenzo",
-        );
-      }
+          quantity: item.quantity,
+          warehouseSource: item.warehouseSource || "Lorenzo",
+        })),
+      );
 
       // Return coupon if used
       if (order.couponId) {

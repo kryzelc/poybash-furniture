@@ -515,7 +515,7 @@ export function CreateOrderDialog({
     toast.success(`Coupon "${coupon.code}" applied successfully!`);
   };
 
-  const handleCreateOrder = () => {
+  const handleCreateOrder = async () => {
     if (orderItems.length === 0) {
       toast.error("Please add at least one item to the order");
       return;
@@ -547,6 +547,7 @@ export function CreateOrderDialog({
         // Create new customer account
         const newCustomer = await createUser({
           email: customerEmail,
+          password: `temp${Date.now()}`,
           firstName: firstName,
           lastName: lastName,
           phone: phone,
@@ -554,7 +555,7 @@ export function CreateOrderDialog({
         });
 
         if (newCustomer) {
-          customerId = newCustomer.id;
+          customerId = newCustomer;
         } else {
           toast.error("Failed to create customer account");
           return;
@@ -606,7 +607,7 @@ export function CreateOrderDialog({
     };
 
     // Stock reservation now happens automatically in placeOrder (AuthContext)
-    onCreateOrder(orderData, customer?.id || `guest-${Date.now()}`);
+    onCreateOrder(orderData, customerId || `guest-${Date.now()}`);
 
     // Mark coupon as used if applied
     if (appliedCoupon) {
@@ -1626,9 +1627,6 @@ export function EditOrderDialog({
   const [isOpen, setIsOpen] = useState(false);
   const [items, setItems] = useState<OrderItem[]>(order.items);
   const [deliveryFee, setDeliveryFee] = useState(order.deliveryFee || 0);
-  const [paymentReference, setPaymentReference] = useState(
-    order.paymentReference || "",
-  );
 
   // Shipping address
   const [firstName, setFirstName] = useState(order.shippingAddress.firstName);
@@ -1636,9 +1634,7 @@ export function EditOrderDialog({
   const [phone, setPhone] = useState(order.shippingAddress.phone || "");
   const [address, setAddress] = useState(order.shippingAddress.address);
   const [city, setCity] = useState(order.shippingAddress.city);
-  const [province, setProvince] = useState(
-    order.shippingAddress.province || order.shippingAddress.state,
-  );
+  const [province, setProvince] = useState(order.shippingAddress.state);
   const [barangay, setBarangay] = useState(
     order.shippingAddress.barangay || "",
   );
@@ -1672,7 +1668,6 @@ export function EditOrderDialog({
       subtotal: calculateSubtotal(),
       deliveryFee: deliveryFee,
       total: calculateTotal(),
-      paymentReference: paymentReference,
       shippingAddress: {
         ...order.shippingAddress,
         firstName,
@@ -1681,7 +1676,6 @@ export function EditOrderDialog({
         address,
         city,
         state: province,
-        province,
         barangay,
         zipCode,
       },
@@ -1863,15 +1857,6 @@ export function EditOrderDialog({
                       step="0.01"
                       value={deliveryFee}
                       onChange={(e) => setDeliveryFee(Number(e.target.value))}
-                    />
-                  </div>
-                )}
-                {order.paymentMethod !== "cash" && (
-                  <div className="space-y-2">
-                    <Label>Payment Reference</Label>
-                    <Input
-                      value={paymentReference}
-                      onChange={(e) => setPaymentReference(e.target.value)}
                     />
                   </div>
                 )}

@@ -12,7 +12,6 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { toast } from "sonner";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
   "https://ktcadsqclaszdyymftvf.supabase.co";

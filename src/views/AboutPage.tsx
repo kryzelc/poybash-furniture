@@ -1,6 +1,5 @@
 "use client";
 
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Card, CardContent } from "../components/ui/card";
 
 const SUPABASE_URL =

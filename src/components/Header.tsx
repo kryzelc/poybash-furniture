@@ -35,7 +35,7 @@ interface HeaderProps {
 
 export function Header({ onCartOpen }: HeaderProps) {
   const { getCartCount } = useCart();
-  const { isAuthenticated, isAdmin, logout } = useAuth();
+  const { isAuthenticated, hasAdminAccess, logout } = useAuth();
   const router = useRouter();
   const [cartCount, setCartCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -158,7 +158,7 @@ export function Header({ onCartOpen }: HeaderProps) {
                       <DropdownMenuItem asChild>
                         <Link href="/account">My Account</Link>
                       </DropdownMenuItem>
-                      {isAdmin() && (
+                      {hasAdminAccess() && (
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem asChild>
