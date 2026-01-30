@@ -48,7 +48,6 @@ import {
   type OrderItem,
   type User,
 } from "../../contexts/AuthContext";
-import { ImageWithFallback } from "../figma/ImageWithFallback";
 import { addAuditLog } from "../../lib/auditLog";
 import {
   getCoupons,
@@ -538,24 +537,29 @@ export function CreateOrderDialog({
     }
 
     // Find or create customer user
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    let customer = users.find((u: any) => u.email === customerEmail);
+    let customerId: string | undefined;
 
-    if (!customer && customerEmail) {
-      // Create new customer account
-      customer = {
-        id: `customer-${Date.now()}`,
-        email: customerEmail,
-        firstName: firstName,
-        lastName: lastName,
-        phone: phone,
-        role: "customer",
-        addresses: [],
-        createdAt: new Date().toISOString(),
-        password: `temp${Date.now()}`, // Temporary password
-      };
-      users.push(customer);
-      localStorage.setItem("users", JSON.stringify(users));
+    if (customerEmail) {
+      // Check if customer exists
+      const emailExists = await checkEmailExists(customerEmail);
+
+      if (!emailExists) {
+        // Create new customer account
+        const newCustomer = await createUser({
+          email: customerEmail,
+          firstName: firstName,
+          lastName: lastName,
+          phone: phone,
+          role: "customer",
+        });
+
+        if (newCustomer) {
+          customerId = newCustomer.id;
+        } else {
+          toast.error("Failed to create customer account");
+          return;
+        }
+      }
     }
 
     const reservationAmount = isReservation ? calculateReservationFee() : 0;
