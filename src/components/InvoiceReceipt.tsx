@@ -148,14 +148,11 @@ export function InvoiceReceipt({ order }: InvoiceReceiptProps) {
               <div className="flex justify-end">
                 <span
                   className={
-                    getStatusBadgeStyle(
-                      order.refundDetails ? "refunded" : order.status,
-                    ) + " text-[10px] px-2 py-0.5"
+                    getStatusBadgeStyle(order.status) +
+                    " text-[10px] px-2 py-0.5"
                   }
                 >
-                  {order.refundDetails
-                    ? "REFUNDED"
-                    : order.status.replace("-", " ").toUpperCase()}
+                  {order.status.replace("-", " ").toUpperCase()}
                 </span>
               </div>
             </div>

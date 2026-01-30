@@ -14,7 +14,6 @@ import {
 } from "../components/ui/card";
 import { Separator } from "../components/ui/separator";
 import { toast } from "sonner";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
   "https://ktcadsqclaszdyymftvf.supabase.co";
@@ -26,7 +25,7 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onNavigate }: LoginPageProps) {
-  const { login, isAdmin } = useAuth();
+  const { login, hasAdminAccess } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -51,7 +50,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
           toast.success("Welcome back!", {
             description: "You have successfully signed in to your account.",
           });
-          if (isAdmin()) {
+          if (hasAdminAccess()) {
             onNavigate("admin");
           } else {
             onNavigate("account");
@@ -82,7 +81,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
         toast.success("Welcome back!", {
           description: "You have successfully signed in to your account.",
         });
-        if (isAdmin()) {
+        if (hasAdminAccess()) {
           onNavigate("admin");
         } else {
           onNavigate("account");
