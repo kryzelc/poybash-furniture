@@ -1,81 +1,130 @@
-'use client';
+"use client";
 
-import { useState, useMemo, useEffect } from 'react';
-import { Button } from '../ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
-import { Label } from '../ui/label';
-import { Input } from '../ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Textarea } from '../ui/textarea';
-import { Badge } from '../ui/badge';
-import { Separator } from '../ui/separator';
-import { Card, CardContent } from '../ui/card';
-import { toast } from 'sonner';
-import { Plus, Trash2, Edit, AlertTriangle, Save, Search, X, Upload, Eye, CheckCircle, Tag, Percent } from 'lucide-react';
-import { getProducts, type Product, type WarehouseStock } from '../../lib/products';
-import { useAuth, type Order, type OrderItem, type User } from '../../contexts/AuthContext';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
-import { addAuditLog } from '../../lib/auditLog';
-import { getCoupons, validateCoupon, calculateDiscount, useCoupon, type Coupon } from '../../lib/coupons';
+import { useState, useMemo, useEffect } from "react";
+import { Button } from "../ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Textarea } from "../ui/textarea";
+import { Badge } from "../ui/badge";
+import { Separator } from "../ui/separator";
+import { Card, CardContent } from "../ui/card";
+import { toast } from "sonner";
+import {
+  Plus,
+  Trash2,
+  Edit,
+  AlertTriangle,
+  Save,
+  Search,
+  X,
+  Upload,
+  Eye,
+  CheckCircle,
+  Tag,
+  Percent,
+} from "lucide-react";
+import {
+  getProducts,
+  type Product,
+  type WarehouseStock,
+} from "../../lib/products";
+import {
+  useAuth,
+  type Order,
+  type OrderItem,
+  type User,
+} from "../../contexts/AuthContext";
+import { ImageWithFallback } from "../figma/ImageWithFallback";
+import { addAuditLog } from "../../lib/auditLog";
+import {
+  getCoupons,
+  validateCoupon,
+  calculateDiscount,
+  useCoupon,
+  type Coupon,
+} from "../../lib/coupons";
+import { createUser, checkEmailExists } from "../../lib/userService";
 // reserveStock is now handled automatically in placeOrder
 // import { reserveStock } from '../../lib/inventory';
 
 // Create Order Dialog
-export function CreateOrderDialog({ 
-  onCreateOrder 
-}: { 
+export function CreateOrderDialog({
+  onCreateOrder,
+}: {
   onCreateOrder: (orderData: any, customUserId: string) => void;
 }) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
-  const [selectedProductId, setSelectedProductId] = useState<number | null>(null);
-  const [selectedVariantId, setSelectedVariantId] = useState<string>('');
+  const [selectedProductId, setSelectedProductId] = useState<number | null>(
+    null,
+  );
+  const [selectedVariantId, setSelectedVariantId] = useState<string>("");
   const [quantity, setQuantity] = useState(1);
-  const [warehouse, setWarehouse] = useState<'Lorenzo' | 'Oroquieta'>('Lorenzo');
-  
+  const [warehouse, setWarehouse] = useState<"Lorenzo" | "Oroquieta">(
+    "Lorenzo",
+  );
+
   // Customer Search
   const [customers, setCustomers] = useState<User[]>(() => {
-    if (typeof window === 'undefined') return [];
-    const stored = localStorage.getItem('users');
+    if (typeof window === "undefined") return [];
+    const stored = localStorage.getItem("users");
     if (!stored) return [];
     const users = JSON.parse(stored);
-    return users.filter((u: User) => u.role === 'customer');
+    return users.filter((u: User) => u.role === "customer");
   });
   const [selectedCustomer, setSelectedCustomer] = useState<User | null>(null);
-  const [customerSearchTerm, setCustomerSearchTerm] = useState('');
-  
+  const [customerSearchTerm, setCustomerSearchTerm] = useState("");
+
   // Product Search
-  const [productSearchTerm, setProductSearchTerm] = useState('');
-  
+  const [productSearchTerm, setProductSearchTerm] = useState("");
+
   // Customer Information
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [province, setProvince] = useState('');
-  const [barangay, setBarangay] = useState('');
-  const [zipCode, setZipCode] = useState('');
-  
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [province, setProvince] = useState("");
+  const [barangay, setBarangay] = useState("");
+  const [zipCode, setZipCode] = useState("");
+
   // Order Details
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'gcash' | 'bank'>('cash');
-  const [deliveryMethod, setDeliveryMethod] = useState<'store-pickup' | 'customer-arranged' | 'staff-delivery'>('store-pickup');
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "gcash" | "bank">(
+    "cash",
+  );
+  const [deliveryMethod, setDeliveryMethod] = useState<
+    "store-pickup" | "customer-arranged" | "staff-delivery"
+  >("store-pickup");
   const [deliveryFee, setDeliveryFee] = useState(0);
   const [isReservation, setIsReservation] = useState(false);
   const [reservationPercentage, setReservationPercentage] = useState(30);
-  const [paymentReference, setPaymentReference] = useState('');
-  const [paymentProof, setPaymentProof] = useState<string>('');
-  const [notes, setNotes] = useState('');
-  
+  const [paymentReference, setPaymentReference] = useState("");
+  const [paymentProof, setPaymentProof] = useState<string>("");
+  const [notes, setNotes] = useState("");
+
   // Payment transaction details
-  const [paymentName, setPaymentName] = useState('');
-  const [paymentPhone, setPaymentPhone] = useState('');
-  const [transactionDetails, setTransactionDetails] = useState('');
-  
+  const [paymentName, setPaymentName] = useState("");
+  const [paymentPhone, setPaymentPhone] = useState("");
+  const [transactionDetails, setTransactionDetails] = useState("");
+
   // Coupon Management
-  const [couponCode, setCouponCode] = useState('');
+  const [couponCode, setCouponCode] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
   const [showApplicableCoupons, setShowApplicableCoupons] = useState(false);
 
@@ -93,10 +142,10 @@ export function CreateOrderDialog({
       reloadProducts();
     };
 
-    window.addEventListener('stockUpdated', handleStockUpdate);
+    window.addEventListener("stockUpdated", handleStockUpdate);
 
     return () => {
-      window.removeEventListener('stockUpdated', handleStockUpdate);
+      window.removeEventListener("stockUpdated", handleStockUpdate);
     };
   }, []);
 
@@ -104,33 +153,33 @@ export function CreateOrderDialog({
   const resetForm = () => {
     setOrderItems([]);
     setSelectedProductId(null);
-    setSelectedVariantId('');
+    setSelectedVariantId("");
     setQuantity(1);
-    setWarehouse('Lorenzo');
+    setWarehouse("Lorenzo");
     setSelectedCustomer(null);
-    setCustomerSearchTerm('');
-    setProductSearchTerm('');
-    setCustomerEmail('');
-    setFirstName('');
-    setLastName('');
-    setPhone('');
-    setAddress('');
-    setCity('');
-    setProvince('');
-    setBarangay('');
-    setZipCode('');
-    setPaymentMethod('cash');
-    setDeliveryMethod('store-pickup');
+    setCustomerSearchTerm("");
+    setProductSearchTerm("");
+    setCustomerEmail("");
+    setFirstName("");
+    setLastName("");
+    setPhone("");
+    setAddress("");
+    setCity("");
+    setProvince("");
+    setBarangay("");
+    setZipCode("");
+    setPaymentMethod("cash");
+    setDeliveryMethod("store-pickup");
     setDeliveryFee(0);
     setIsReservation(false);
     setReservationPercentage(30);
-    setPaymentReference('');
-    setPaymentProof('');
-    setPaymentName('');
-    setPaymentPhone('');
-    setTransactionDetails('');
-    setNotes('');
-    setCouponCode('');
+    setPaymentReference("");
+    setPaymentProof("");
+    setPaymentName("");
+    setPaymentPhone("");
+    setTransactionDetails("");
+    setNotes("");
+    setCouponCode("");
     setAppliedCoupon(null);
     setShowApplicableCoupons(false);
   };
@@ -146,61 +195,69 @@ export function CreateOrderDialog({
   const filteredCustomers = useMemo(() => {
     if (!customerSearchTerm.trim()) return [];
     const term = customerSearchTerm.toLowerCase();
-    return customers.filter(c =>
-      c.firstName?.toLowerCase().includes(term) ||
-      c.lastName?.toLowerCase().includes(term) ||
-      c.email?.toLowerCase().includes(term) ||
-      c.phone?.includes(term)
-    ).slice(0, 5); // Limit to 5 results
+    return customers
+      .filter(
+        (c) =>
+          c.firstName?.toLowerCase().includes(term) ||
+          c.lastName?.toLowerCase().includes(term) ||
+          c.email?.toLowerCase().includes(term) ||
+          c.phone?.includes(term),
+      )
+      .slice(0, 5); // Limit to 5 results
   }, [customers, customerSearchTerm]);
 
   // Filter products based on search term
   const filteredProducts = useMemo(() => {
     if (!productSearchTerm.trim()) {
-      return products.filter(p => p.active !== false);
+      return products.filter((p) => p.active !== false);
     }
     const term = productSearchTerm.toLowerCase();
     return products
-      .filter(p => p.active !== false)
-      .filter(p =>
-        p.name.toLowerCase().includes(term) ||
-        p.category.toLowerCase().includes(term) ||
-        p.description?.toLowerCase().includes(term)
+      .filter((p) => p.active !== false)
+      .filter(
+        (p) =>
+          p.name.toLowerCase().includes(term) ||
+          p.category.toLowerCase().includes(term) ||
+          p.description?.toLowerCase().includes(term),
       );
   }, [products, productSearchTerm]);
 
   // Handle customer selection
   const handleSelectCustomer = (customer: User) => {
     setSelectedCustomer(customer);
-    const defaultAddress = customer.addresses?.find(addr => addr.isDefault) || customer.addresses?.[0];
-    
+    const defaultAddress =
+      customer.addresses?.find((addr) => addr.isDefault) ||
+      customer.addresses?.[0];
+
     setCustomerEmail(customer.email);
     setFirstName(customer.firstName);
     setLastName(customer.lastName);
-    setPhone(customer.phone || defaultAddress?.phone || '');
-    setAddress(defaultAddress?.address || '');
-    setCity(defaultAddress?.city || '');
-    setProvince(defaultAddress?.state || '');
-    setBarangay(defaultAddress?.barangay || '');
-    setZipCode(defaultAddress?.zipCode || '');
-    setCustomerSearchTerm('');
-    
-    toast.success(`Customer ${customer.firstName} ${customer.lastName} selected`);
+    setPhone(customer.phone || defaultAddress?.phone || "");
+    setAddress(defaultAddress?.address || "");
+    setCity(defaultAddress?.city || "");
+    setProvince(defaultAddress?.state || "");
+    setBarangay(defaultAddress?.barangay || "");
+    setZipCode(defaultAddress?.zipCode || "");
+    setCustomerSearchTerm("");
+
+    toast.success(
+      `Customer ${customer.firstName} ${customer.lastName} selected`,
+    );
   };
 
   // Clear selected customer
   const handleClearCustomer = () => {
     setSelectedCustomer(null);
-    setCustomerEmail('');
-    setFirstName('');
-    setLastName('');
-    setPhone('');
-    setAddress('');
-    setCity('');
-    setProvince('');
-    setBarangay('');
-    setZipCode('');
-    toast.info('Customer cleared');
+    setCustomerEmail("");
+    setFirstName("");
+    setLastName("");
+    setPhone("");
+    setAddress("");
+    setCity("");
+    setProvince("");
+    setBarangay("");
+    setZipCode("");
+    toast.info("Customer cleared");
   };
 
   // Handle payment proof upload
@@ -209,42 +266,46 @@ export function CreateOrderDialog({
     if (!file) return;
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file');
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload an image file");
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size must be less than 5MB');
+      toast.error("Image size must be less than 5MB");
       return;
     }
 
     const reader = new FileReader();
     reader.onloadend = () => {
       setPaymentProof(reader.result as string);
-      toast.success('Payment proof uploaded successfully');
+      toast.success("Payment proof uploaded successfully");
     };
     reader.readAsDataURL(file);
   };
 
   // Get available stock for a specific warehouse
   const getAvailableStock = (
-    product: Product, 
-    warehouseName: 'Lorenzo' | 'Oroquieta',
-    variantId?: string
+    product: Product,
+    warehouseName: "Lorenzo" | "Oroquieta",
+    variantId?: string,
   ): number => {
     let stockInfo: WarehouseStock | undefined;
-    
+
     if (variantId && product.variants) {
-      const variant = product.variants.find(v => v.id === variantId);
+      const variant = product.variants.find((v) => v.id === variantId);
       if (variant) {
-        stockInfo = variant.warehouseStock.find(ws => ws.warehouse === warehouseName);
+        stockInfo = variant.warehouseStock.find(
+          (ws) => ws.warehouse === warehouseName,
+        );
       }
     } else if (product.warehouseStock) {
-      stockInfo = product.warehouseStock.find(ws => ws.warehouse === warehouseName);
+      stockInfo = product.warehouseStock.find(
+        (ws) => ws.warehouse === warehouseName,
+      );
     }
-    
+
     if (!stockInfo) return 0;
     return Math.max(0, stockInfo.quantity - stockInfo.reserved);
   };
@@ -252,13 +313,16 @@ export function CreateOrderDialog({
   // Check if there's enough stock for all items
   const checkStockAvailability = (): { isValid: boolean; errors: string[] } => {
     const errors: string[] = [];
-    
+
     // Group items by product/variant/warehouse to check total quantities
-    const groupedItems = new Map<string, { item: OrderItem; totalQuantity: number }>();
-    
+    const groupedItems = new Map<
+      string,
+      { item: OrderItem; totalQuantity: number }
+    >();
+
     for (const item of orderItems) {
-      const key = `${item.productId}-${item.variantId || 'none'}-${item.warehouseSource}`;
-      
+      const key = `${item.productId}-${item.variantId || "none"}-${item.warehouseSource}`;
+
       if (groupedItems.has(key)) {
         const existing = groupedItems.get(key)!;
         existing.totalQuantity += item.quantity;
@@ -266,81 +330,92 @@ export function CreateOrderDialog({
         groupedItems.set(key, { item, totalQuantity: item.quantity });
       }
     }
-    
+
     // Check stock for each grouped item
     for (const { item, totalQuantity } of groupedItems.values()) {
-      const product = products.find(p => p.id === item.productId);
+      const product = products.find((p) => p.id === item.productId);
       if (!product) continue;
-      
-      const availableStock = getAvailableStock(product, item.warehouseSource!, item.variantId);
+
+      const availableStock = getAvailableStock(
+        product,
+        item.warehouseSource!,
+        item.variantId,
+      );
       if (totalQuantity > availableStock) {
-        const variantLabel = item.variantId ? ` (${item.size ? item.size + ' - ' : ''}${item.color})` : '';
+        const variantLabel = item.variantId
+          ? ` (${item.size ? item.size + " - " : ""}${item.color})`
+          : "";
         errors.push(
-          `${product.name}${variantLabel} in ${item.warehouseSource}: Only ${availableStock} available, ${totalQuantity} total requested in order`
+          `${product.name}${variantLabel} in ${item.warehouseSource}: Only ${availableStock} available, ${totalQuantity} total requested in order`,
         );
       }
     }
-    
+
     return { isValid: errors.length === 0, errors };
   };
 
   const addItemToOrder = () => {
     if (!selectedProductId) {
-      toast.error('Please select a product');
+      toast.error("Please select a product");
       return;
     }
 
-    const product = products.find(p => p.id === selectedProductId);
+    const product = products.find((p) => p.id === selectedProductId);
     if (!product) return;
 
     // Check if variant is required but not selected
     if (product.variants && product.variants.length > 0 && !selectedVariantId) {
-      toast.error('Please select a variant');
+      toast.error("Please select a variant");
       return;
     }
 
     // Check stock availability including quantities already in the order
-    const availableStock = getAvailableStock(product, warehouse, selectedVariantId);
-    
+    const availableStock = getAvailableStock(
+      product,
+      warehouse,
+      selectedVariantId,
+    );
+
     // Calculate total quantity of this product/variant already in order items (for same warehouse)
     const existingQuantity = orderItems
-      .filter(item => 
-        item.productId === selectedProductId && 
-        item.variantId === selectedVariantId &&
-        item.warehouseSource === warehouse
+      .filter(
+        (item) =>
+          item.productId === selectedProductId &&
+          item.variantId === selectedVariantId &&
+          item.warehouseSource === warehouse,
       )
       .reduce((sum, item) => sum + item.quantity, 0);
-    
+
     const totalQuantityNeeded = existingQuantity + quantity;
-    
+
     if (totalQuantityNeeded > availableStock) {
       toast.error(
         `Insufficient stock. ${availableStock} units available in ${warehouse} warehouse. ` +
-        `You already have ${existingQuantity} units in this order. ` +
-        `Cannot add ${quantity} more.`,
-        { duration: 6000 }
+          `You already have ${existingQuantity} units in this order. ` +
+          `Cannot add ${quantity} more.`,
+        { duration: 6000 },
       );
       return;
     }
 
     if (quantity <= 0) {
-      toast.error('Quantity must be at least 1');
+      toast.error("Quantity must be at least 1");
       return;
     }
 
     let price = product.price;
-    let variantLabel = '';
-    let color = '';
-    let size = '';
+    let variantLabel = "";
+    let color = "";
+    let size = "";
 
     // Handle variants
     if (product.variants && product.variants.length > 0 && selectedVariantId) {
-      const variant = product.variants.find(v => v.id === selectedVariantId);
+      const variant = product.variants.find((v) => v.id === selectedVariantId);
       if (variant) {
         price = variant.price;
         color = variant.color;
-        size = variant.size || '';
-        variantLabel = `${size ? size + ' - ' : ''}${color}`;
+        size = variant.size || "";
+        variantLabel = `${size ? size + " - " : ""}${color}`;
       }
     } else if (product.colors && product.colors.length > 0) {
       color = product.colors[0];
@@ -360,9 +435,9 @@ export function CreateOrderDialog({
 
     setOrderItems([...orderItems, newItem]);
     setSelectedProductId(null);
-    setSelectedVariantId('');
+    setSelectedVariantId("");
     setQuantity(1);
-    toast.success('Item added to order');
+    toast.success("Item added to order");
   };
 
   const removeItem = (index: number) => {
@@ -370,7 +445,10 @@ export function CreateOrderDialog({
   };
 
   const calculateSubtotal = () => {
-    return orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return orderItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
   };
 
   const calculateCouponDiscount = () => {
@@ -388,29 +466,29 @@ export function CreateOrderDialog({
   const calculateReservationFee = () => {
     return (calculateTotal() * reservationPercentage) / 100;
   };
-  
+
   const getApplicableCoupons = useMemo(() => {
     if (orderItems.length === 0) return [];
-    
+
     const subtotal = calculateSubtotal();
     const allCoupons = getCoupons();
-    
-    return allCoupons.filter(coupon => {
+
+    return allCoupons.filter((coupon) => {
       if (!coupon.isActive) return false;
       if (coupon.usedCount >= coupon.usageLimit) return false;
-      
+
       const expiryDate = new Date(coupon.expiryDate);
       if (expiryDate < new Date()) return false;
-      
+
       if (subtotal < coupon.minPurchase) return false;
-      
+
       return true;
     });
   }, [orderItems]);
 
   const handleApplyCoupon = () => {
     if (!couponCode.trim()) {
-      toast.error('Please enter a coupon code');
+      toast.error("Please enter a coupon code");
       return;
     }
 
@@ -418,18 +496,18 @@ export function CreateOrderDialog({
     const validation = validateCoupon(couponCode, subtotal);
 
     if (!validation.valid) {
-      toast.error(validation.error || 'Invalid coupon');
+      toast.error(validation.error || "Invalid coupon");
       return;
     }
 
     setAppliedCoupon(validation.coupon!);
-    setCouponCode('');
+    setCouponCode("");
     toast.success(`Coupon "${validation.coupon!.code}" applied successfully!`);
   };
 
   const handleRemoveCoupon = () => {
     setAppliedCoupon(null);
-    toast.info('Coupon removed');
+    toast.info("Coupon removed");
   };
 
   const handleSelectCoupon = (coupon: Coupon) => {
@@ -440,29 +518,29 @@ export function CreateOrderDialog({
 
   const handleCreateOrder = () => {
     if (orderItems.length === 0) {
-      toast.error('Please add at least one item to the order');
+      toast.error("Please add at least one item to the order");
       return;
     }
 
     if (!firstName || !lastName || !phone || !address || !city) {
-      toast.error('Please fill in all required customer information');
+      toast.error("Please fill in all required customer information");
       return;
     }
 
     // Validate stock availability for all items
     const stockCheck = checkStockAvailability();
     if (!stockCheck.isValid) {
-      toast.error('Insufficient stock for the following items:', {
-        description: stockCheck.errors.join('\n'),
+      toast.error("Insufficient stock for the following items:", {
+        description: stockCheck.errors.join("\n"),
         duration: 6000,
       });
       return;
     }
 
     // Find or create customer user
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
+    const users = JSON.parse(localStorage.getItem("users") || "[]");
     let customer = users.find((u: any) => u.email === customerEmail);
-    
+
     if (!customer && customerEmail) {
       // Create new customer account
       customer = {
@@ -471,13 +549,13 @@ export function CreateOrderDialog({
         firstName: firstName,
         lastName: lastName,
         phone: phone,
-        role: 'customer',
+        role: "customer",
         addresses: [],
         createdAt: new Date().toISOString(),
         password: `temp${Date.now()}`, // Temporary password
       };
       users.push(customer);
-      localStorage.setItem('users', JSON.stringify(users));
+      localStorage.setItem("users", JSON.stringify(users));
     }
 
     const reservationAmount = isReservation ? calculateReservationFee() : 0;
@@ -485,9 +563,9 @@ export function CreateOrderDialog({
     const orderData: any = {
       items: orderItems,
       subtotal: calculateSubtotal(),
-      deliveryFee: deliveryMethod === 'staff-delivery' ? deliveryFee : 0,
+      deliveryFee: deliveryMethod === "staff-delivery" ? deliveryFee : 0,
       total: calculateTotal(),
-      status: 'pending',
+      status: "pending",
       isReservation: isReservation,
       reservationFee: isReservation ? reservationAmount : undefined,
       reservationPercentage: isReservation ? reservationPercentage : undefined,
@@ -501,7 +579,7 @@ export function CreateOrderDialog({
         province: province,
         barangay: barangay,
         zipCode: zipCode,
-        country: 'Philippines',
+        country: "Philippines",
         phone: phone,
       },
       paymentMethod: paymentMethod,
@@ -513,12 +591,14 @@ export function CreateOrderDialog({
       couponCode: appliedCoupon?.code,
       couponDiscount: appliedCoupon ? calculateCouponDiscount() : undefined,
       couponId: appliedCoupon?.id,
-      coupon: appliedCoupon ? {
-        code: appliedCoupon.code,
-        discountType: appliedCoupon.discountType,
-        discountValue: appliedCoupon.discountValue,
-        discountAmount: calculateCouponDiscount(),
-      } : undefined,
+      coupon: appliedCoupon
+        ? {
+            code: appliedCoupon.code,
+            discountType: appliedCoupon.discountType,
+            discountValue: appliedCoupon.discountValue,
+            discountAmount: calculateCouponDiscount(),
+          }
+        : undefined,
     };
 
     // Stock reservation now happens automatically in placeOrder (AuthContext)
@@ -531,9 +611,11 @@ export function CreateOrderDialog({
 
     // Add audit log
     if (user) {
-      const couponNote = appliedCoupon ? ` | Coupon: ${appliedCoupon.code} (-₱${calculateCouponDiscount().toFixed(2)})` : '';
+      const couponNote = appliedCoupon
+        ? ` | Coupon: ${appliedCoupon.code} (-₱${calculateCouponDiscount().toFixed(2)})`
+        : "";
       addAuditLog({
-        actionType: 'manual_order_created',
+        actionType: "manual_order_created",
         performedBy: {
           id: user.id,
           email: user.email,
@@ -541,20 +623,20 @@ export function CreateOrderDialog({
           name: `${user.firstName} ${user.lastName}`,
         },
         targetEntity: {
-          type: 'order',
-          id: 'pending',
+          type: "order",
+          id: "pending",
           name: `Order for ${firstName} ${lastName}`,
         },
         metadata: {
-          notes: `Manual order created: ${orderItems.length} items, Total: ₱${calculateTotal().toFixed(2)}${couponNote}${notes ? ` - ${notes}` : ''}`,
+          notes: `Manual order created: ${orderItems.length} items, Total: ₱${calculateTotal().toFixed(2)}${couponNote}${notes ? ` - ${notes}` : ""}`,
         },
       });
     }
 
     // Close dialog and reset form
     setIsOpen(false);
-    
-    toast.success('Order created successfully!');
+
+    toast.success("Order created successfully!");
   };
 
   return (
@@ -602,9 +684,13 @@ export function CreateOrderDialog({
                               <p className="font-medium">
                                 {customer.firstName} {customer.lastName}
                               </p>
-                              <p className="text-sm text-muted-foreground truncate">{customer.email}</p>
+                              <p className="text-sm text-muted-foreground truncate">
+                                {customer.email}
+                              </p>
                               {customer.phone && (
-                                <p className="text-sm text-muted-foreground">{customer.phone}</p>
+                                <p className="text-sm text-muted-foreground">
+                                  {customer.phone}
+                                </p>
                               )}
                             </div>
                             <Badge variant="outline">Select</Badge>
@@ -614,7 +700,8 @@ export function CreateOrderDialog({
                     )}
                     {customerSearchTerm && filteredCustomers.length === 0 && (
                       <p className="text-sm text-muted-foreground text-center py-2">
-                        No customers found. Fill in the form below to create a new order.
+                        No customers found. Fill in the form below to create a
+                        new order.
                       </p>
                     )}
                   </div>
@@ -626,14 +713,20 @@ export function CreateOrderDialog({
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge className="bg-green-600">Selected Customer</Badge>
+                        <Badge className="bg-green-600">
+                          Selected Customer
+                        </Badge>
                       </div>
                       <p className="font-medium">
                         {selectedCustomer.firstName} {selectedCustomer.lastName}
                       </p>
-                      <p className="text-sm text-muted-foreground">{selectedCustomer.email}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {selectedCustomer.email}
+                      </p>
                       {selectedCustomer.phone && (
-                        <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {selectedCustomer.phone}
+                        </p>
                       )}
                     </div>
                     <Button
@@ -754,7 +847,7 @@ export function CreateOrderDialog({
             {/* Add Items */}
             <div className="space-y-4">
               <h3 className="font-semibold">Order Items</h3>
-              
+
               {/* Product Search */}
               <div className="space-y-2">
                 <Label>Search Products</Label>
@@ -769,25 +862,32 @@ export function CreateOrderDialog({
                 </div>
                 {productSearchTerm && (
                   <p className="text-xs text-muted-foreground">
-                    {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} found
+                    {filteredProducts.length} product
+                    {filteredProducts.length !== 1 ? "s" : ""} found
                   </p>
                 )}
               </div>
-              
+
               {/* Item Selection */}
               <div className="grid grid-cols-12 gap-2 items-end">
                 <div className="space-y-2 col-span-3">
                   <Label>Product</Label>
-                  <Select value={selectedProductId?.toString() || ''} onValueChange={(value) => {
-                    setSelectedProductId(Number(value));
-                    setSelectedVariantId('');
-                  }}>
+                  <Select
+                    value={selectedProductId?.toString() || ""}
+                    onValueChange={(value) => {
+                      setSelectedProductId(Number(value));
+                      setSelectedVariantId("");
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select product" />
                     </SelectTrigger>
                     <SelectContent>
                       {filteredProducts.map((product) => (
-                        <SelectItem key={product.id} value={product.id.toString()}>
+                        <SelectItem
+                          key={product.id}
+                          value={product.id.toString()}
+                        >
                           {product.name}
                         </SelectItem>
                       ))}
@@ -795,38 +895,55 @@ export function CreateOrderDialog({
                   </Select>
                 </div>
 
-                {selectedProductId && products.find(p => p.id === selectedProductId)?.variants && products.find(p => p.id === selectedProductId)!.variants!.length > 0 && (
-                  <div className="space-y-2 col-span-3">
-                    <Label>Variant</Label>
-                    <Select value={selectedVariantId} onValueChange={setSelectedVariantId}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select variant" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {products.find(p => p.id === selectedProductId)?.variants?.filter(v => v.active).map((variant) => (
-                          <SelectItem key={variant.id} value={variant.id}>
-                            {variant.size && `${variant.size} - `}{variant.color}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                {selectedProductId &&
+                  products.find((p) => p.id === selectedProductId)?.variants &&
+                  products.find((p) => p.id === selectedProductId)!.variants!
+                    .length > 0 && (
+                    <div className="space-y-2 col-span-3">
+                      <Label>Variant</Label>
+                      <Select
+                        value={selectedVariantId}
+                        onValueChange={setSelectedVariantId}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select variant" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {products
+                            .find((p) => p.id === selectedProductId)
+                            ?.variants?.filter((v) => v.active)
+                            .map((variant) => (
+                              <SelectItem key={variant.id} value={variant.id}>
+                                {variant.size && `${variant.size} - `}
+                                {variant.color}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                 <div className="space-y-2 col-span-1">
                   <Label>Qty</Label>
                   <Input
                     type="number"
                     min="1"
-                    value={quantity || ''}
-                    onChange={(e) => setQuantity(e.target.value === '' ? 0 : Number(e.target.value))}
+                    value={quantity || ""}
+                    onChange={(e) =>
+                      setQuantity(
+                        e.target.value === "" ? 0 : Number(e.target.value),
+                      )
+                    }
                     className="text-center [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                 </div>
 
                 <div className="space-y-2 col-span-2">
                   <Label>Warehouse</Label>
-                  <Select value={warehouse} onValueChange={(value: any) => setWarehouse(value)}>
+                  <Select
+                    value={warehouse}
+                    onValueChange={(value: any) => setWarehouse(value)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -854,48 +971,67 @@ export function CreateOrderDialog({
                         {warehouse} Warehouse
                       </Badge>
                       {(() => {
-                        const product = products.find(p => p.id === selectedProductId);
+                        const product = products.find(
+                          (p) => p.id === selectedProductId,
+                        );
                         if (!product) return null;
-                        
-                        const availableStock = getAvailableStock(product, warehouse, selectedVariantId);
-                        
+
+                        const availableStock = getAvailableStock(
+                          product,
+                          warehouse,
+                          selectedVariantId,
+                        );
+
                         // Calculate quantity already in order for this product/variant/warehouse
                         const alreadyInOrder = orderItems
-                          .filter(item => 
-                            item.productId === selectedProductId && 
-                            item.variantId === selectedVariantId &&
-                            item.warehouseSource === warehouse
+                          .filter(
+                            (item) =>
+                              item.productId === selectedProductId &&
+                              item.variantId === selectedVariantId &&
+                              item.warehouseSource === warehouse,
                           )
                           .reduce((sum, item) => sum + item.quantity, 0);
-                        
+
                         const remainingStock = availableStock - alreadyInOrder;
-                        const isLowStock = remainingStock > 0 && remainingStock <= 5;
+                        const isLowStock =
+                          remainingStock > 0 && remainingStock <= 5;
                         const isOutOfStock = remainingStock <= 0;
-                        
+
                         return (
                           <>
                             <span className="text-sm">
-                              Available: 
-                              <span className={`ml-1 font-semibold ${
-                                isOutOfStock ? 'text-red-600' : 
-                                isLowStock ? 'text-yellow-600' : 
-                                'text-green-600'
-                              }`}>
+                              Available:
+                              <span
+                                className={`ml-1 font-semibold ${
+                                  isOutOfStock
+                                    ? "text-red-600"
+                                    : isLowStock
+                                      ? "text-yellow-600"
+                                      : "text-green-600"
+                                }`}
+                              >
                                 {availableStock} units
                               </span>
                               {alreadyInOrder > 0 && (
                                 <span className="text-muted-foreground ml-2">
-                                  ({alreadyInOrder} in order, {Math.max(0, remainingStock)} remaining)
+                                  ({alreadyInOrder} in order,{" "}
+                                  {Math.max(0, remainingStock)} remaining)
                                 </span>
                               )}
                             </span>
                             {isLowStock && !isOutOfStock && (
-                              <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-700 border-yellow-300">
+                              <Badge
+                                variant="outline"
+                                className="text-xs bg-yellow-50 text-yellow-700 border-yellow-300"
+                              >
                                 Low Stock
                               </Badge>
                             )}
                             {isOutOfStock && (
-                              <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-300">
+                              <Badge
+                                variant="outline"
+                                className="text-xs bg-red-50 text-red-700 border-red-300"
+                              >
                                 Out of Stock
                               </Badge>
                             )}
@@ -911,22 +1047,34 @@ export function CreateOrderDialog({
               {orderItems.length > 0 && (
                 <div className="border rounded-lg p-4 space-y-2">
                   {orderItems.map((item, index) => {
-                    const product = products.find(p => p.id === item.productId);
-                    const availableStock = product ? getAvailableStock(product, item.warehouseSource!, item.variantId) : 0;
-                    
+                    const product = products.find(
+                      (p) => p.id === item.productId,
+                    );
+                    const availableStock = product
+                      ? getAvailableStock(
+                          product,
+                          item.warehouseSource!,
+                          item.variantId,
+                        )
+                      : 0;
+
                     // Calculate total quantity of this product/variant in the order (for same warehouse)
                     const totalQuantityInOrder = orderItems
-                      .filter(orderItem => 
-                        orderItem.productId === item.productId && 
-                        orderItem.variantId === item.variantId &&
-                        orderItem.warehouseSource === item.warehouseSource
+                      .filter(
+                        (orderItem) =>
+                          orderItem.productId === item.productId &&
+                          orderItem.variantId === item.variantId &&
+                          orderItem.warehouseSource === item.warehouseSource,
                       )
                       .reduce((sum, orderItem) => sum + orderItem.quantity, 0);
-                    
+
                     const hasStockIssue = totalQuantityInOrder > availableStock;
-                    
+
                     return (
-                      <div key={index} className={`flex items-center gap-4 p-2 rounded ${hasStockIssue ? 'bg-red-50 border border-red-300' : 'bg-secondary'}`}>
+                      <div
+                        key={index}
+                        className={`flex items-center gap-4 p-2 rounded ${hasStockIssue ? "bg-red-50 border border-red-300" : "bg-secondary"}`}
+                      >
                         <img
                           src={item.imageUrl}
                           alt={item.name}
@@ -935,19 +1083,29 @@ export function CreateOrderDialog({
                         <div className="flex-1">
                           <div className="font-medium">{item.name}</div>
                           <div className="text-sm text-muted-foreground">
-                            {item.size && `${item.size} - `}{item.color} • {item.quantity}x ₱{item.price.toFixed(2)}
+                            {item.size && `${item.size} - `}
+                            {item.color} • {item.quantity}x ₱
+                            {item.price.toFixed(2)}
                           </div>
                           <div className="flex items-center gap-2 mt-1">
-                            <Badge variant="outline" className="text-xs">{item.warehouseSource}</Badge>
+                            <Badge variant="outline" className="text-xs">
+                              {item.warehouseSource}
+                            </Badge>
                             {hasStockIssue && (
-                              <Badge variant="outline" className="text-xs bg-red-100 text-red-700 border-red-300">
+                              <Badge
+                                variant="outline"
+                                className="text-xs bg-red-100 text-red-700 border-red-300"
+                              >
                                 <AlertTriangle className="h-3 w-3 mr-1" />
-                                Only {availableStock} available (Total in order: {totalQuantityInOrder})
+                                Only {availableStock} available (Total in order:{" "}
+                                {totalQuantityInOrder})
                               </Badge>
                             )}
                           </div>
                         </div>
-                        <div className="font-semibold">₱{(item.price * item.quantity).toFixed(2)}</div>
+                        <div className="font-semibold">
+                          ₱{(item.price * item.quantity).toFixed(2)}
+                        </div>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -970,7 +1128,10 @@ export function CreateOrderDialog({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Payment Method</Label>
-                  <Select value={paymentMethod} onValueChange={(value: any) => setPaymentMethod(value)}>
+                  <Select
+                    value={paymentMethod}
+                    onValueChange={(value: any) => setPaymentMethod(value)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -984,19 +1145,26 @@ export function CreateOrderDialog({
 
                 <div className="space-y-2">
                   <Label>Delivery Method</Label>
-                  <Select value={deliveryMethod} onValueChange={(value: any) => setDeliveryMethod(value)}>
+                  <Select
+                    value={deliveryMethod}
+                    onValueChange={(value: any) => setDeliveryMethod(value)}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="store-pickup">Store Pickup</SelectItem>
-                      <SelectItem value="staff-delivery">Staff Delivery</SelectItem>
-                      <SelectItem value="customer-arranged">Customer Arranged</SelectItem>
+                      <SelectItem value="staff-delivery">
+                        Staff Delivery
+                      </SelectItem>
+                      <SelectItem value="customer-arranged">
+                        Customer Arranged
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                {deliveryMethod === 'staff-delivery' && (
+                {deliveryMethod === "staff-delivery" && (
                   <div className="space-y-2">
                     <Label>Delivery Fee</Label>
                     <Input
@@ -1009,7 +1177,7 @@ export function CreateOrderDialog({
                   </div>
                 )}
 
-                {paymentMethod !== 'cash' && (
+                {paymentMethod !== "cash" && (
                   <>
                     <div className="space-y-2">
                       <Label>Account Name</Label>
@@ -1019,7 +1187,7 @@ export function CreateOrderDialog({
                         placeholder="Account holder name"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label>Account No.</Label>
                       <Input
@@ -1028,7 +1196,7 @@ export function CreateOrderDialog({
                         placeholder="GCash number or Bank account number"
                       />
                     </div>
-                    
+
                     <div className="space-y-2 col-span-2">
                       <Label>Payment Reference Number</Label>
                       <Input
@@ -1037,7 +1205,7 @@ export function CreateOrderDialog({
                         placeholder="Transaction reference number"
                       />
                     </div>
-                    
+
                     <div className="space-y-2 col-span-2">
                       <Label>Transaction Details</Label>
                       <Textarea
@@ -1052,7 +1220,7 @@ export function CreateOrderDialog({
               </div>
 
               {/* Payment Proof Upload for Digital Payments */}
-              {paymentMethod !== 'cash' && (
+              {paymentMethod !== "cash" && (
                 <div className="space-y-2">
                   <Label>Payment Proof * (Required for verification)</Label>
                   <p className="text-xs text-muted-foreground">
@@ -1069,16 +1237,23 @@ export function CreateOrderDialog({
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => document.getElementById('paymentProof')?.click()}
+                      onClick={() =>
+                        document.getElementById("paymentProof")?.click()
+                      }
                       className="flex-1 justify-start gap-2"
                     >
                       <Upload className="h-4 w-4" />
-                      {paymentProof ? 'Change Image' : 'Upload Image'}
+                      {paymentProof ? "Change Image" : "Upload Image"}
                     </Button>
                     {paymentProof && (
                       <>
                         <Dialog>
-                          <Button type="button" variant="outline" size="icon" onClick={() => {}}>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => {}}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <DialogContent className="max-w-4xl">
@@ -1089,7 +1264,11 @@ export function CreateOrderDialog({
                               </DialogDescription>
                             </DialogHeader>
                             <div className="max-h-[70vh] overflow-auto">
-                              <img src={paymentProof} alt="Payment proof" className="w-full h-auto" />
+                              <img
+                                src={paymentProof}
+                                alt="Payment proof"
+                                className="w-full h-auto"
+                              />
                             </div>
                           </DialogContent>
                         </Dialog>
@@ -1097,7 +1276,7 @@ export function CreateOrderDialog({
                           type="button"
                           variant="outline"
                           size="icon"
-                          onClick={() => setPaymentProof('')}
+                          onClick={() => setPaymentProof("")}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -1114,7 +1293,13 @@ export function CreateOrderDialog({
               )}
 
               {/* Reservation Option */}
-              <Card className={isReservation ? "border-amber-300 bg-amber-50" : "border-border"}>
+              <Card
+                className={
+                  isReservation
+                    ? "border-amber-300 bg-amber-50"
+                    : "border-border"
+                }
+              >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex-1">
@@ -1127,7 +1312,10 @@ export function CreateOrderDialog({
                           className="w-5 h-5 rounded border-2 border-amber-600 text-amber-600 focus:ring-2 focus:ring-amber-500 focus:ring-offset-0 cursor-pointer"
                         />
                         <div>
-                          <Label htmlFor="isReservation" className="cursor-pointer font-medium">
+                          <Label
+                            htmlFor="isReservation"
+                            className="cursor-pointer font-medium"
+                          >
                             Reservation Order (Partial Payment)
                           </Label>
                           <p className="text-xs text-muted-foreground mt-0.5">
@@ -1137,7 +1325,10 @@ export function CreateOrderDialog({
                       </div>
                     </div>
                     {isReservation && (
-                      <Badge variant="outline" className="bg-amber-100 text-amber-800 border-amber-300">
+                      <Badge
+                        variant="outline"
+                        className="bg-amber-100 text-amber-800 border-amber-300"
+                      >
                         Active
                       </Badge>
                     )}
@@ -1154,15 +1345,23 @@ export function CreateOrderDialog({
                         type="number"
                         min="1"
                         max="99"
-                        value={reservationPercentage || ''}
-                        onChange={(e) => setReservationPercentage(e.target.value === '' ? 0 : Number(e.target.value))}
+                        value={reservationPercentage || ""}
+                        onChange={(e) =>
+                          setReservationPercentage(
+                            e.target.value === "" ? 0 : Number(e.target.value),
+                          )
+                        }
                         className="border-amber-300 focus:border-amber-500 focus:ring-amber-500 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                     <div className="p-3 bg-white rounded-lg border border-amber-200">
                       <p className="text-sm">
-                        Customer will pay <span className="font-semibold text-amber-700">₱{calculateReservationFee().toFixed(2)}</span>
-                        {' '}({reservationPercentage}% of ₱{calculateTotal().toFixed(2)})
+                        Customer will pay{" "}
+                        <span className="font-semibold text-amber-700">
+                          ₱{calculateReservationFee().toFixed(2)}
+                        </span>{" "}
+                        ({reservationPercentage}% of ₱
+                        {calculateTotal().toFixed(2)})
                       </p>
                     </div>
                   </CardContent>
@@ -1194,14 +1393,17 @@ export function CreateOrderDialog({
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={() => setShowApplicableCoupons(!showApplicableCoupons)}
+                    onClick={() =>
+                      setShowApplicableCoupons(!showApplicableCoupons)
+                    }
                     className="gap-2"
                   >
                     <Percent className="h-3 w-3" />
-                    {showApplicableCoupons ? 'Hide' : 'View'} Available Coupons ({getApplicableCoupons.length})
+                    {showApplicableCoupons ? "Hide" : "View"} Available Coupons
+                    ({getApplicableCoupons.length})
                   </Button>
                 </div>
-                
+
                 {/* Applied Coupon */}
                 {appliedCoupon && (
                   <Card className="bg-green-50 border-green-200">
@@ -1209,9 +1411,11 @@ export function CreateOrderDialog({
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <Badge className="bg-green-600">{appliedCoupon.code}</Badge>
+                            <Badge className="bg-green-600">
+                              {appliedCoupon.code}
+                            </Badge>
                             <Badge variant="outline" className="text-xs">
-                              {appliedCoupon.discountType === 'percentage'
+                              {appliedCoupon.discountType === "percentage"
                                 ? `${appliedCoupon.discountValue}% OFF`
                                 : `₱${appliedCoupon.discountValue} OFF`}
                             </Badge>
@@ -1242,9 +1446,11 @@ export function CreateOrderDialog({
                     <Input
                       placeholder="Enter coupon code"
                       value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                      onChange={(e) =>
+                        setCouponCode(e.target.value.toUpperCase())
+                      }
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
+                        if (e.key === "Enter") {
                           e.preventDefault();
                           handleApplyCoupon();
                         }
@@ -1262,58 +1468,90 @@ export function CreateOrderDialog({
                 )}
 
                 {/* Available Coupons List */}
-                {!appliedCoupon && showApplicableCoupons && getApplicableCoupons.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      Available coupons for this order:
-                    </p>
-                    <div className="grid gap-2">
-                      {getApplicableCoupons.map((coupon) => {
-                        const discountAmount = calculateDiscount(coupon, calculateSubtotal());
-                        return (
-                          <Card
-                            key={coupon.id}
-                            className="cursor-pointer hover:border-primary transition-colors"
-                            onClick={() => handleSelectCoupon(coupon)}
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <Badge>{coupon.code}</Badge>
-                                  <Badge variant="outline" className="text-xs">
-                                    {coupon.discountType === 'percentage'
-                                      ? `${coupon.discountValue}% OFF`
-                                      : `₱${coupon.discountValue} OFF`}
-                                  </Badge>
+                {!appliedCoupon &&
+                  showApplicableCoupons &&
+                  getApplicableCoupons.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">
+                        Available coupons for this order:
+                      </p>
+                      <div className="grid gap-2">
+                        {getApplicableCoupons.map((coupon) => {
+                          const discountAmount = calculateDiscount(
+                            coupon,
+                            calculateSubtotal(),
+                          );
+                          return (
+                            <Card
+                              key={coupon.id}
+                              className="cursor-pointer hover:border-primary transition-colors"
+                              onClick={() => handleSelectCoupon(coupon)}
+                            >
+                              <CardContent className="p-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <Badge>{coupon.code}</Badge>
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      {coupon.discountType === "percentage"
+                                        ? `${coupon.discountValue}% OFF`
+                                        : `₱${coupon.discountValue} OFF`}
+                                    </Badge>
+                                  </div>
+                                  <p className="text-sm">
+                                    {coupon.description}
+                                  </p>
+                                  <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
+                                    <span>
+                                      Min: ₱
+                                      {coupon.minPurchase.toLocaleString(
+                                        "en-PH",
+                                        { minimumFractionDigits: 2 },
+                                      )}
+                                    </span>
+                                    {coupon.maxDiscount && (
+                                      <span>
+                                        Max Discount: ₱
+                                        {coupon.maxDiscount.toLocaleString(
+                                          "en-PH",
+                                          { minimumFractionDigits: 2 },
+                                        )}
+                                      </span>
+                                    )}
+                                    <span>
+                                      Remaining:{" "}
+                                      {coupon.usageLimit - coupon.usedCount}/
+                                      {coupon.usageLimit}
+                                    </span>
+                                    <span>
+                                      Exp:{" "}
+                                      {new Date(
+                                        coupon.expiryDate,
+                                      ).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                  <p className="text-sm mt-1">
+                                    You'll save: ₱{discountAmount.toFixed(2)}
+                                  </p>
                                 </div>
-                                <p className="text-sm">{coupon.description}</p>
-                                <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
-                                  <span>Min: ₱{coupon.minPurchase.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
-                                  {coupon.maxDiscount && (
-                                    <span>Max Discount: ₱{coupon.maxDiscount.toLocaleString('en-PH', { minimumFractionDigits: 2 })}</span>
-                                  )}
-                                  <span>
-                                    Remaining: {coupon.usageLimit - coupon.usedCount}/{coupon.usageLimit}
-                                  </span>
-                                  <span>Exp: {new Date(coupon.expiryDate).toLocaleDateString()}</span>
-                                </div>
-                                <p className="text-sm mt-1">
-                                  You'll save: ₱{discountAmount.toFixed(2)}
-                                </p>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {!appliedCoupon && showApplicableCoupons && getApplicableCoupons.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No coupons available for this order. Add more items or check the minimum purchase requirement.
-                  </p>
-                )}
+                {!appliedCoupon &&
+                  showApplicableCoupons &&
+                  getApplicableCoupons.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      No coupons available for this order. Add more items or
+                      check the minimum purchase requirement.
+                    </p>
+                  )}
               </div>
             )}
 
@@ -1326,7 +1564,7 @@ export function CreateOrderDialog({
                   <span>Subtotal:</span>
                   <span>₱{calculateSubtotal().toFixed(2)}</span>
                 </div>
-                {deliveryMethod === 'staff-delivery' && deliveryFee > 0 && (
+                {deliveryMethod === "staff-delivery" && deliveryFee > 0 && (
                   <div className="flex justify-between">
                     <span>Delivery Fee:</span>
                     <span>₱{deliveryFee.toFixed(2)}</span>
@@ -1357,7 +1595,10 @@ export function CreateOrderDialog({
               <Button variant="outline" onClick={() => setIsOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleCreateOrder} disabled={orderItems.length === 0}>
+              <Button
+                onClick={handleCreateOrder}
+                disabled={orderItems.length === 0}
+              >
                 <Save className="h-4 w-4 mr-2" />
                 Create Order
               </Button>
@@ -1381,16 +1622,22 @@ export function EditOrderDialog({
   const [isOpen, setIsOpen] = useState(false);
   const [items, setItems] = useState<OrderItem[]>(order.items);
   const [deliveryFee, setDeliveryFee] = useState(order.deliveryFee || 0);
-  const [paymentReference, setPaymentReference] = useState(order.paymentReference || '');
-  
+  const [paymentReference, setPaymentReference] = useState(
+    order.paymentReference || "",
+  );
+
   // Shipping address
   const [firstName, setFirstName] = useState(order.shippingAddress.firstName);
   const [lastName, setLastName] = useState(order.shippingAddress.lastName);
-  const [phone, setPhone] = useState(order.shippingAddress.phone || '');
+  const [phone, setPhone] = useState(order.shippingAddress.phone || "");
   const [address, setAddress] = useState(order.shippingAddress.address);
   const [city, setCity] = useState(order.shippingAddress.city);
-  const [province, setProvince] = useState(order.shippingAddress.province || order.shippingAddress.state);
-  const [barangay, setBarangay] = useState(order.shippingAddress.barangay || '');
+  const [province, setProvince] = useState(
+    order.shippingAddress.province || order.shippingAddress.state,
+  );
+  const [barangay, setBarangay] = useState(
+    order.shippingAddress.barangay || "",
+  );
   const [zipCode, setZipCode] = useState(order.shippingAddress.zipCode);
 
   const updateQuantity = (index: number, newQuantity: number) => {
@@ -1401,14 +1648,14 @@ export function EditOrderDialog({
 
   const removeItem = (index: number) => {
     if (items.length === 1) {
-      toast.error('Order must have at least one item');
+      toast.error("Order must have at least one item");
       return;
     }
     setItems(items.filter((_, i) => i !== index));
   };
 
   const calculateSubtotal = () => {
-    return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   };
 
   const calculateTotal = () => {
@@ -1442,7 +1689,7 @@ export function EditOrderDialog({
     // Add audit log
     if (user) {
       addAuditLog({
-        actionType: 'order_modified',
+        actionType: "order_modified",
         performedBy: {
           id: user.id,
           email: user.email,
@@ -1450,24 +1697,29 @@ export function EditOrderDialog({
           name: `${user.firstName} ${user.lastName}`,
         },
         targetEntity: {
-          type: 'order',
+          type: "order",
           id: order.id,
           name: order.id,
         },
         metadata: {
           orderNumber: order.id,
-          notes: 'Order details updated',
+          notes: "Order details updated",
         },
       });
     }
 
     setIsOpen(false);
-    toast.success('Order updated successfully');
+    toast.success("Order updated successfully");
   };
 
   return (
     <>
-      <Button variant="outline" size="sm" onClick={() => setIsOpen(true)} className="gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => setIsOpen(true)}
+        className="gap-2"
+      >
         <Edit className="h-4 w-4" />
         Edit Order
       </Button>
@@ -1487,7 +1739,10 @@ export function EditOrderDialog({
               <h3 className="font-semibold">Order Items</h3>
               <div className="space-y-2">
                 {items.map((item, index) => (
-                  <div key={index} className="flex items-center gap-4 p-3 bg-secondary rounded-lg">
+                  <div
+                    key={index}
+                    className="flex items-center gap-4 p-3 bg-secondary rounded-lg"
+                  >
                     <img
                       src={item.imageUrl}
                       alt={item.name}
@@ -1496,9 +1751,12 @@ export function EditOrderDialog({
                     <div className="flex-1">
                       <div className="font-medium">{item.name}</div>
                       <div className="text-sm text-muted-foreground">
-                        {item.size && `${item.size} - `}{item.color}
+                        {item.size && `${item.size} - `}
+                        {item.color}
                       </div>
-                      <div className="text-sm">₱{item.price.toFixed(2)} each</div>
+                      <div className="text-sm">
+                        ₱{item.price.toFixed(2)} each
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Label className="text-sm">Qty:</Label>
@@ -1506,7 +1764,9 @@ export function EditOrderDialog({
                         type="number"
                         min="1"
                         value={item.quantity}
-                        onChange={(e) => updateQuantity(index, Number(e.target.value))}
+                        onChange={(e) =>
+                          updateQuantity(index, Number(e.target.value))
+                        }
                         className="w-20"
                       />
                     </div>
@@ -1534,31 +1794,52 @@ export function EditOrderDialog({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>First Name</Label>
-                  <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                  <Input
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Last Name</Label>
-                  <Input value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                  <Input
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Phone</Label>
-                  <Input value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  <Input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>City</Label>
-                  <Input value={city} onChange={(e) => setCity(e.target.value)} />
+                  <Input
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2 col-span-2">
                   <Label>Street Address</Label>
-                  <Input value={address} onChange={(e) => setAddress(e.target.value)} />
+                  <Input
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Barangay</Label>
-                  <Input value={barangay} onChange={(e) => setBarangay(e.target.value)} />
+                  <Input
+                    value={barangay}
+                    onChange={(e) => setBarangay(e.target.value)}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Province</Label>
-                  <Input value={province} onChange={(e) => setProvince(e.target.value)} />
+                  <Input
+                    value={province}
+                    onChange={(e) => setProvince(e.target.value)}
+                  />
                 </div>
               </div>
             </div>
@@ -1569,7 +1850,7 @@ export function EditOrderDialog({
             <div className="space-y-4">
               <h3 className="font-semibold">Order Details</h3>
               <div className="grid grid-cols-2 gap-4">
-                {order.deliveryMethod === 'staff-delivery' && (
+                {order.deliveryMethod === "staff-delivery" && (
                   <div className="space-y-2">
                     <Label>Delivery Fee</Label>
                     <Input
@@ -1581,7 +1862,7 @@ export function EditOrderDialog({
                     />
                   </div>
                 )}
-                {order.paymentMethod !== 'cash' && (
+                {order.paymentMethod !== "cash" && (
                   <div className="space-y-2">
                     <Label>Payment Reference</Label>
                     <Input
@@ -1639,11 +1920,11 @@ export function DeleteOrderDialog({
 }) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [confirmText, setConfirmText] = useState('');
+  const [confirmText, setConfirmText] = useState("");
 
   const handleDelete = () => {
     if (confirmText !== order.id) {
-      toast.error('Please type the order ID correctly to confirm deletion');
+      toast.error("Please type the order ID correctly to confirm deletion");
       return;
     }
 
@@ -1652,7 +1933,7 @@ export function DeleteOrderDialog({
     // Add audit log
     if (user) {
       addAuditLog({
-        actionType: 'order_cancelled',
+        actionType: "order_cancelled",
         performedBy: {
           id: user.id,
           email: user.email,
@@ -1660,25 +1941,30 @@ export function DeleteOrderDialog({
           name: `${user.firstName} ${user.lastName}`,
         },
         targetEntity: {
-          type: 'order',
+          type: "order",
           id: order.id,
           name: order.id,
         },
         metadata: {
           orderNumber: order.id,
-          notes: 'Order permanently deleted',
+          notes: "Order permanently deleted",
         },
       });
     }
 
     setIsOpen(false);
-    setConfirmText('');
-    toast.success('Order deleted successfully');
+    setConfirmText("");
+    toast.success("Order deleted successfully");
   };
 
   return (
     <>
-      <Button variant="destructive" size="sm" onClick={() => setIsOpen(true)} className="gap-2">
+      <Button
+        variant="destructive"
+        size="sm"
+        onClick={() => setIsOpen(true)}
+        className="gap-2"
+      >
         <Trash2 className="h-4 w-4" />
         Delete Order
       </Button>
@@ -1691,18 +1977,24 @@ export function DeleteOrderDialog({
               Delete Order
             </DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This will permanently delete the order.
+              This action cannot be undone. This will permanently delete the
+              order.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
               <p className="text-sm">
-                You are about to delete order <strong>{order.id}</strong> for{' '}
-                <strong>{order.shippingAddress.firstName} {order.shippingAddress.lastName}</strong>.
+                You are about to delete order <strong>{order.id}</strong> for{" "}
+                <strong>
+                  {order.shippingAddress.firstName}{" "}
+                  {order.shippingAddress.lastName}
+                </strong>
+                .
               </p>
               <p className="text-sm mt-2">
-                Total: <strong>₱{order.total.toFixed(2)}</strong> • {order.items.length} item(s)
+                Total: <strong>₱{order.total.toFixed(2)}</strong> •{" "}
+                {order.items.length} item(s)
               </p>
             </div>
 

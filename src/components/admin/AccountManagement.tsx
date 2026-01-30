@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import type { User as UserType } from "../../contexts/AuthContext";
 import {
@@ -12,36 +12,95 @@ import {
   sanitizeInput,
 } from "../../lib/validation";
 import { useAuth } from "../../contexts/AuthContext";
-import { getCreatableRoles, getRoleName, getRoleDescription } from "../../lib/permissions";
-import { useAuditLog } from "../../hooks/useAuditLog";
 import {
-  addUserNotification,
-  canChangeEmail,
-} from "../../lib/auditLog";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Badge } from '../ui/badge';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from '../ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
-import { UserPlus, Edit, Trash2, Search, Shield, Lock, Mail, Phone, User, EyeOff, AlertCircle, Calendar, Crown, ShoppingCart, Package, Edit2, Users, Filter } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
+  getCreatableRoles,
+  getRoleName,
+  getRoleDescription,
+} from "../../lib/permissions";
+import { useAuditLog } from "../../hooks/useAuditLog";
+import { addUserNotification, canChangeEmail } from "../../lib/auditLog";
+import {
+  getAllUsers,
+  updateUserRole,
+  toggleUserActive,
+  updateUserInfo,
+  createUser,
+  checkEmailExists,
+} from "../../lib/userService";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Badge } from "../ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+} from "../ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../ui/alert-dialog";
+import {
+  UserPlus,
+  Edit,
+  Trash2,
+  Search,
+  Shield,
+  Lock,
+  Mail,
+  Phone,
+  User,
+  EyeOff,
+  AlertCircle,
+  Calendar,
+  Crown,
+  ShoppingCart,
+  Package,
+  Edit2,
+  Users,
+  Filter,
+} from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 
 export function AccountManagement() {
   const { user: currentUser } = useAuth();
   const isOwner = currentUser?.role === "owner";
   const { logAccountAction } = useAuditLog();
 
-  const [users, setUsers] = useState<
-    (UserType & { password?: string })[]
-  >(() => {
-    if (typeof window === "undefined") return [];
-    const stored = localStorage.getItem("users");
-    return stored ? JSON.parse(stored) : [];
-  });
+  const [users, setUsers] = useState<(UserType & { password?: string })[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<
     (UserType & { password?: string }) | null
   >(null);
@@ -53,29 +112,31 @@ export function AccountManagement() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "active" | "inactive"
   >("active");
-  
+
   // Popover open states
   const [showRoleFilterPopover, setShowRoleFilterPopover] = useState(false);
   const [showStatusFilterPopover, setShowStatusFilterPopover] = useState(false);
 
+  // Load users from Supabase on mount
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const loadUsers = async () => {
+    setLoading(true);
+    const fetchedUsers = await getAllUsers();
+    setUsers(fetchedUsers);
+    setLoading(false);
+  };
+
   // Calculate statistics
   const stats = useMemo(() => {
     const totalUsers = users.length;
-    const ownerUsers = users.filter(
-      (u) => u.role === "owner",
-    ).length;
-    const adminUsers = users.filter(
-      (u) => u.role === "admin",
-    ).length;
-    const customerUsers = users.filter(
-      (u) => u.role === "customer",
-    ).length;
-    const staffUsers = users.filter(
-      (u) => u.role === "staff",
-    ).length;
-    const clerkUsers = users.filter(
-      (u) => u.role === "inventory-clerk",
-    ).length;
+    const ownerUsers = users.filter((u) => u.role === "owner").length;
+    const adminUsers = users.filter((u) => u.role === "admin").length;
+    const customerUsers = users.filter((u) => u.role === "customer").length;
+    const staffUsers = users.filter((u) => u.role === "staff").length;
+    const clerkUsers = users.filter((u) => u.role === "inventory-clerk").length;
 
     return {
       totalUsers,
@@ -97,9 +158,7 @@ export function AccountManagement() {
 
     if (statusFilter !== "all") {
       filtered = filtered.filter((u) =>
-        statusFilter === "active"
-          ? u.active !== false
-          : u.active === false,
+        statusFilter === "active" ? u.active !== false : u.active === false,
       );
     }
 
@@ -116,7 +175,7 @@ export function AccountManagement() {
     return filtered;
   }, [users, roleFilter, statusFilter, searchTerm]);
 
-  const handleUpdateRole = (
+  const handleUpdateRole = async (
     userId: string,
     newRole: "customer" | "staff" | "inventory-clerk" | "admin" | "owner",
   ) => {
@@ -132,24 +191,29 @@ export function AccountManagement() {
     if (!user) return;
 
     const oldRole = user.role;
-    const updatedUsers = users.map((u) =>
-      u.id === userId ? { ...u, role: newRole } : u,
-    );
-    setUsers(updatedUsers);
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
+
+    const success = await updateUserRole(userId, newRole);
+
+    if (!success) {
+      toast.error("Failed to update role", {
+        description: "There was an error updating the user role",
+        duration: 3000,
+      });
+      return;
+    }
+
+    // Reload users
+    await loadUsers();
 
     // Add audit log
     if (currentUser) {
-      logAccountAction(
-        "role_changed",
-        user.id,
-        user.email,
-        [{
+      logAccountAction("role_changed", user.id, user.email, [
+        {
           field: "role",
           oldValue: oldRole,
           newValue: newRole,
-        }]
-      );
+        },
+      ]);
 
       // Notify affected user
       addUserNotification({
@@ -166,14 +230,10 @@ export function AccountManagement() {
     });
   };
 
-  const handleToggleActive = (
-    userId: string,
-    currentStatus: boolean,
-  ) => {
+  const handleToggleActive = async (userId: string, currentStatus: boolean) => {
     if (!isOwner) {
       toast.error("Access denied! 🚫", {
-        description:
-          "Only owners can deactivate/reactivate users",
+        description: "Only owners can deactivate/reactivate users",
         duration: 3000,
       });
       return;
@@ -183,19 +243,19 @@ export function AccountManagement() {
     const user = users.find((u) => u.id === userId);
     if (!user) return;
 
-    if (
-      confirm(
-        `Are you sure you want to ${action} ${user?.email}?`,
-      )
-    ) {
-      const updatedUsers = users.map((u) =>
-        u.id === userId ? { ...u, active: !currentStatus } : u,
-      );
-      setUsers(updatedUsers);
-      localStorage.setItem(
-        "users",
-        JSON.stringify(updatedUsers),
-      );
+    if (confirm(`Are you sure you want to ${action} ${user?.email}?`)) {
+      const success = await toggleUserActive(userId, !currentStatus);
+
+      if (!success) {
+        toast.error("Failed to update status", {
+          description: "There was an error updating the user status",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Reload users
+      await loadUsers();
 
       // Add audit log
       logAccountAction(
@@ -203,8 +263,12 @@ export function AccountManagement() {
         user.id,
         user.email,
         [
-          { field: "active", oldValue: String(currentStatus), newValue: String(!currentStatus) },
-        ]
+          {
+            field: "active",
+            oldValue: String(currentStatus),
+            newValue: String(!currentStatus),
+          },
+        ],
       );
 
       // Notify affected user
@@ -222,14 +286,14 @@ export function AccountManagement() {
     }
   };
 
-  const handleUpdateUserInfo = (
+  const handleUpdateUserInfo = async (
     userId: string,
     updates: {
       firstName?: string;
       lastName?: string;
       email?: string;
       phone?: string;
-    }
+    },
   ) => {
     if (!isOwner) {
       toast.error("Access denied! 🚫", {
@@ -274,9 +338,7 @@ export function AccountManagement() {
 
     // Check if email is already taken by another user
     if (updates.email) {
-      const emailExists = users.some(
-        (u) => u.email === updates.email && u.id !== userId
-      );
+      const emailExists = await checkEmailExists(updates.email, userId);
       if (emailExists) {
         toast.error("Email already exists", {
           description: "This email is already registered",
@@ -287,33 +349,56 @@ export function AccountManagement() {
     }
 
     const user = users.find((u) => u.id === userId);
-    const updatedUsers = users.map((u) =>
-      u.id === userId ? { ...u, ...updates } : u
-    );
-    setUsers(updatedUsers);
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-    
+
+    const success = await updateUserInfo(userId, updates);
+
+    if (!success) {
+      toast.error("Failed to update user", {
+        description: "There was an error updating the user information",
+        duration: 3000,
+      });
+      return;
+    }
+
+    // Reload users
+    await loadUsers();
+
     // Log the action - only log fields that actually changed
     const changes = [];
-    if (updates.firstName && updates.firstName !== user?.firstName) changes.push({ field: "firstName", oldValue: user?.firstName || "", newValue: updates.firstName });
-    if (updates.lastName && updates.lastName !== user?.lastName) changes.push({ field: "lastName", oldValue: user?.lastName || "", newValue: updates.lastName });
-    if (updates.email && updates.email !== user?.email) changes.push({ field: "email", oldValue: user?.email || "", newValue: updates.email });
-    if (updates.phone && updates.phone !== user?.phone) changes.push({ field: "phone", oldValue: user?.phone || "", newValue: updates.phone });
-    
-    logAccountAction(
-      "account_modified",
-      userId,
-      user?.email || "",
-      changes
-    );
-    
+    if (updates.firstName && updates.firstName !== user?.firstName)
+      changes.push({
+        field: "firstName",
+        oldValue: user?.firstName || "",
+        newValue: updates.firstName,
+      });
+    if (updates.lastName && updates.lastName !== user?.lastName)
+      changes.push({
+        field: "lastName",
+        oldValue: user?.lastName || "",
+        newValue: updates.lastName,
+      });
+    if (updates.email && updates.email !== user?.email)
+      changes.push({
+        field: "email",
+        oldValue: user?.email || "",
+        newValue: updates.email,
+      });
+    if (updates.phone && updates.phone !== user?.phone)
+      changes.push({
+        field: "phone",
+        oldValue: user?.phone || "",
+        newValue: updates.phone,
+      });
+
+    logAccountAction("account_modified", userId, user?.email || "", changes);
+
     toast.success("User information updated successfully! ✅", {
       description: `${user?.email}'s information has been updated`,
       duration: 3000,
     });
   };
 
-  const handleAddUser = (userData: {
+  const handleAddUser = async (userData: {
     email: string;
     password: string;
     firstName: string;
@@ -330,15 +415,15 @@ export function AccountManagement() {
   }) => {
     if (!isOwner && userData.role !== "customer") {
       toast.error("Access denied! 🚫", {
-        description:
-          "Only owners can create admin or owner accounts",
+        description: "Only owners can create admin or owner accounts",
         duration: 3000,
       });
       return;
     }
 
     // Check if email already exists
-    if (users.find((u) => u.email === userData.email)) {
+    const emailExists = await checkEmailExists(userData.email);
+    if (emailExists) {
       toast.error("User already exists! ⚠️", {
         description: "A user with this email already exists",
         duration: 3000,
@@ -346,46 +431,33 @@ export function AccountManagement() {
       return;
     }
 
-    const newUser = {
-      id: "user-" + Date.now(),
+    const userId = await createUser({
       email: userData.email,
       password: userData.password,
       firstName: userData.firstName,
       lastName: userData.lastName,
       phone: userData.phone || "",
       role: userData.role,
-      addresses: userData.addresses || (userData.role === 'customer' && userData.address ? [{
-        id: 'default-' + Date.now(),
-        label: 'Default Address',
-        firstName: sanitizeInput(userData.firstName),
-        lastName: sanitizeInput(userData.lastName),
-        address: sanitizeInput(userData.address),
-        barangay: sanitizeInput(userData.barangay || ''),
-        city: sanitizeInput(userData.city || ''),
-        state: sanitizeInput(userData.state || ''),
-        zipCode: sanitizeInput(userData.zipCode || ''),
-        phone: userData.phone ? formatPhoneNumber(userData.phone) : "",
-        isDefault: true,
-      }] : []),
-      createdAt: new Date().toISOString(),
-    };
+    });
 
-    const updatedUsers = [...users, newUser];
-    setUsers(updatedUsers);
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-    
+    if (!userId) {
+      toast.error("Failed to create user", {
+        description: "There was an error creating the user",
+        duration: 3000,
+      });
+      return;
+    }
+
+    // Reload users
+    await loadUsers();
+
     // Log the action
-    logAccountAction(
-      "account_created",
-      newUser.id,
-      newUser.email,
-      [
-        { field: "role", oldValue: "", newValue: newUser.role },
-        { field: "firstName", oldValue: "", newValue: newUser.firstName },
-        { field: "lastName", oldValue: "", newValue: newUser.lastName },
-      ]
-    );
-    
+    logAccountAction("account_created", userId, userData.email, [
+      { field: "role", oldValue: "", newValue: userData.role },
+      { field: "firstName", oldValue: "", newValue: userData.firstName },
+      { field: "lastName", oldValue: "", newValue: userData.lastName },
+    ]);
+
     toast.success("User created successfully! 🎉", {
       description: `${userData.firstName} ${userData.lastName} has been added`,
       duration: 3000,
@@ -403,12 +475,8 @@ export function AccountManagement() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-primary">
-              {stats.totalUsers}
-            </div>
-            <p className="text-muted-foreground">
-              All registered users
-            </p>
+            <div className="text-primary">{stats.totalUsers}</div>
+            <p className="text-muted-foreground">All registered users</p>
           </CardContent>
         </Card>
 
@@ -418,12 +486,8 @@ export function AccountManagement() {
             <User className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-primary">
-              {stats.customerUsers}
-            </div>
-            <p className="text-muted-foreground">
-              Customer accounts
-            </p>
+            <div className="text-primary">{stats.customerUsers}</div>
+            <p className="text-muted-foreground">Customer accounts</p>
           </CardContent>
         </Card>
 
@@ -433,12 +497,8 @@ export function AccountManagement() {
             <Shield className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-primary">
-              {stats.adminUsers}
-            </div>
-            <p className="text-muted-foreground">
-              Admin accounts
-            </p>
+            <div className="text-primary">{stats.adminUsers}</div>
+            <p className="text-muted-foreground">Admin accounts</p>
           </CardContent>
         </Card>
 
@@ -448,12 +508,8 @@ export function AccountManagement() {
             <Crown className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-primary">
-              {stats.ownerUsers}
-            </div>
-            <p className="text-muted-foreground">
-              Owner accounts
-            </p>
+            <div className="text-primary">{stats.ownerUsers}</div>
+            <p className="text-muted-foreground">Owner accounts</p>
           </CardContent>
         </Card>
       </div>
@@ -470,10 +526,7 @@ export function AccountManagement() {
                   : "View user accounts (contact owner to modify)"}
               </CardDescription>
             </div>
-            <Dialog
-              open={isAddDialogOpen}
-              onOpenChange={setIsAddDialogOpen}
-            >
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" variant="default">
                   Add User
@@ -483,15 +536,15 @@ export function AccountManagement() {
                 <DialogHeader>
                   <DialogTitle>Add New User</DialogTitle>
                   <DialogDescription>
-                    {isOwner 
-                      ? 'Create a new user account with any role' 
-                      : 'Create customer, sales staff, or inventory clerk accounts'}
+                    {isOwner
+                      ? "Create a new user account with any role"
+                      : "Create customer, sales staff, or inventory clerk accounts"}
                   </DialogDescription>
                 </DialogHeader>
                 <AddUserForm
                   onSubmit={handleAddUser}
                   onCancel={() => setIsAddDialogOpen(false)}
-                  currentUserRole={currentUser?.role || 'admin'}
+                  currentUserRole={currentUser?.role || "admin"}
                 />
               </DialogContent>
             </Dialog>
@@ -504,14 +557,20 @@ export function AccountManagement() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Popover open={showRoleFilterPopover} onOpenChange={setShowRoleFilterPopover}>
+            <Popover
+              open={showRoleFilterPopover}
+              onOpenChange={setShowRoleFilterPopover}
+            >
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-[200px] justify-between">
                   <span>
                     {roleFilter === "all" && `All Users (${users.length})`}
-                    {roleFilter === "customer" && `Customers (${stats.customerUsers})`}
-                    {roleFilter === "staff" && `Sales Staff (${stats.staffUsers})`}
-                    {roleFilter === "inventory-clerk" && `Inventory Clerks (${stats.clerkUsers})`}
+                    {roleFilter === "customer" &&
+                      `Customers (${stats.customerUsers})`}
+                    {roleFilter === "staff" &&
+                      `Sales Staff (${stats.staffUsers})`}
+                    {roleFilter === "inventory-clerk" &&
+                      `Inventory Clerks (${stats.clerkUsers})`}
                     {roleFilter === "admin" && `Admins (${stats.adminUsers})`}
                     {roleFilter === "owner" && `Owners (${stats.ownerUsers})`}
                   </span>
@@ -551,7 +610,9 @@ export function AccountManagement() {
                     Sales Staff ({stats.staffUsers})
                   </Button>
                   <Button
-                    variant={roleFilter === "inventory-clerk" ? "secondary" : "ghost"}
+                    variant={
+                      roleFilter === "inventory-clerk" ? "secondary" : "ghost"
+                    }
                     className="w-full justify-start"
                     onClick={() => {
                       setRoleFilter("inventory-clerk");
@@ -583,7 +644,10 @@ export function AccountManagement() {
                 </div>
               </PopoverContent>
             </Popover>
-            <Popover open={showStatusFilterPopover} onOpenChange={setShowStatusFilterPopover}>
+            <Popover
+              open={showStatusFilterPopover}
+              onOpenChange={setShowStatusFilterPopover}
+            >
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-[180px] justify-between">
                   <span>
@@ -617,7 +681,9 @@ export function AccountManagement() {
                     Active Only
                   </Button>
                   <Button
-                    variant={statusFilter === "inactive" ? "secondary" : "ghost"}
+                    variant={
+                      statusFilter === "inactive" ? "secondary" : "ghost"
+                    }
                     className="w-full justify-start"
                     onClick={() => {
                       setStatusFilter("inactive");
@@ -639,7 +705,9 @@ export function AccountManagement() {
                 <TableHead className="text-center w-[140px]">Contact</TableHead>
                 <TableHead className="text-center w-[120px]">Role</TableHead>
                 <TableHead className="text-center w-[120px]">Joined</TableHead>
-                <TableHead className="text-center w-[100px]">Addresses</TableHead>
+                <TableHead className="text-center w-[100px]">
+                  Addresses
+                </TableHead>
                 <TableHead className="text-center w-[120px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -673,12 +741,9 @@ export function AccountManagement() {
                         </DialogTrigger>
                         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
                           <DialogHeader>
-                            <DialogTitle>
-                              User Details
-                            </DialogTitle>
+                            <DialogTitle>User Details</DialogTitle>
                             <DialogDescription>
-                              View and manage user information
-                              and permissions
+                              View and manage user information and permissions
                             </DialogDescription>
                           </DialogHeader>
                           {selectedUser && (
@@ -704,35 +769,34 @@ export function AccountManagement() {
                           variant={
                             user.role === "owner"
                               ? "default"
-                              : user.role === "admin" || user.role === "staff" || user.role === "inventory-clerk"
+                              : user.role === "admin" ||
+                                  user.role === "staff" ||
+                                  user.role === "inventory-clerk"
                                 ? "secondary"
                                 : "outline"
                           }
                         >
                           {user.role === "owner" ? (
                             <>
-                              <Crown className="h-3 w-3 mr-1" />{" "}
-                              Owner
+                              <Crown className="h-3 w-3 mr-1" /> Owner
                             </>
                           ) : user.role === "admin" ? (
                             <>
-                              <Shield className="h-3 w-3 mr-1" />{" "}
-                              Admin
+                              <Shield className="h-3 w-3 mr-1" /> Admin
                             </>
                           ) : user.role === "staff" ? (
                             <>
-                              <ShoppingCart className="h-3 w-3 mr-1" />{" "}
-                              Sales Staff
+                              <ShoppingCart className="h-3 w-3 mr-1" /> Sales
+                              Staff
                             </>
                           ) : user.role === "inventory-clerk" ? (
                             <>
-                              <Package className="h-3 w-3 mr-1" />{" "}
-                              Inventory Clerk
+                              <Package className="h-3 w-3 mr-1" /> Inventory
+                              Clerk
                             </>
                           ) : (
                             <>
-                              <User className="h-3 w-3 mr-1" />{" "}
-                              Customer
+                              <User className="h-3 w-3 mr-1" /> Customer
                             </>
                           )}
                         </Badge>
@@ -745,9 +809,7 @@ export function AccountManagement() {
                     </TableCell>
                     <TableCell className="text-center py-2">
                       <div className="text-sm text-muted-foreground">
-                        {new Date(
-                          user.createdAt,
-                        ).toLocaleDateString()}
+                        {new Date(user.createdAt).toLocaleDateString()}
                       </div>
                     </TableCell>
                     <TableCell className="text-center py-2 text-sm">
@@ -755,30 +817,23 @@ export function AccountManagement() {
                     </TableCell>
                     <TableCell className="text-center py-2">
                       <div className="flex gap-2 justify-center">
-                        {isOwner &&
-                          user.email !==
-                            "owner@poybash.com" && (
-                            <Button
-                              variant={
-                                user.active === false
-                                  ? "outline"
-                                  : "ghost"
-                              }
-                              size="sm"
-                              onClick={() =>
-                                handleToggleActive(
-                                  user.id,
-                                  user.active !== false,
-                                )
-                              }
-                            >
-                              {user.active === false ? (
-                                "Reactivate"
-                              ) : (
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              )}
-                            </Button>
-                          )}
+                        {isOwner && user.email !== "owner@poybash.com" && (
+                          <Button
+                            variant={
+                              user.active === false ? "outline" : "ghost"
+                            }
+                            size="sm"
+                            onClick={() =>
+                              handleToggleActive(user.id, user.active !== false)
+                            }
+                          >
+                            {user.active === false ? (
+                              "Reactivate"
+                            ) : (
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -811,7 +866,7 @@ function UserDetailsView({
       lastName?: string;
       email?: string;
       phone?: string;
-    }
+    },
   ) => void;
   isOwner: boolean;
 }) {
@@ -847,7 +902,7 @@ function UserDetailsView({
     if (storedUsers) {
       const users = JSON.parse(storedUsers);
       const adminUser = users.find((u: any) => u.id === currentUser?.id);
-      
+
       if (!adminUser || adminUser.password !== verificationPassword) {
         setPasswordError("Incorrect password. Please try again.");
         return;
@@ -948,7 +1003,8 @@ function UserDetailsView({
           <DialogHeader>
             <DialogTitle>Verify Your Identity</DialogTitle>
             <DialogDescription>
-              For security purposes, please enter your password to confirm these changes.
+              For security purposes, please enter your password to confirm these
+              changes.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -977,14 +1033,13 @@ function UserDetailsView({
             </div>
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-sm text-amber-800">
-                <strong>Security Notice:</strong> This verification ensures that only authorized users can modify account information, protecting against unauthorized access.
+                <strong>Security Notice:</strong> This verification ensures that
+                only authorized users can modify account information, protecting
+                against unauthorized access.
               </p>
             </div>
             <div className="flex gap-2">
-              <Button
-                className="flex-1"
-                onClick={handleVerifyAndSave}
-              >
+              <Button className="flex-1" onClick={handleVerifyAndSave}>
                 Verify & Save Changes
               </Button>
               <Button
@@ -1041,9 +1096,7 @@ function UserDetailsView({
             <>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-muted-foreground">
-                    First Name
-                  </p>
+                  <p className="text-muted-foreground">First Name</p>
                   <p>{user.firstName}</p>
                 </div>
                 <div>
@@ -1052,29 +1105,19 @@ function UserDetailsView({
                 </div>
               </div>
               <div>
-                <p className="text-muted-foreground">
-                  Email Address
-                </p>
+                <p className="text-muted-foreground">Email Address</p>
                 <p className="flex items-center gap-2">
                   <Mail className="h-4 w-4" />
                   {user.email}
                 </p>
               </div>
               <div>
-                <p className="text-muted-foreground">
-                  Phone Number
-                </p>
-                <p>
-                  {user.phone || "Not provided"}
-                </p>
+                <p className="text-muted-foreground">Phone Number</p>
+                <p>{user.phone || "Not provided"}</p>
               </div>
               <div>
-                <p className="text-muted-foreground">
-                  Account Created
-                </p>
-                <p>
-                  {new Date(user.createdAt).toLocaleString()}
-                </p>
+                <p className="text-muted-foreground">Account Created</p>
+                <p>{new Date(user.createdAt).toLocaleString()}</p>
               </div>
             </>
           ) : (
@@ -1140,9 +1183,7 @@ function UserDetailsView({
                 />
               </div>
               <div>
-                <p className="text-muted-foreground text-sm">
-                  Account Created
-                </p>
+                <p className="text-muted-foreground text-sm">Account Created</p>
                 <p className="flex items-center gap-2 text-sm">
                   <Calendar className="h-4 w-4" />
                   {new Date(user.createdAt).toLocaleString()}
@@ -1150,13 +1191,11 @@ function UserDetailsView({
               </div>
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800">
-                  🔒 <strong>Security:</strong> You'll be asked to verify your password before these changes are saved.
+                  🔒 <strong>Security:</strong> You'll be asked to verify your
+                  password before these changes are saved.
                 </p>
               </div>
-              <Button
-                className="w-full"
-                onClick={handleSaveWithVerification}
-              >
+              <Button className="w-full" onClick={handleSaveWithVerification}>
                 Save Changes
               </Button>
             </>
@@ -1179,17 +1218,42 @@ function UserDetailsView({
             <Label htmlFor="userRole">User Role</Label>
             <Popover>
               <PopoverTrigger asChild>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="w-full justify-between"
                   disabled={!isOwner}
                 >
                   <span className="flex items-center gap-2">
-                    {selectedRole === "customer" && <><User className="h-4 w-4" /><span>Customer</span></>}
-                    {selectedRole === "staff" && <><ShoppingCart className="h-4 w-4" /><span>Sales Staff</span></>}
-                    {selectedRole === "inventory-clerk" && <><Package className="h-4 w-4" /><span>Inventory Clerk</span></>}
-                    {selectedRole === "admin" && <><Shield className="h-4 w-4" /><span>Admin</span></>}
-                    {selectedRole === "owner" && <><Crown className="h-4 w-4" /><span>Owner</span></>}
+                    {selectedRole === "customer" && (
+                      <>
+                        <User className="h-4 w-4" />
+                        <span>Customer</span>
+                      </>
+                    )}
+                    {selectedRole === "staff" && (
+                      <>
+                        <ShoppingCart className="h-4 w-4" />
+                        <span>Sales Staff</span>
+                      </>
+                    )}
+                    {selectedRole === "inventory-clerk" && (
+                      <>
+                        <Package className="h-4 w-4" />
+                        <span>Inventory Clerk</span>
+                      </>
+                    )}
+                    {selectedRole === "admin" && (
+                      <>
+                        <Shield className="h-4 w-4" />
+                        <span>Admin</span>
+                      </>
+                    )}
+                    {selectedRole === "owner" && (
+                      <>
+                        <Crown className="h-4 w-4" />
+                        <span>Owner</span>
+                      </>
+                    )}
                   </span>
                   <Filter className="ml-2 h-4 w-4" />
                 </Button>
@@ -1197,7 +1261,9 @@ function UserDetailsView({
               <PopoverContent className="w-full p-2" align="start">
                 <div className="space-y-1">
                   <Button
-                    variant={selectedRole === "customer" ? "secondary" : "ghost"}
+                    variant={
+                      selectedRole === "customer" ? "secondary" : "ghost"
+                    }
                     className="w-full justify-start"
                     onClick={() => setSelectedRole("customer")}
                   >
@@ -1213,7 +1279,9 @@ function UserDetailsView({
                     Sales Staff
                   </Button>
                   <Button
-                    variant={selectedRole === "inventory-clerk" ? "secondary" : "ghost"}
+                    variant={
+                      selectedRole === "inventory-clerk" ? "secondary" : "ghost"
+                    }
                     className="w-full justify-start"
                     onClick={() => setSelectedRole("inventory-clerk")}
                   >
@@ -1244,9 +1312,7 @@ function UserDetailsView({
           {isOwner && user.email !== "owner@poybash.com" && (
             <Button
               className="w-full"
-              onClick={() =>
-                onUpdateRole(user.id, selectedRole)
-              }
+              onClick={() => onUpdateRole(user.id, selectedRole)}
               disabled={selectedRole === user.role}
             >
               Update Role
@@ -1270,16 +1336,12 @@ function UserDetailsView({
             <p className="font-medium mb-2">
               {selectedRole === user.role
                 ? "Current Permissions:"
-                : "Permissions if changed to " +
-                  selectedRole +
-                  ":"}
+                : "Permissions if changed to " + selectedRole + ":"}
             </p>
             <ul className="space-y-1 text-sm text-muted-foreground">
-              {getRolePermissions(selectedRole).map(
-                (permission, index) => (
-                  <li key={index}>{permission}</li>
-                ),
-              )}
+              {getRolePermissions(selectedRole).map((permission, index) => (
+                <li key={index}>{permission}</li>
+              ))}
             </ul>
           </div>
         </CardContent>
@@ -1293,10 +1355,7 @@ function UserDetailsView({
           </CardHeader>
           <CardContent className="space-y-3">
             {user.addresses.map((address) => (
-              <div
-                key={address.id}
-                className="p-3 border rounded-lg"
-              >
+              <div key={address.id} className="p-3 border rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <p>{address.label}</p>
                   {address.isDefault && (
@@ -1313,9 +1372,7 @@ function UserDetailsView({
                   {address.barangay && `${address.barangay}, `}
                   {address.city}, {address.state} {address.zipCode}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  {address.phone}
-                </p>
+                <p className="text-sm text-muted-foreground">{address.phone}</p>
               </div>
             ))}
           </CardContent>
@@ -1341,7 +1398,12 @@ function AddUserForm({
     firstName: "",
     lastName: "",
     phone: "",
-    role: "customer" as "customer" | "staff" | "inventory-clerk" | "admin" | "owner",
+    role: "customer" as
+      | "customer"
+      | "staff"
+      | "inventory-clerk"
+      | "admin"
+      | "owner",
     // Address fields for customer accounts
     address: "",
     barangay: "",
@@ -1350,9 +1412,7 @@ function AddUserForm({
     zipCode: "",
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>(
-    {},
-  );
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleInputChange = (field: string, value: string) => {
     setErrors((prev) => ({ ...prev, [field]: "" }));
@@ -1372,26 +1432,23 @@ function AddUserForm({
     const newErrors: Record<string, string> = {};
 
     const firstNameVal = validateName(formData.firstName);
-    if (!firstNameVal.valid)
-      newErrors.firstName = firstNameVal.error || "";
+    if (!firstNameVal.valid) newErrors.firstName = firstNameVal.error || "";
 
     const lastNameVal = validateName(formData.lastName);
-    if (!lastNameVal.valid)
-      newErrors.lastName = lastNameVal.error || "";
+    if (!lastNameVal.valid) newErrors.lastName = lastNameVal.error || "";
 
     const emailVal = validateEmail(formData.email);
     if (!emailVal.valid) newErrors.email = emailVal.error || "";
 
     // Phone is required for customer accounts
-    if (formData.role === 'customer') {
+    if (formData.role === "customer") {
       if (!formData.phone.trim()) {
         newErrors.phone = "Phone number is required for customers";
       } else {
         const phoneVal = validatePhoneNumber(formData.phone);
-        if (!phoneVal.valid)
-          newErrors.phone = phoneVal.error || "";
+        if (!phoneVal.valid) newErrors.phone = phoneVal.error || "";
       }
-      
+
       // Address fields are required for customer accounts
       if (!formData.address.trim()) {
         newErrors.address = "Street address is required";
@@ -1410,13 +1467,11 @@ function AddUserForm({
       }
     } else if (formData.phone.trim()) {
       const phoneVal = validatePhoneNumber(formData.phone);
-      if (!phoneVal.valid)
-        newErrors.phone = phoneVal.error || "";
+      if (!phoneVal.valid) newErrors.phone = phoneVal.error || "";
     }
 
     const passwordVal = validatePassword(formData.password);
-    if (!passwordVal.valid)
-      newErrors.password = passwordVal.error || "";
+    if (!passwordVal.valid) newErrors.password = passwordVal.error || "";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -1435,50 +1490,51 @@ function AddUserForm({
       firstName: sanitizeInput(formData.firstName),
       lastName: sanitizeInput(formData.lastName),
       email: sanitizeInput(formData.email),
-      phone: formData.phone
-        ? formatPhoneNumber(formData.phone)
-        : "",
+      phone: formData.phone ? formatPhoneNumber(formData.phone) : "",
       // Include address if it's a customer and address is provided
-      ...(formData.role === 'customer' && formData.address ? {
-        addresses: [{
-          id: 'default-' + Date.now(),
-          label: 'Default Address',
-          firstName: sanitizeInput(formData.firstName),
-          lastName: sanitizeInput(formData.lastName),
-          address: sanitizeInput(formData.address),
-          barangay: sanitizeInput(formData.barangay),
-          city: sanitizeInput(formData.city),
-          state: sanitizeInput(formData.state),
-          zipCode: sanitizeInput(formData.zipCode),
-          country: "Philippines",
-          phone: formData.phone ? formatPhoneNumber(formData.phone) : "",
-          isDefault: true,
-        }]
-      } : {}),
+      ...(formData.role === "customer" && formData.address
+        ? {
+            addresses: [
+              {
+                id: "default-" + Date.now(),
+                label: "Default Address",
+                firstName: sanitizeInput(formData.firstName),
+                lastName: sanitizeInput(formData.lastName),
+                address: sanitizeInput(formData.address),
+                barangay: sanitizeInput(formData.barangay),
+                city: sanitizeInput(formData.city),
+                state: sanitizeInput(formData.state),
+                zipCode: sanitizeInput(formData.zipCode),
+                country: "Philippines",
+                phone: formData.phone ? formatPhoneNumber(formData.phone) : "",
+                isDefault: true,
+              },
+            ],
+          }
+        : {}),
     };
 
     onSubmit(submissionData);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 max-h-[70vh] overflow-y-auto px-1"
+    >
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="firstName">First Name *</Label>
           <Input
             id="firstName"
             value={formData.firstName}
-            onChange={(e) =>
-              handleInputChange("firstName", e.target.value)
-            }
+            onChange={(e) => handleInputChange("firstName", e.target.value)}
             className={errors.firstName ? "border-red-500" : ""}
             placeholder="Juan"
             required
           />
           {errors.firstName && (
-            <p className="text-xs text-red-500">
-              {errors.firstName}
-            </p>
+            <p className="text-xs text-red-500">{errors.firstName}</p>
           )}
         </div>
         <div className="space-y-2">
@@ -1486,17 +1542,13 @@ function AddUserForm({
           <Input
             id="lastName"
             value={formData.lastName}
-            onChange={(e) =>
-              handleInputChange("lastName", e.target.value)
-            }
+            onChange={(e) => handleInputChange("lastName", e.target.value)}
             className={errors.lastName ? "border-red-500" : ""}
             placeholder="Dela Cruz"
             required
           />
           {errors.lastName && (
-            <p className="text-xs text-red-500">
-              {errors.lastName}
-            </p>
+            <p className="text-xs text-red-500">{errors.lastName}</p>
           )}
         </div>
       </div>
@@ -1507,16 +1559,12 @@ function AddUserForm({
           id="email"
           type="email"
           value={formData.email}
-          onChange={(e) =>
-            handleInputChange("email", e.target.value)
-          }
+          onChange={(e) => handleInputChange("email", e.target.value)}
           className={errors.email ? "border-red-500" : ""}
           placeholder="juan.delacruz@example.com"
           required
         />
-        {errors.email && (
-          <p className="text-xs text-red-500">{errors.email}</p>
-        )}
+        {errors.email && <p className="text-xs text-red-500">{errors.email}</p>}
       </div>
 
       <div className="space-y-2">
@@ -1525,17 +1573,13 @@ function AddUserForm({
           id="password"
           type="password"
           value={formData.password}
-          onChange={(e) =>
-            handleInputChange("password", e.target.value)
-          }
+          onChange={(e) => handleInputChange("password", e.target.value)}
           className={errors.password ? "border-red-500" : ""}
           placeholder="••••••••"
           required
         />
         {errors.password && (
-          <p className="text-xs text-red-500">
-            {errors.password}
-          </p>
+          <p className="text-xs text-red-500">{errors.password}</p>
         )}
         <p className="text-xs text-muted-foreground">
           At least 8 characters with letters and numbers
@@ -1543,7 +1587,9 @@ function AddUserForm({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="phone">Phone Number {formData.role === 'customer' && '*'}</Label>
+        <Label htmlFor="phone">
+          Phone Number {formData.role === "customer" && "*"}
+        </Label>
         <Input
           type="tel"
           name="phone"
@@ -1552,7 +1598,11 @@ function AddUserForm({
             const phone = e.target.value;
             setFormData({ ...formData, phone });
             if (phone && !validatePhoneNumber(phone).valid) {
-              setErrors({ ...errors, phone: validatePhoneNumber(phone).error || 'Invalid phone number' });
+              setErrors({
+                ...errors,
+                phone:
+                  validatePhoneNumber(phone).error || "Invalid phone number",
+              });
             } else {
               const newErrors = { ...errors };
               delete newErrors.phone;
@@ -1568,106 +1618,133 @@ function AddUserForm({
               }
             }
           }}
-          required={formData.role === 'customer'}
+          required={formData.role === "customer"}
           className={errors.phone ? "border-red-500" : ""}
           placeholder="+63 XXX XXX XXXX"
         />
-        {errors.phone && (
-          <p className="text-xs text-red-500">{errors.phone}</p>
-        )}
+        {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="role">User Role *</Label>
         <Popover>
           <PopoverTrigger asChild>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full justify-between"
-              disabled={currentUserRole !== 'owner'}
+              disabled={currentUserRole !== "owner"}
             >
               <span>{getRoleName(formData.role)}</span>
               <Filter className="ml-2 h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-2" align="start">
+          <PopoverContent
+            className="w-[var(--radix-popover-trigger-width)] p-2"
+            align="start"
+          >
             <div className="space-y-1">
               <Button
                 variant={formData.role === "customer" ? "secondary" : "ghost"}
                 className="w-full justify-start flex-col items-start h-auto py-2"
                 onClick={() => setFormData({ ...formData, role: "customer" })}
               >
-                <p>{getRoleName('customer')}</p>
-                <p className="text-xs text-muted-foreground">{getRoleDescription('customer')}</p>
+                <p>{getRoleName("customer")}</p>
+                <p className="text-xs text-muted-foreground">
+                  {getRoleDescription("customer")}
+                </p>
               </Button>
-              {(currentUserRole === 'owner' || currentUserRole === 'admin' || currentUserRole === 'staff' || currentUserRole === 'inventory-clerk') && (
+              {(currentUserRole === "owner" ||
+                currentUserRole === "admin" ||
+                currentUserRole === "staff" ||
+                currentUserRole === "inventory-clerk") && (
                 <>
                   <Button
                     variant={formData.role === "staff" ? "secondary" : "ghost"}
                     className="w-full justify-start flex-col items-start h-auto py-2"
                     onClick={() => setFormData({ ...formData, role: "staff" })}
                   >
-                    <p>{getRoleName('staff')}</p>
-                    <p className="text-xs text-muted-foreground">{getRoleDescription('staff')}</p>
+                    <p>{getRoleName("staff")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {getRoleDescription("staff")}
+                    </p>
                   </Button>
                   <Button
-                    variant={formData.role === "inventory-clerk" ? "secondary" : "ghost"}
+                    variant={
+                      formData.role === "inventory-clerk"
+                        ? "secondary"
+                        : "ghost"
+                    }
                     className="w-full justify-start flex-col items-start h-auto py-2"
-                    onClick={() => setFormData({ ...formData, role: "inventory-clerk" })}
+                    onClick={() =>
+                      setFormData({ ...formData, role: "inventory-clerk" })
+                    }
                   >
-                    <p>{getRoleName('inventory-clerk')}</p>
-                    <p className="text-xs text-muted-foreground">{getRoleDescription('inventory-clerk')}</p>
+                    <p>{getRoleName("inventory-clerk")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {getRoleDescription("inventory-clerk")}
+                    </p>
                   </Button>
                 </>
               )}
-              {currentUserRole === 'owner' && (
+              {currentUserRole === "owner" && (
                 <>
                   <Button
                     variant={formData.role === "admin" ? "secondary" : "ghost"}
                     className="w-full justify-start flex-col items-start h-auto py-2"
                     onClick={() => setFormData({ ...formData, role: "admin" })}
                   >
-                    <p>{getRoleName('admin')}</p>
-                    <p className="text-xs text-muted-foreground">{getRoleDescription('admin')}</p>
+                    <p>{getRoleName("admin")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {getRoleDescription("admin")}
+                    </p>
                   </Button>
                   <Button
                     variant={formData.role === "owner" ? "secondary" : "ghost"}
                     className="w-full justify-start flex-col items-start h-auto py-2"
                     onClick={() => setFormData({ ...formData, role: "owner" })}
                   >
-                    <p>{getRoleName('owner')}</p>
-                    <p className="text-xs text-muted-foreground">{getRoleDescription('owner')}</p>
+                    <p>{getRoleName("owner")}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {getRoleDescription("owner")}
+                    </p>
                   </Button>
                 </>
               )}
             </div>
           </PopoverContent>
         </Popover>
-        {currentUserRole === 'admin' && (
+        {currentUserRole === "admin" && (
           <p className="text-xs text-muted-foreground">
-            Admins can create customer, sales staff, and inventory clerk accounts
+            Admins can create customer, sales staff, and inventory clerk
+            accounts
           </p>
         )}
-        {(currentUserRole === 'staff' || currentUserRole === 'inventory-clerk') && (
+        {(currentUserRole === "staff" ||
+          currentUserRole === "inventory-clerk") && (
           <p className="text-xs text-muted-foreground">
             You can only create customer accounts
           </p>
         )}
-        {currentUserRole !== 'owner' && currentUserRole !== 'admin' && currentUserRole !== 'staff' && currentUserRole !== 'inventory-clerk' && (
-          <p className="text-xs text-muted-foreground">
-            Only admins and owners can create accounts
-          </p>
-        )}
+        {currentUserRole !== "owner" &&
+          currentUserRole !== "admin" &&
+          currentUserRole !== "staff" &&
+          currentUserRole !== "inventory-clerk" && (
+            <p className="text-xs text-muted-foreground">
+              Only admins and owners can create accounts
+            </p>
+          )}
       </div>
 
       {/* Address Section - Only for Customer Accounts */}
-      {formData.role === 'customer' && (
+      {formData.role === "customer" && (
         <div className="space-y-4 pt-4 border-t">
           <div className="flex items-center gap-2">
             <h4 className="text-sm font-medium">Billing/Shipping Address *</h4>
-            <p className="text-xs text-muted-foreground">(Required for security & order fulfillment)</p>
+            <p className="text-xs text-muted-foreground">
+              (Required for security & order fulfillment)
+            </p>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="address">Street Address *</Label>
             <Input
@@ -1760,11 +1837,7 @@ function AddUserForm({
         <Button type="submit" className="flex-1">
           Create User
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-        >
+        <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
       </div>

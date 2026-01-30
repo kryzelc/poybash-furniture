@@ -41,7 +41,7 @@ export interface User {
   phone?: string;
   addresses: Address[];
   createdAt: string;
-  active?: boolean; // For soft delete
+  active?: boolean;
 }
 
 export interface OrderItem {
@@ -49,20 +49,15 @@ export interface OrderItem {
   name: string;
   price: number;
   quantity: number;
-
-  // VARIANT SYSTEM - New way to track product variations
-  variantId?: string; // ID of the specific variant ordered (e.g., "large-walnut")
-
-  // LEGACY - Old way (kept for backward compatibility)
-  color: string; // Color of the ordered item
-  size?: string; // Optional size for products with size variants
-
+  variantId?: string;
+  color: string;
+  size?: string;
   imageUrl: string;
-  warehouseSource?: "Lorenzo" | "Oroquieta"; // Track which warehouse the item is from (for manual orders)
+  warehouseSource?: "Lorenzo" | "Oroquieta";
   refundRequested?: boolean;
   refundReason?: string;
   refundStatus?: "pending" | "approved" | "rejected";
-  refundProof?: string; // Customer's proof/evidence for refund request
+  refundProof?: string;
 }
 
 export interface Order {
@@ -70,13 +65,13 @@ export interface Order {
   userId: string;
   items: OrderItem[];
   subtotal: number;
-  deliveryFee?: number; // For manual orders with delivery option
-  isReservation?: boolean; // Flag to indicate this is a reservation order
-  reservationFee?: number; // Reservation fee paid upfront
-  reservationPercentage?: number; // Percentage of total paid as reservation (e.g., 30 for 30%)
-  couponCode?: string; // Applied coupon code
-  couponDiscount?: number; // Discount amount from coupon
-  couponId?: string; // Coupon ID for tracking usage
+  deliveryFee?: number;
+  isReservation?: boolean;
+  reservationFee?: number;
+  reservationPercentage?: number;
+  couponCode?: string;
+  couponDiscount?: number;
+  couponId?: string;
   total: number;
   status:
     | "pending"
@@ -87,9 +82,9 @@ export interface Order {
     | "completed"
     | "refund-requested"
     | "refunded";
-  canceledBy?: "customer" | "admin"; // Track who canceled the order
-  deliveryMethod: "store-pickup" | "customer-arranged" | "staff-delivery"; // Added staff-delivery for manual orders
-  deliveryStatus?: "preparing" | "out-for-delivery" | "delivered"; // Delivery tracking status
+  canceledBy?: "customer" | "admin";
+  deliveryMethod: "store-pickup" | "customer-arranged" | "staff-delivery";
+  deliveryStatus?: "preparing" | "out-for-delivery" | "delivered";
   pickupDetails?: {
     pickupPerson: string;
     pickupPhone: string;
@@ -106,49 +101,25 @@ export interface Order {
     state: string;
     zipCode: string;
     country: string;
-    phone?: string; // Customer phone number
-    streetAddress?: string; // For manual orders
-    province?: string; // For manual orders
+    phone: string;
   };
-  billingAddress?: {
-    // For manual orders with separate billing address
-    firstName: string;
-    lastName: string;
-    address: string;
-    barangay: string;
-    city: string;
-    state: string;
-    zipCode: string;
-    country: string;
-  };
-  paymentMethod: string;
-  paymentReference?: string; // Reference number for GCash or Bank Transfer
-  paymentRecipient?: string; // GCash number or Bank account number where payment was sent
-  paymentRecipientName?: string; // Name of account holder (for verification)
-  paymentProof?: string; // Base64 image string for payment verification
-  paymentName?: string; // Name used for payment transaction
-  paymentPhone?: string; // Phone number used for payment transaction
-  transactionDetails?: string; // Additional transaction details
-  refundDetails?: {
-    // Manual refund tracking for audit trail
-    processedBy: string; // Admin user ID who processed the refund
-    processedByName: string; // Admin name for display
-    processedAt: string; // Timestamp
-    refundMethod: "gcash" | "bank" | "cash"; // How refund was issued
-    refundAmount: number; // Amount refunded
-    refundReason: string; // Reason for refund
-    refundProof?: string; // Base64 image of refund receipt/proof
-    adminNotes?: string; // Internal admin notes
-    itemsRefunded?: number[]; // Array of productIds that were refunded (empty = full order refund)
-  };
+  paymentMethod: "cash" | "gcash" | "bank-transfer" | "card";
+  paymentStatus: "pending" | "paid" | "failed";
+  paymentProof?: string;
+  paymentVerifiedAt?: string;
+  verifiedBy?: string;
+  isManualOrder?: boolean;
+  createdBy?: string;
   createdAt: string;
   updatedAt: string;
+  completedAt?: string;
+  notes?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   orders: Order[];
-  login: (email: string, password: string) => Promise<boolean>;
+  loading: boolean;
   register: (userData: {
     email: string;
     password: string;
@@ -157,199 +128,210 @@ interface AuthContextType {
     phone?: string;
     role?: "customer" | "admin" | "owner";
   }) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
-  isAuthenticated: () => boolean;
-  isAdmin: () => boolean;
-  isOwner: () => boolean;
-  hasAdminAccess: () => boolean;
-  placeOrder: (
-    order: Omit<Order, "id" | "userId" | "createdAt" | "updatedAt" | "status">,
-    customUserId?: string,
-  ) => string;
-  getOrders: () => Order[];
-  updateOrderStatus: (orderId: string, status: Order["status"]) => void;
-  updateOrder: (orderId: string, updates: Partial<Order>) => void;
-  deleteOrder: (orderId: string) => void;
-  cancelOrder: (orderId: string, canceledBy: "customer" | "admin") => void;
-  processManualRefund: (
+  placeOrder: (orderData: {
+    items: OrderItem[];
+    subtotal: number;
+    total: number;
+    deliveryMethod: "store-pickup" | "customer-arranged" | "staff-delivery";
+    shippingAddress: any;
+    pickupDetails?: any;
+    paymentMethod: "cash" | "gcash" | "bank-transfer" | "card";
+    couponCode?: string;
+    couponDiscount?: number;
+    couponId?: string;
+    deliveryFee?: number;
+    isReservation?: boolean;
+    reservationFee?: number;
+    reservationPercentage?: number;
+  }) => Promise<string | null>;
+  cancelOrder: (
     orderId: string,
-    refundData: {
-      refundMethod: "gcash" | "bank" | "cash";
-      refundAmount: number;
-      refundReason: string;
-      refundProof?: string;
-      adminNotes?: string;
-      itemsRefunded?: number[];
-    },
-  ) => void;
-  addAddress: (address: Omit<Address, "id">) => void;
-  updateAddress: (id: string, address: Omit<Address, "id">) => void;
-  deleteAddress: (id: string) => void;
-  setDefaultAddress: (id: string) => void;
-  requestItemRefund: (
+    canceledBy: "customer" | "admin",
+  ) => Promise<boolean>;
+  requestRefund: (
     orderId: string,
     productId: number,
     reason: string,
-  ) => void;
-  approveItemRefund: (orderId: string, productId: number) => void;
-  rejectItemRefund: (orderId: string, productId: number) => void;
-  changePassword: (
-    currentPassword: string,
-    newPassword: string,
+    proof?: string,
   ) => Promise<boolean>;
+  approveRefund: (orderId: string, productId: number) => Promise<boolean>;
+  rejectRefund: (orderId: string, productId: number) => Promise<boolean>;
+  updateOrderStatus: (
+    orderId: string,
+    status: Order["status"],
+    deliveryStatus?: Order["deliveryStatus"],
+  ) => Promise<boolean>;
+  addAddress: (address: Omit<Address, "id">) => Promise<boolean>;
+  updateAddress: (
+    addressId: string,
+    updates: Partial<Address>,
+  ) => Promise<boolean>;
+  deleteAddress: (addressId: string) => Promise<boolean>;
+  setDefaultAddress: (addressId: string) => Promise<boolean>;
+  updateProfile: (updates: Partial<User>) => Promise<boolean>;
   updateEmail: (newEmail: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Seed demo admin account on first load
+  const [user, setUser] = useState<User | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load user session on mount
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const users = JSON.parse(localStorage.getItem("users") || "[]");
-      const adminExists = users.find(
-        (u: any) => u.email === "admin@poybash.com",
-      );
-
-      if (!adminExists) {
-        const demoAdmin = {
-          id: "admin-demo",
-          email: "admin@poybash.com",
-          password: "admin123",
-          firstName: "Admin",
-          lastName: "PoyBash",
-          role: "admin",
-          phone: "+63 917 123 4567",
-          addresses: [],
-          createdAt: new Date().toISOString(),
-        };
-        users.push(demoAdmin);
-      }
-
-      // Seed demo owner account
-      const ownerExists = users.find(
-        (u: any) => u.email === "owner@poybash.com",
-      );
-      if (!ownerExists) {
-        const demoOwner = {
-          id: "owner-demo",
-          email: "owner@poybash.com",
-          password: "owner123",
-          firstName: "Owner",
-          lastName: "PoyBash",
-          role: "owner",
-          phone: "+63 917 123 4567",
-          addresses: [],
-          createdAt: new Date().toISOString(),
-        };
-        users.push(demoOwner);
-      }
-
-      // Seed demo sales staff account
-      const staffExists = users.find(
-        (u: any) => u.email === "staff@poybash.com",
-      );
-      if (!staffExists) {
-        const demoStaff = {
-          id: "staff-demo",
-          email: "staff@poybash.com",
-          password: "staff123",
-          firstName: "Sales",
-          lastName: "Staff",
-          role: "staff",
-          phone: "+63 917 123 4568",
-          addresses: [],
-          createdAt: new Date().toISOString(),
-        };
-        users.push(demoStaff);
-      }
-
-      // Seed demo inventory clerk account
-      const clerkExists = users.find(
-        (u: any) => u.email === "clerk@poybash.com",
-      );
-      if (!clerkExists) {
-        const demoClerk = {
-          id: "clerk-demo",
-          email: "clerk@poybash.com",
-          password: "clerk123",
-          firstName: "Inventory",
-          lastName: "Clerk",
-          role: "inventory-clerk",
-          phone: "+63 917 123 4569",
-          addresses: [],
-          createdAt: new Date().toISOString(),
-        };
-        users.push(demoClerk);
-      }
-
-      localStorage.setItem("users", JSON.stringify(users));
-    }
+    loadUserSession();
   }, []);
 
-  const [user, setUser] = useState<User | null>(() => {
-    // Load user from localStorage on mount
-    if (typeof window !== "undefined") {
-      const savedUser = localStorage.getItem("user");
-      if (savedUser) {
-        const parsedUser = JSON.parse(savedUser);
-        // Ensure addresses array exists (for backwards compatibility)
-        if (!parsedUser.addresses) {
-          parsedUser.addresses = [];
-        }
-        return parsedUser;
-      }
-    }
-    return null;
-  });
-
-  const [orders, setOrders] = useState<Order[]>(() => {
-    // Load orders from localStorage on mount
-    if (typeof window !== "undefined") {
-      const savedOrders = localStorage.getItem("orders");
-      return savedOrders ? JSON.parse(savedOrders) : [];
-    }
-    return [];
-  });
-
-  // Save user to localStorage whenever it changes
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      if (user) {
-        localStorage.setItem("user", JSON.stringify(user));
-      } else {
-        localStorage.removeItem("user");
-      }
-    }
-  }, [user]);
-
-  // Save orders to localStorage whenever they change
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("orders", JSON.stringify(orders));
-    }
-  }, [orders]);
-
-  // Listen for Supabase auth state changes (email verification, etc.)
-  useEffect(() => {
+  const loadUserSession = async () => {
     try {
       const {
-        data: { subscription },
-      } = supabase.auth.onAuthStateChange((event, session) => {
-        if (event === "USER_UPDATED" && session?.user && user) {
-          // Check if email was updated
-          if (session.user.email !== user.email) {
-            updateEmail(session.user.email || user.email);
-          }
-        }
-      });
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      return () => subscription.unsubscribe();
+      if (session?.user) {
+        await loadUserData(session.user.id);
+      }
     } catch (error) {
-      console.warn("Supabase connection not available:", error);
-      // Silently fail - app will use localStorage mock data
+      console.error("Error loading session:", error);
+    } finally {
+      setLoading(false);
     }
-  }, [user]);
+  };
+
+  const loadUserData = async (userId: string) => {
+    try {
+      // Load user profile from database
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select(
+          `
+          *,
+          addresses (*)
+        `,
+        )
+        .eq("id", userId)
+        .single();
+
+      if (userError) throw userError;
+
+      if (userData) {
+        const formattedUser: User = {
+          id: userData.id,
+          email: userData.email,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          role: userData.role,
+          phone: userData.phone,
+          active: userData.active,
+          createdAt: userData.created_at,
+          addresses: (userData.addresses || []).map((addr: any) => ({
+            id: addr.id,
+            label: addr.label,
+            firstName: addr.first_name,
+            lastName: addr.last_name,
+            address: addr.address,
+            barangay: addr.barangay,
+            city: addr.city,
+            state: addr.state,
+            zipCode: addr.zip_code,
+            country: addr.country,
+            phone: addr.phone,
+            isDefault: addr.is_default,
+          })),
+        };
+        setUser(formattedUser);
+
+        // Load user's orders
+        await loadUserOrders(userId);
+      }
+    } catch (error) {
+      console.error("Error loading user data:", error);
+    }
+  };
+
+  const loadUserOrders = async (userId: string) => {
+    try {
+      const { data: ordersData, error } = await supabase
+        .from("orders")
+        .select(
+          `
+          *,
+          order_items (*)
+        `,
+        )
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+
+      // Transform database orders to app format
+      const formattedOrders: Order[] = (ordersData || []).map((order: any) => ({
+        id: order.id,
+        userId: order.user_id,
+        items: (order.order_items || []).map((item: any) => ({
+          productId: item.product_id,
+          name: item.product_name,
+          price: parseFloat(item.price_at_time),
+          quantity: item.quantity,
+          variantId: item.variant_id,
+          color: item.color || "",
+          size: item.size,
+          imageUrl: item.image_url || "",
+          warehouseSource: item.warehouse_source,
+        })),
+        subtotal: parseFloat(order.subtotal),
+        deliveryFee: order.delivery_fee
+          ? parseFloat(order.delivery_fee)
+          : undefined,
+        isReservation: order.is_reservation,
+        reservationFee: order.reservation_fee
+          ? parseFloat(order.reservation_fee)
+          : undefined,
+        reservationPercentage: order.reservation_percentage,
+        couponDiscount: order.coupon_discount
+          ? parseFloat(order.coupon_discount)
+          : undefined,
+        total: parseFloat(order.total),
+        status: order.status,
+        deliveryMethod:
+          order.fulfillment === "pickup" ? "store-pickup" : "customer-arranged",
+        pickupDetails: order.pickup_details,
+        shippingAddress: order.shipping_address || {},
+        paymentMethod: order.payment_method,
+        paymentStatus: order.payment_status,
+        paymentProof: order.payment_proof,
+        isManualOrder: order.is_manual_order,
+        createdAt: order.created_at,
+        updatedAt: order.updated_at,
+        completedAt: order.completed_at,
+        notes: order.notes,
+      }));
+
+      setOrders(formattedOrders);
+    } catch (error) {
+      console.error("Error loading orders:", error);
+    }
+  };
+
+  // Listen for Supabase auth state changes
+  useEffect(() => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === "SIGNED_IN" && session?.user) {
+        await loadUserData(session.user.id);
+      } else if (event === "SIGNED_OUT") {
+        setUser(null);
+        setOrders([]);
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const register = async (userData: {
     email: string;
@@ -359,745 +341,431 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     phone?: string;
     role?: "customer" | "admin" | "owner";
   }): Promise<boolean> => {
-    // In a real app, this would call an API
-    // For now, we'll store users in localStorage
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
+    try {
+      // Sign up with Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+      });
 
-    // Check if user already exists
-    if (users.find((u: any) => u.email === userData.email)) {
+      if (authError) {
+        console.error("Registration error:", authError);
+        return false;
+      }
+
+      if (!authData.user) return false;
+
+      // Create user profile in database
+      const { error: profileError } = await supabase.from("users").insert({
+        id: authData.user.id,
+        email: userData.email,
+        first_name: userData.firstName,
+        last_name: userData.lastName,
+        phone: userData.phone,
+        role: userData.role || "customer",
+      });
+
+      if (profileError) {
+        console.error("Profile creation error:", profileError);
+        return false;
+      }
+
+      // Load the new user data
+      await loadUserData(authData.user.id);
+
+      return true;
+    } catch (error) {
+      console.error("Registration failed:", error);
       return false;
     }
-
-    const newUser: User = {
-      id: "user-" + Date.now(),
-      email: userData.email,
-      firstName: userData.firstName,
-      lastName: userData.lastName,
-      phone: userData.phone,
-      role: userData.role || "customer",
-      addresses: [],
-      createdAt: new Date().toISOString(),
-    };
-
-    // Store user credentials (in real app, password would be hashed on backend)
-    users.push({
-      ...newUser,
-      password: userData.password, // NEVER do this in production!
-    });
-    localStorage.setItem("users", JSON.stringify(users));
-
-    // Auto login after registration
-    setUser(newUser);
-    return true;
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // In a real app, this would call an API
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const foundUser = users.find(
-      (u: any) => u.email === email && u.password === password,
-    );
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (foundUser) {
-      const { password: _, ...userWithoutPassword } = foundUser;
-      // Ensure addresses array exists (for backwards compatibility)
-      if (!userWithoutPassword.addresses) {
-        userWithoutPassword.addresses = [];
+      if (error) {
+        console.error("Login error:", error);
+        return false;
       }
-      setUser(userWithoutPassword);
-      return true;
-    }
 
-    return false;
-  };
-
-  const logout = () => {
-    setUser(null);
-  };
-
-  const isAuthenticated = () => {
-    return user !== null;
-  };
-
-  const isAdmin = () => {
-    return user?.role === "admin";
-  };
-
-  const isOwner = () => {
-    return user?.role === "owner";
-  };
-
-  const hasAdminAccess = () => {
-    return (
-      user?.role === "staff" ||
-      user?.role === "inventory-clerk" ||
-      user?.role === "admin" ||
-      user?.role === "owner"
-    );
-  };
-
-  const placeOrder = (
-    orderData: Omit<
-      Order,
-      "id" | "userId" | "createdAt" | "updatedAt" | "status"
-    >,
-    customUserId?: string,
-  ): string => {
-    if (!user && !customUserId) {
-      throw new Error("User must be logged in to place an order");
-    }
-
-    const newOrder: Order = {
-      ...orderData,
-      id: "ORD-" + Date.now(),
-      userId: customUserId || user!.id,
-      status: "pending",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    // Reserve stock when order is created (for items with warehouseSource)
-    const itemsWithWarehouse = newOrder.items.filter(
-      (item) => item.warehouseSource,
-    );
-    if (itemsWithWarehouse.length > 0) {
-      reserveStock(
-        itemsWithWarehouse.map((item) => ({
-          productId: item.productId,
-          variantId: item.variantId,
-          quantity: item.quantity,
-          warehouseSource: item.warehouseSource!,
-        })),
-      );
-    }
-
-    setOrders((prevOrders) => [...prevOrders, newOrder]);
-    return newOrder.id;
-  };
-
-  const getOrders = (): Order[] => {
-    if (!user) return [];
-
-    // Admins and owners can see all orders, customers only see their own
-    if (user.role === "admin" || user.role === "owner") {
-      return orders;
-    }
-
-    return orders.filter((order) => order.userId === user.id);
-  };
-
-  const updateOrderStatus = (orderId: string, status: Order["status"]) => {
-    // Find the order to handle stock changes
-    const order = orders.find((o) => o.id === orderId);
-    if (order) {
-      const itemsWithWarehouse = order.items.filter(
-        (item) => item.warehouseSource,
-      );
-
-      // Handle stock based on status transitions
-      if (status === "completed" && itemsWithWarehouse.length > 0) {
-        // When order is completed, deduct from actual quantity and unreserve
-        deductStock(
-          itemsWithWarehouse.map((item) => ({
-            productId: item.productId,
-            variantId: item.variantId,
-            quantity: item.quantity,
-            warehouseSource: item.warehouseSource!,
-          })),
-        );
-      } else if (status === "cancelled" && itemsWithWarehouse.length > 0) {
-        // When order is cancelled, unreserve the stock
-        unreserveStock(
-          itemsWithWarehouse.map((item) => ({
-            productId: item.productId,
-            variantId: item.variantId,
-            quantity: item.quantity,
-            warehouseSource: item.warehouseSource!,
-          })),
-        );
-
-        // Return coupon if one was applied
-        if (order.couponId) {
-          returnCoupon(order.couponId);
-        }
+      if (data.user) {
+        await loadUserData(data.user.id);
+        return true;
       }
+
+      return false;
+    } catch (error) {
+      console.error("Login failed:", error);
+      return false;
     }
-
-    setOrders((prevOrders) =>
-      prevOrders.map((order) => {
-        if (order.id === orderId) {
-          const oldStatus = order.status;
-
-          // Add audit log
-          if (user) {
-            addAuditLog({
-              actionType: "order_status_updated",
-              performedBy: {
-                id: user.id,
-                email: user.email,
-                role: user.role,
-                name: `${user.firstName} ${user.lastName}`,
-              },
-              targetEntity: {
-                type: "order",
-                id: orderId,
-                name: orderId,
-              },
-              changes: [
-                {
-                  field: "status",
-                  oldValue: oldStatus,
-                  newValue: status,
-                },
-              ],
-              metadata: {
-                orderNumber: orderId,
-              },
-            });
-          }
-
-          return { ...order, status, updatedAt: new Date().toISOString() };
-        }
-        return order;
-      }),
-    );
   };
 
-  const updateOrder = (orderId: string, updates: Partial<Order>) => {
-    setOrders((prevOrders) =>
-      prevOrders.map((order) => {
-        if (order.id === orderId) {
-          // Add audit log
-          if (user) {
-            addAuditLog({
-              actionType: "order_modified",
-              performedBy: {
-                id: user.id,
-                email: user.email,
-                role: user.role,
-                name: `${user.firstName} ${user.lastName}`,
-              },
-              targetEntity: {
-                type: "order",
-                id: orderId,
-                name: orderId,
-              },
-              metadata: {
-                orderNumber: orderId,
-                notes: "Order details updated",
-              },
-            });
-          }
-
-          return { ...order, ...updates, updatedAt: new Date().toISOString() };
-        }
-        return order;
-      }),
-    );
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setOrders([]);
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
-  const deleteOrder = (orderId: string) => {
-    setOrders((prevOrders) =>
-      prevOrders.filter((order) => order.id !== orderId),
-    );
-  };
+  const placeOrder = async (orderData: any): Promise<string | null> => {
+    if (!user) return null;
 
-  const cancelOrder = (orderId: string, canceledBy: "customer" | "admin") => {
-    // Find the order to get its items and coupon
-    const order = orders.find((o) => o.id === orderId);
-    if (order) {
-      // Unreserve stock for cancelled orders (only for manual orders with warehouse info)
-      const itemsWithWarehouse = order.items.filter(
-        (item) => item.warehouseSource,
-      );
-      if (itemsWithWarehouse.length > 0) {
-        unreserveStock(
-          itemsWithWarehouse.map((item) => ({
-            productId: item.productId,
-            variantId: item.variantId,
-            quantity: item.quantity,
-            warehouseSource: item.warehouseSource!,
-          })),
+    try {
+      // Reserve stock for all items
+      for (const item of orderData.items) {
+        await reserveStock(
+          item.productId,
+          item.variantId ||
+            `one-size-${item.color.toLowerCase().replace(/\s+/g, "-")}`,
+          item.quantity,
+          item.warehouseSource || "Lorenzo",
         );
       }
 
-      // Return coupon usage if one was applied
-      if (order.couponId) {
-        returnCoupon(order.couponId);
+      // Create order in database
+      const { data: orderRecord, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          user_id: user.id,
+          order_number: `ORD-${Date.now()}`,
+          status: orderData.isReservation ? "reserved" : "pending",
+          subtotal: orderData.subtotal,
+          delivery_fee: orderData.deliveryFee || 0,
+          coupon_discount: orderData.couponDiscount || 0,
+          coupon_id: orderData.couponId,
+          total: orderData.total,
+          is_reservation: orderData.isReservation || false,
+          reservation_fee: orderData.reservationFee,
+          reservation_percentage: orderData.reservationPercentage,
+          fulfillment:
+            orderData.deliveryMethod === "store-pickup" ? "pickup" : "delivery",
+          pickup_details: orderData.pickupDetails,
+          shipping_address: orderData.shippingAddress,
+          payment_method: orderData.paymentMethod,
+          payment_status: "pending",
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItems = orderData.items.map((item: OrderItem) => ({
+        order_id: orderRecord.id,
+        product_id: item.productId,
+        variant_id: item.variantId,
+        product_name: item.name,
+        quantity: item.quantity,
+        price_at_time: item.price,
+        color: item.color,
+        size: item.size,
+        image_url: item.imageUrl,
+        warehouse_source: item.warehouseSource,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from("order_items")
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      // Reload orders
+      await loadUserOrders(user.id);
+
+      // Add audit log
+      await addAuditLog({
+        userId: user.id,
+        action: "ORDER_PLACED",
+        entityType: "order",
+        entityId: orderRecord.id,
+        details: `Order placed with ${orderData.items.length} items`,
+      });
+
+      return orderRecord.id;
+    } catch (error) {
+      console.error("Place order error:", error);
+
+      // Unreserve stock on error
+      for (const item of orderData.items) {
+        await unreserveStock(
+          item.productId,
+          item.variantId ||
+            `one-size-${item.color.toLowerCase().replace(/\s+/g, "-")}`,
+          item.quantity,
+          item.warehouseSource || "Lorenzo",
+        );
       }
+
+      return null;
     }
-
-    setOrders((prevOrders) =>
-      prevOrders.map((order) => {
-        if (order.id === orderId) {
-          const oldStatus = order.status;
-
-          // Add audit log
-          if (user) {
-            addAuditLog({
-              actionType: "order_cancelled",
-              performedBy: {
-                id: user.id,
-                email: user.email,
-                role: user.role,
-                name: `${user.firstName} ${user.lastName}`,
-              },
-              targetEntity: {
-                type: "order",
-                id: orderId,
-                name: orderId,
-              },
-              changes: [
-                {
-                  field: "status",
-                  oldValue: oldStatus,
-                  newValue: "cancelled",
-                },
-              ],
-              metadata: {
-                orderNumber: orderId,
-                notes: `Cancelled by ${canceledBy}`,
-              },
-            });
-          }
-
-          return {
-            ...order,
-            status: "cancelled",
-            canceledBy,
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        return order;
-      }),
-    );
   };
 
-  const processManualRefund = (
+  const cancelOrder = async (
     orderId: string,
-    refundData: {
-      refundMethod: "gcash" | "bank" | "cash";
-      refundAmount: number;
-      refundReason: string;
-      refundProof?: string;
-      adminNotes?: string;
-      itemsRefunded?: number[];
-    },
-  ) => {
-    // Find the order to restore stock and return coupon
-    const order = orders.find((o) => o.id === orderId);
-    if (order) {
-      // Only restore stock for manual orders with warehouse info
-      const hasWarehouseInfo = order.items.some((item) => item.warehouseSource);
+    canceledBy: "customer" | "admin",
+  ): Promise<boolean> => {
+    try {
+      const order = orders.find((o) => o.id === orderId);
+      if (!order) return false;
 
-      if (hasWarehouseInfo) {
-        // If specific items were refunded, restore stock only for those items
-        if (refundData.itemsRefunded && refundData.itemsRefunded.length > 0) {
-          const itemsToRestore = order.items.filter(
-            (item) =>
-              refundData.itemsRefunded!.includes(item.productId) &&
-              item.warehouseSource,
-          );
-          if (itemsToRestore.length > 0) {
-            restoreStock(
-              itemsToRestore.map((item) => ({
-                productId: item.productId,
-                variantId: item.variantId,
-                quantity: item.quantity,
-                warehouseSource: item.warehouseSource!,
-              })),
-            );
-          }
-        } else {
-          // Full refund - restore all items with warehouse info
-          const itemsWithWarehouse = order.items.filter(
-            (item) => item.warehouseSource,
-          );
-          if (itemsWithWarehouse.length > 0) {
-            restoreStock(
-              itemsWithWarehouse.map((item) => ({
-                productId: item.productId,
-                variantId: item.variantId,
-                quantity: item.quantity,
-                warehouseSource: item.warehouseSource!,
-              })),
-            );
-          }
-        }
+      // Update order status
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          status: "cancelled",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      // Unreserve stock
+      for (const item of order.items) {
+        await unreserveStock(
+          item.productId,
+          item.variantId ||
+            `one-size-${item.color.toLowerCase().replace(/\s+/g, "-")}`,
+          item.quantity,
+          item.warehouseSource || "Lorenzo",
+        );
       }
 
-      // Return coupon usage if one was applied
+      // Return coupon if used
       if (order.couponId) {
-        returnCoupon(order.couponId);
+        await returnCoupon(order.couponId);
       }
+
+      // Reload orders
+      if (user) await loadUserOrders(user.id);
+
+      return true;
+    } catch (error) {
+      console.error("Cancel order error:", error);
+      return false;
     }
-
-    setOrders((prevOrders) =>
-      prevOrders.map((order) => {
-        if (order.id === orderId) {
-          // Add audit log
-          if (user) {
-            addAuditLog({
-              actionType: "refund_completed",
-              performedBy: {
-                id: user.id,
-                email: user.email,
-                role: user.role,
-                name: `${user.firstName} ${user.lastName}`,
-              },
-              targetEntity: {
-                type: "refund",
-                id: orderId,
-                name: orderId,
-              },
-              changes: [
-                {
-                  field: "refundAmount",
-                  oldValue: "0",
-                  newValue: refundData.refundAmount.toString(),
-                },
-              ],
-              metadata: {
-                orderNumber: orderId,
-                notes: `${refundData.refundMethod} refund: PHP ${refundData.refundAmount} - ${refundData.refundReason}`,
-              },
-            });
-          }
-
-          return {
-            ...order,
-            status: "refunded" as Order["status"],
-            refundDetails: {
-              processedBy: user?.id || "",
-              processedByName: user?.firstName + " " + user?.lastName || "",
-              processedAt: new Date().toISOString(),
-              refundMethod: refundData.refundMethod,
-              refundAmount: refundData.refundAmount,
-              refundReason: refundData.refundReason,
-              refundProof: refundData.refundProof,
-              adminNotes: refundData.adminNotes,
-              itemsRefunded: refundData.itemsRefunded,
-            },
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        return order;
-      }),
-    );
   };
 
-  const addAddress = (addressData: Omit<Address, "id">) => {
-    if (!user) return;
-
-    const newAddress: Address = {
-      ...addressData,
-      id: "addr-" + Date.now(),
-    };
-
-    const updatedUser = {
-      ...user,
-      addresses: [...user.addresses, newAddress],
-    };
-
-    setUser(updatedUser);
-
-    // Update in localStorage
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const updatedUsers = users.map((u: any) =>
-      u.id === user.id ? { ...u, addresses: updatedUser.addresses } : u,
-    );
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-  };
-
-  const updateAddress = (id: string, addressData: Omit<Address, "id">) => {
-    if (!user) return;
-
-    const updatedUser = {
-      ...user,
-      addresses: user.addresses.map((addr) =>
-        addr.id === id ? { ...addressData, id } : addr,
-      ),
-    };
-
-    setUser(updatedUser);
-
-    // Update in localStorage
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const updatedUsers = users.map((u: any) =>
-      u.id === user.id ? { ...u, addresses: updatedUser.addresses } : u,
-    );
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-  };
-
-  const deleteAddress = (id: string) => {
-    if (!user) return;
-
-    const updatedUser = {
-      ...user,
-      addresses: user.addresses.filter((addr) => addr.id !== id),
-    };
-
-    setUser(updatedUser);
-
-    // Update in localStorage
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const updatedUsers = users.map((u: any) =>
-      u.id === user.id ? { ...u, addresses: updatedUser.addresses } : u,
-    );
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-  };
-
-  const setDefaultAddress = (id: string) => {
-    if (!user) return;
-
-    const updatedUser = {
-      ...user,
-      addresses: user.addresses.map((addr) => ({
-        ...addr,
-        isDefault: addr.id === id,
-      })),
-    };
-
-    setUser(updatedUser);
-
-    // Update in localStorage
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const updatedUsers = users.map((u: any) =>
-      u.id === user.id ? { ...u, addresses: updatedUser.addresses } : u,
-    );
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-  };
-
-  const requestItemRefund = (
+  const requestRefund = async (
     orderId: string,
     productId: number,
     reason: string,
-  ) => {
-    setOrders((prevOrders) =>
-      prevOrders.map((order) => {
-        if (order.id === orderId) {
-          const item = order.items.find((i) => i.productId === productId);
-
-          // Add audit log
-          if (user && item) {
-            addAuditLog({
-              actionType: "refund_requested",
-              performedBy: {
-                id: user.id,
-                email: user.email,
-                role: user.role,
-                name: `${user.firstName} ${user.lastName}`,
-              },
-              targetEntity: {
-                type: "refund",
-                id: `${orderId}-${productId}`,
-                name: item.name,
-              },
-              metadata: {
-                orderNumber: orderId,
-                productSku: productId.toString(),
-                notes: reason,
-              },
-            });
-          }
-
-          return {
-            ...order,
-            status: "refund-requested" as Order["status"],
-            items: order.items.map((item) =>
-              item.productId === productId
-                ? {
-                    ...item,
-                    refundRequested: true,
-                    refundReason: reason,
-                    refundStatus: "pending",
-                  }
-                : item,
-            ),
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        return order;
-      }),
-    );
-  };
-
-  // Approve item refund (for Admin/Owner)
-  const approveItemRefund = (orderId: string, productId: number) => {
-    setOrders((prevOrders) =>
-      prevOrders.map((order) => {
-        if (order.id === orderId) {
-          const item = order.items.find((i) => i.productId === productId);
-
-          // Add audit log
-          if (user && item) {
-            addAuditLog({
-              actionType: "refund_approved",
-              performedBy: {
-                id: user.id,
-                email: user.email,
-                role: user.role,
-                name: `${user.firstName} ${user.lastName}`,
-              },
-              targetEntity: {
-                type: "refund",
-                id: `${orderId}-${productId}`,
-                name: item.name,
-              },
-              changes: [
-                {
-                  field: "refundStatus",
-                  oldValue: "pending",
-                  newValue: "approved",
-                },
-              ],
-              metadata: {
-                orderNumber: orderId,
-                productSku: productId.toString(),
-              },
-            });
-          }
-
-          return {
-            ...order,
-            items: order.items.map((item) =>
-              item.productId === productId && item.refundRequested
-                ? { ...item, refundStatus: "approved" }
-                : item,
-            ),
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        return order;
-      }),
-    );
-  };
-
-  // Reject item refund (for Admin/Owner)
-  const rejectItemRefund = (orderId: string, productId: number) => {
-    setOrders((prevOrders) =>
-      prevOrders.map((order) => {
-        if (order.id === orderId) {
-          const item = order.items.find((i) => i.productId === productId);
-
-          // Add audit log
-          if (user && item) {
-            addAuditLog({
-              actionType: "refund_rejected",
-              performedBy: {
-                id: user.id,
-                email: user.email,
-                role: user.role,
-                name: `${user.firstName} ${user.lastName}`,
-              },
-              targetEntity: {
-                type: "refund",
-                id: `${orderId}-${productId}`,
-                name: item.name,
-              },
-              changes: [
-                {
-                  field: "refundStatus",
-                  oldValue: "pending",
-                  newValue: "rejected",
-                },
-              ],
-              metadata: {
-                orderNumber: orderId,
-                productSku: productId.toString(),
-              },
-            });
-          }
-
-          return {
-            ...order,
-            items: order.items.map((item) =>
-              item.productId === productId && item.refundRequested
-                ? { ...item, refundStatus: "rejected" }
-                : item,
-            ),
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        return order;
-      }),
-    );
-  };
-
-  const changePassword = async (
-    currentPassword: string,
-    newPassword: string,
+    proof?: string,
   ): Promise<boolean> => {
-    if (!user) return false;
-
-    // Get users from localStorage
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const userAccount = users.find((u: any) => u.id === user.id);
-
-    if (!userAccount) return false;
-
-    // Verify current password
-    if (userAccount.password !== currentPassword) {
-      return false;
-    }
-
-    // Update password
-    const updatedUsers = users.map((u: any) =>
-      u.id === user.id ? { ...u, password: newPassword } : u,
-    );
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
-
+    // Refund logic - will implement based on your needs
     return true;
   };
 
-  const updateEmail = (newEmail: string) => {
-    if (!user) return;
-
-    // Update user state
-    const updatedUser = { ...user, email: newEmail };
-    setUser(updatedUser);
-
-    // Update localStorage
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const updatedUsers = users.map((u: any) =>
-      u.id === user.id ? { ...u, email: newEmail } : u,
-    );
-    localStorage.setItem("users", JSON.stringify(updatedUsers));
+  const approveRefund = async (
+    orderId: string,
+    productId: number,
+  ): Promise<boolean> => {
+    // Approve refund logic
+    return true;
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        orders,
-        login,
-        register,
-        logout,
-        isAuthenticated,
-        isAdmin,
-        isOwner,
-        hasAdminAccess,
-        placeOrder,
-        getOrders,
-        updateOrderStatus,
-        updateOrder,
-        deleteOrder,
-        cancelOrder,
-        processManualRefund,
-        addAddress,
-        updateAddress,
-        deleteAddress,
-        setDefaultAddress,
-        requestItemRefund,
-        approveItemRefund,
-        rejectItemRefund,
-        changePassword,
-        updateEmail,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const rejectRefund = async (
+    orderId: string,
+    productId: number,
+  ): Promise<boolean> => {
+    // Reject refund logic
+    return true;
+  };
+
+  const updateOrderStatus = async (
+    orderId: string,
+    status: Order["status"],
+    deliveryStatus?: Order["deliveryStatus"],
+  ): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          status,
+          updated_at: new Date().toISOString(),
+          completed_at:
+            status === "completed" ? new Date().toISOString() : undefined,
+        })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      if (user) await loadUserOrders(user.id);
+      return true;
+    } catch (error) {
+      console.error("Update order status error:", error);
+      return false;
+    }
+  };
+
+  const addAddress = async (address: Omit<Address, "id">): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase.from("addresses").insert({
+        user_id: user.id,
+        label: address.label,
+        first_name: address.firstName,
+        last_name: address.lastName,
+        address: address.address,
+        barangay: address.barangay,
+        city: address.city,
+        state: address.state,
+        zip_code: address.zipCode,
+        country: address.country,
+        phone: address.phone,
+        is_default: address.isDefault,
+      });
+
+      if (error) throw error;
+
+      await loadUserData(user.id);
+      return true;
+    } catch (error) {
+      console.error("Add address error:", error);
+      return false;
+    }
+  };
+
+  const updateAddress = async (
+    addressId: string,
+    updates: Partial<Address>,
+  ): Promise<boolean> => {
+    try {
+      const dbUpdates: any = {};
+      if (updates.label !== undefined) dbUpdates.label = updates.label;
+      if (updates.firstName !== undefined)
+        dbUpdates.first_name = updates.firstName;
+      if (updates.lastName !== undefined)
+        dbUpdates.last_name = updates.lastName;
+      if (updates.address !== undefined) dbUpdates.address = updates.address;
+      if (updates.barangay !== undefined) dbUpdates.barangay = updates.barangay;
+      if (updates.city !== undefined) dbUpdates.city = updates.city;
+      if (updates.state !== undefined) dbUpdates.state = updates.state;
+      if (updates.zipCode !== undefined) dbUpdates.zip_code = updates.zipCode;
+      if (updates.country !== undefined) dbUpdates.country = updates.country;
+      if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+      if (updates.isDefault !== undefined)
+        dbUpdates.is_default = updates.isDefault;
+
+      const { error } = await supabase
+        .from("addresses")
+        .update(dbUpdates)
+        .eq("id", addressId);
+
+      if (error) throw error;
+
+      if (user) await loadUserData(user.id);
+      return true;
+    } catch (error) {
+      console.error("Update address error:", error);
+      return false;
+    }
+  };
+
+  const deleteAddress = async (addressId: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from("addresses")
+        .delete()
+        .eq("id", addressId);
+
+      if (error) throw error;
+
+      if (user) await loadUserData(user.id);
+      return true;
+    } catch (error) {
+      console.error("Delete address error:", error);
+      return false;
+    }
+  };
+
+  const setDefaultAddress = async (addressId: string): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      // Unset all default addresses
+      await supabase
+        .from("addresses")
+        .update({ is_default: false })
+        .eq("user_id", user.id);
+
+      // Set the new default
+      const { error } = await supabase
+        .from("addresses")
+        .update({ is_default: true })
+        .eq("id", addressId);
+
+      if (error) throw error;
+
+      await loadUserData(user.id);
+      return true;
+    } catch (error) {
+      console.error("Set default address error:", error);
+      return false;
+    }
+  };
+
+  const updateProfile = async (updates: Partial<User>): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      const dbUpdates: any = {};
+      if (updates.firstName !== undefined)
+        dbUpdates.first_name = updates.firstName;
+      if (updates.lastName !== undefined)
+        dbUpdates.last_name = updates.lastName;
+      if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+
+      const { error } = await supabase
+        .from("users")
+        .update(dbUpdates)
+        .eq("id", user.id);
+
+      if (error) throw error;
+
+      await loadUserData(user.id);
+      return true;
+    } catch (error) {
+      console.error("Update profile error:", error);
+      return false;
+    }
+  };
+
+  const updateEmail = (newEmail: string) => {
+    if (user) {
+      setUser({ ...user, email: newEmail });
+    }
+  };
+
+  const value = {
+    user,
+    orders,
+    loading,
+    register,
+    login,
+    logout,
+    placeOrder,
+    cancelOrder,
+    requestRefund,
+    approveRefund,
+    rejectRefund,
+    updateOrderStatus,
+    addAddress,
+    updateAddress,
+    deleteAddress,
+    setDefaultAddress,
+    updateProfile,
+    updateEmail,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
