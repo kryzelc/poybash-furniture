@@ -1,5 +1,3 @@
-import { supabase } from "../utils/supabase/client";
-
 export interface Coupon {
   id: string;
   code: string;
@@ -109,58 +107,6 @@ export const validateCoupon = (
   }
 
   return { valid: true, coupon };
-};
-
-// Validate coupon via edge function (recommended for production)
-export const validateCouponViaEdgeFunction = async (
-  code: string,
-  orderTotal: number,
-): Promise<{
-  valid: boolean;
-  coupon?: any;
-  error?: string;
-  discount?: number;
-}> => {
-  try {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      return { valid: false, error: "Authentication required" };
-    }
-
-    const { data, error } = await supabase.functions.invoke("validate-coupon", {
-      body: {
-        coupon_code: code,
-        order_total: orderTotal,
-      },
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
-    });
-
-    if (error) {
-      console.error("Edge function error:", error);
-      return { valid: false, error: error.message || "Validation failed" };
-    }
-
-    if (!data.valid) {
-      return { valid: false, error: data.message || "Invalid coupon" };
-    }
-
-    return {
-      valid: true,
-      coupon: {
-        id: data.coupon_id,
-        code: code,
-      },
-      discount: data.discount_amount,
-    };
-  } catch (error) {
-    console.error("Coupon validation error:", error);
-    return { valid: false, error: "Failed to validate coupon" };
-  }
 };
 
 // Calculate discount amount

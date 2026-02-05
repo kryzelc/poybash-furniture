@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "../components/ui/button";
 import {
   Card,
@@ -9,9 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
-import { toast } from "sonner";
-import { Mail, RefreshCw } from "lucide-react";
-import { supabase } from "../utils/supabase/client";
+import { Mail } from "lucide-react";
 
 interface VerifyEmailPageProps {
   email: string;
@@ -19,33 +16,6 @@ interface VerifyEmailPageProps {
 }
 
 export function VerifyEmailPage({ email, onNavigate }: VerifyEmailPageProps) {
-  const [isResending, setIsResending] = useState(false);
-
-  const handleResendEmail = async () => {
-    setIsResending(true);
-    try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: email,
-      });
-
-      if (error) {
-        toast.error("Failed to resend verification email", {
-          description: error.message,
-          duration: 4000,
-        });
-      } else {
-        toast.success("Verification email sent", {
-          description: "Please check your inbox.",
-        });
-      }
-    } catch (error) {
-      toast.error("An unexpected error occurred");
-    } finally {
-      setIsResending(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center py-12">
       <div className="container mx-auto px-4 lg:px-8">
@@ -57,49 +27,28 @@ export function VerifyEmailPage({ email, onNavigate }: VerifyEmailPageProps) {
                   <Mail className="h-8 w-8 text-primary" />
                 </div>
               </div>
-              <CardTitle>Verify Your Email</CardTitle>
+              <CardTitle>Email Verification Not Required</CardTitle>
               <CardDescription>
-                We've sent a verification link to {email}
+                This feature is not available in demo mode
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="p-4 bg-secondary/30 rounded-lg space-y-2">
                 <p className="text-center">
-                  Please check your email inbox and click the verification link
-                  to activate your account.
+                  Email verification is not required for localStorage demo mode.
+                  Your account for {email} is ready to use.
                 </p>
                 <p className="text-center text-muted-foreground">
-                  The link will expire in 24 hours.
+                  In a production environment, you would receive a verification email.
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleResendEmail}
-                  disabled={isResending}
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 mr-2 ${isResending ? "animate-spin" : ""}`}
-                  />
-                  {isResending ? "Sending..." : "Resend Verification Email"}
-                </Button>
-
-                <Button
-                  variant="ghost"
-                  className="w-full"
-                  onClick={() => onNavigate("login")}
-                >
-                  Back to Login
-                </Button>
-              </div>
-
-              <div className="text-center pt-4 border-t">
-                <p className="text-muted-foreground mb-2">
-                  Check your spam folder if you don't see the email
-                </p>
-              </div>
+              <Button
+                className="w-full"
+                onClick={() => onNavigate("login")}
+              >
+                Go to Login
+              </Button>
             </CardContent>
           </Card>
         </div>

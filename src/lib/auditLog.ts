@@ -67,6 +67,7 @@ export interface AuditLogEntry {
     orderNumber?: string;
     productSku?: string;
     couponCode?: string;
+    total?: number;
     notes?: string;
   };
   ipAddress?: string;
@@ -97,7 +98,7 @@ export function getAuditLogs(): AuditLogEntry[] {
 // Helper: Get device and browser info
 function getDeviceInfo() {
   if (typeof window === "undefined") return undefined;
-  
+
   const userAgent = navigator.userAgent;
   let browser = "Unknown";
   let os = "Unknown";
@@ -142,12 +143,12 @@ export function addAuditLog(entry: Omit<AuditLogEntry, "id" | "timestamp">): voi
     deviceInfo: getDeviceInfo(),
   };
   logs.unshift(newEntry); // Add to beginning for recent-first order
-  
+
   // Keep only last 2000 entries to prevent excessive storage
   if (logs.length > 2000) {
     logs.splice(2000);
   }
-  
+
   localStorage.setItem("auditLogs", JSON.stringify(logs));
 }
 
@@ -197,7 +198,7 @@ export function searchAuditLogs(searchTerm: string): AuditLogEntry[] {
   return logs.filter(log => {
     // Safety checks - skip malformed logs
     if (!log.performedBy || !log.targetEntity) return false;
-    
+
     return (
       log.performedBy.email?.toLowerCase().includes(term) ||
       log.performedBy.name?.toLowerCase().includes(term) ||
@@ -214,15 +215,15 @@ export function searchAuditLogs(searchTerm: string): AuditLogEntry[] {
 export function exportAuditLogsToCSV(): string {
   const logs = getAuditLogs();
   // Filter out malformed logs
-  const validLogs = logs.filter(log => 
-    log.performedBy && 
-    log.performedBy.email && 
-    log.performedBy.role && 
-    log.targetEntity && 
+  const validLogs = logs.filter(log =>
+    log.performedBy &&
+    log.performedBy.email &&
+    log.performedBy.role &&
+    log.targetEntity &&
     log.targetEntity.type &&
     log.targetEntity.name
   );
-  
+
   const headers = [
     "Timestamp",
     "Action Type",
@@ -234,12 +235,12 @@ export function exportAuditLogsToCSV(): string {
     "Warehouse",
     "Notes"
   ];
-  
+
   const rows = validLogs.map(log => {
     const changes = log.changes
       ? log.changes.map(c => `${c.field}: ${c.oldValue} → ${c.newValue}`).join("; ")
       : "N/A";
-    
+
     return [
       new Date(log.timestamp).toLocaleString(),
       log.actionType,
@@ -252,22 +253,22 @@ export function exportAuditLogsToCSV(): string {
       log.metadata?.notes || "N/A",
     ].map(cell => `"${cell}"`).join(",");
   });
-  
+
   return [headers.join(","), ...rows].join("\n");
 }
 
 // Export filtered audit logs as CSV
 export function exportFilteredAuditLogsToCSV(filteredLogs: AuditLogEntry[]): string {
   // Filter out malformed logs
-  const validLogs = filteredLogs.filter(log => 
-    log.performedBy && 
-    log.performedBy.email && 
-    log.performedBy.role && 
-    log.targetEntity && 
+  const validLogs = filteredLogs.filter(log =>
+    log.performedBy &&
+    log.performedBy.email &&
+    log.performedBy.role &&
+    log.targetEntity &&
     log.targetEntity.type &&
     log.targetEntity.name
   );
-  
+
   const headers = [
     "Timestamp",
     "Action Type",
@@ -279,12 +280,12 @@ export function exportFilteredAuditLogsToCSV(filteredLogs: AuditLogEntry[]): str
     "Warehouse",
     "Notes"
   ];
-  
+
   const rows = validLogs.map(log => {
     const changes = log.changes
       ? log.changes.map(c => `${c.field}: ${c.oldValue} → ${c.newValue}`).join("; ")
       : "N/A";
-    
+
     return [
       new Date(log.timestamp).toLocaleString(),
       log.actionType,
@@ -297,7 +298,7 @@ export function exportFilteredAuditLogsToCSV(filteredLogs: AuditLogEntry[]): str
       log.metadata?.notes || "N/A",
     ].map(cell => `"${cell}"`).join(",");
   });
-  
+
   return [headers.join(","), ...rows].join("\n");
 }
 
@@ -310,14 +311,14 @@ export function clearAuditLogs(): void {
 export function getAuditLogStats() {
   const logs = getAuditLogs();
   // Filter out malformed logs
-  const validLogs = logs.filter(log => 
-    log.performedBy && 
-    log.performedBy.role && 
-    log.targetEntity && 
+  const validLogs = logs.filter(log =>
+    log.performedBy &&
+    log.performedBy.role &&
+    log.targetEntity &&
     log.targetEntity.type &&
     log.actionType
   );
-  
+
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const thisWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -355,16 +356,16 @@ export function getUserNotifications(userId: string): UserNotification[] {
 export function addUserNotification(notification: Omit<UserNotification, "id" | "timestamp" | "read">): void {
   const allNotifications = localStorage.getItem("userNotifications");
   const allNotifs: UserNotification[] = allNotifications ? JSON.parse(allNotifications) : [];
-  
+
   const newNotification: UserNotification = {
     ...notification,
     id: `notif-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     timestamp: new Date().toISOString(),
     read: false,
   };
-  
+
   allNotifs.unshift(newNotification);
-  
+
   // Keep only last 100 notifications per user
   const userNotifs = allNotifs.filter(n => n.userId === notification.userId);
   if (userNotifs.length > 100) {
@@ -380,12 +381,12 @@ export function addUserNotification(notification: Omit<UserNotification, "id" | 
 export function markNotificationAsRead(notificationId: string): void {
   const allNotifications = localStorage.getItem("userNotifications");
   if (!allNotifications) return;
-  
+
   const notifications: UserNotification[] = JSON.parse(allNotifications);
-  const updated = notifications.map(n => 
+  const updated = notifications.map(n =>
     n.id === notificationId ? { ...n, read: true } : n
   );
-  
+
   localStorage.setItem("userNotifications", JSON.stringify(updated));
 }
 
@@ -393,12 +394,12 @@ export function markNotificationAsRead(notificationId: string): void {
 export function markAllNotificationsAsRead(userId: string): void {
   const allNotifications = localStorage.getItem("userNotifications");
   if (!allNotifications) return;
-  
+
   const notifications: UserNotification[] = JSON.parse(allNotifications);
-  const updated = notifications.map(n => 
+  const updated = notifications.map(n =>
     n.userId === userId ? { ...n, read: true } : n
   );
-  
+
   localStorage.setItem("userNotifications", JSON.stringify(updated));
 }
 
@@ -412,23 +413,23 @@ export function getUnreadNotificationCount(userId: string): number {
 export function canChangeEmail(userId: string): { allowed: boolean; nextAllowedChange?: Date } {
   const logs = getAuditLogs();
   const emailChanges = logs.filter(
-    log => 
-      log.targetEntity.id === userId && 
+    log =>
+      log.targetEntity.id === userId &&
       log.actionType === "account_modified" &&
       log.changes?.some(c => c.field === "email")
   );
-  
+
   if (emailChanges.length === 0) return { allowed: true };
-  
+
   const lastEmailChange = new Date(emailChanges[0].timestamp);
   const cooldownPeriod = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
   const nextAllowedChange = new Date(lastEmailChange.getTime() + cooldownPeriod);
   const now = new Date();
-  
+
   if (now >= nextAllowedChange) {
     return { allowed: true };
   }
-  
+
   return {
     allowed: false,
     nextAllowedChange,
@@ -529,7 +530,7 @@ export function detectSuspiciousActivities(): SuspiciousActivity[] {
   logs.forEach(log => {
     // Safety check - skip logs with missing performedBy data
     if (!log.performedBy || !log.performedBy.id) return;
-    
+
     const key = log.performedBy.id;
     if (!userActions.has(key)) userActions.set(key, []);
     userActions.get(key)!.push(log);
@@ -540,7 +541,7 @@ export function detectSuspiciousActivities(): SuspiciousActivity[] {
       const timeWindow = actions.slice(i, i + 5);
       const firstTime = new Date(timeWindow[0].timestamp).getTime();
       const lastTime = new Date(timeWindow[4].timestamp).getTime();
-      
+
       if (lastTime - firstTime <= 60000) { // Within 1 minute
         suspicious.push({
           id: `suspicious-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -590,7 +591,7 @@ export function detectSuspiciousActivities(): SuspiciousActivity[] {
   const deletionActions = logs.filter(log => {
     if (!log.performedBy || !log.actionType) return false;
     return (
-      log.actionType.includes("deleted") || 
+      log.actionType.includes("deleted") ||
       log.actionType.includes("cancelled") ||
       log.actionType.includes("deactivated")
     );
@@ -599,10 +600,10 @@ export function detectSuspiciousActivities(): SuspiciousActivity[] {
   for (let i = 0; i < deletionActions.length - 2; i++) {
     const timeWindow = deletionActions.slice(i, i + 3);
     if (!timeWindow[0].performedBy) continue;
-    
+
     const firstTime = new Date(timeWindow[0].timestamp).getTime();
     const lastTime = new Date(timeWindow[2].timestamp).getTime();
-    
+
     if (lastTime - firstTime <= 300000) { // Within 5 minutes
       suspicious.push({
         id: `suspicious-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -622,7 +623,7 @@ export function detectSuspiciousActivities(): SuspiciousActivity[] {
 // Helper: Get related actions for an entity
 export function getRelatedActions(entityType: string, entityId: string): AuditLogEntry[] {
   const logs = getAuditLogs();
-  return logs.filter(log => 
+  return logs.filter(log =>
     log.targetEntity && log.targetEntity.type === entityType && log.targetEntity.id === entityId
   );
 }
@@ -643,11 +644,11 @@ export interface UserActivitySummary {
 export function getUserActivitySummary(): UserActivitySummary[] {
   const logs = getAuditLogs();
   const userMap = new Map<string, AuditLogEntry[]>();
-  
+
   logs.forEach(log => {
     // Safety check - skip logs with missing performedBy data
     if (!log.performedBy || !log.performedBy.id) return;
-    
+
     const key = log.performedBy.id;
     if (!userMap.has(key)) userMap.set(key, []);
     userMap.get(key)!.push(log);
@@ -662,12 +663,12 @@ export function getUserActivitySummary(): UserActivitySummary[] {
   userMap.forEach((userLogs, userId) => {
     const actionsToday = userLogs.filter(l => new Date(l.timestamp) >= today).length;
     const actionsThisWeek = userLogs.filter(l => new Date(l.timestamp) >= thisWeek).length;
-    
+
     const actionCounts = new Map<string, number>();
     userLogs.forEach(log => {
       actionCounts.set(log.actionType, (actionCounts.get(log.actionType) || 0) + 1);
     });
-    
+
     let mostCommonAction = "";
     let maxCount = 0;
     actionCounts.forEach((count, action) => {

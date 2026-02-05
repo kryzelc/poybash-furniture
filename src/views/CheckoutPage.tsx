@@ -9,8 +9,9 @@ import { useAuth } from "../contexts/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { PhoneInput } from "../components/PhoneInput";
 import { Separator } from "../components/ui/separator";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+// Removed ImageWithFallback - using regular img tags
 import {
   Card,
   CardContent,
@@ -159,9 +160,6 @@ export function CheckoutPage() {
     // Apply specific filtering based on field
     if (name === "firstName" || name === "lastName") {
       processedValue = value.replace(/[^A-Za-zÀ-ÿ\s'-]/g, "");
-    } else if (name === "phone") {
-      processedValue = value.replace(/[^0-9\s+-]/g, "");
-      processedValue = processedValue.slice(0, 16); // +63 9XX XXX XXXX format (16 chars with spaces)
     } else if (name === "city" || name === "state") {
       processedValue = value.replace(/[^A-Za-zÀ-ÿ\s.-]/g, "");
     } else if (name === "zipCode") {
@@ -186,9 +184,6 @@ export function CheckoutPage() {
 
     if (name === "pickupPerson") {
       processedValue = value.replace(/[^A-Za-zÀ-ÿ\s'-]/g, "");
-    } else if (name === "pickupPhone") {
-      processedValue = value.replace(/[^0-9\s+-]/g, "");
-      processedValue = processedValue.slice(0, 16); // +63 9XX XXX XXXX format (16 chars with spaces)
     }
 
     setPickupDetails({
@@ -667,22 +662,18 @@ export function CheckoutPage() {
                       <p className="text-xs text-red-500">{errors.email}</p>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone Number *</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      className={errors.phone ? "border-red-500" : ""}
-                      placeholder="+63 932 549 0596"
-                      required
-                    />
-                    {errors.phone && (
-                      <p className="text-xs text-red-500">{errors.phone}</p>
-                    )}
-                  </div>
+                  <PhoneInput
+                    id="phone"
+                    label="Phone Number"
+                    value={formData.phone}
+                    onChange={(value) => {
+                      setErrors((prev) => ({ ...prev, phone: "" }));
+                      setFormData({ ...formData, phone: value });
+                    }}
+                    error={errors.phone}
+                    required
+                    placeholder="932 549 0596"
+                  />
                 </CardContent>
               </Card>
 
@@ -774,24 +765,21 @@ export function CheckoutPage() {
                       </p>
                     )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pickupPhone">Contact Number *</Label>
-                    <Input
-                      id="pickupPhone"
-                      name="pickupPhone"
-                      type="tel"
-                      value={pickupDetails.pickupPhone}
-                      onChange={handlePickupDetailsChange}
-                      className={errors.pickupPhone ? "border-red-500" : ""}
-                      placeholder="+63 XXX XXX XXXX"
-                      required
-                    />
-                    {errors.pickupPhone && (
-                      <p className="text-xs text-red-500">
-                        {errors.pickupPhone}
-                      </p>
-                    )}
-                  </div>
+                  <PhoneInput
+                    id="pickupPhone"
+                    label="Contact Number"
+                    value={pickupDetails.pickupPhone}
+                    onChange={(value) => {
+                      setErrors((prev) => ({ ...prev, pickupPhone: "" }));
+                      setPickupDetails({
+                        ...pickupDetails,
+                        pickupPhone: value,
+                      });
+                    }}
+                    error={errors.pickupPhone}
+                    required
+                    placeholder="932 549 0596"
+                  />
                   {deliveryMethod === "customer-arranged" && (
                     <div className="space-y-2">
                       <Label htmlFor="deliveryService">

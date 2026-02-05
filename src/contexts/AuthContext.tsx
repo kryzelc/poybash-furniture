@@ -7,7 +7,6 @@ import {
   ReactNode,
   useEffect,
 } from "react";
-import { supabase } from "../utils/supabase/client";
 import { addAuditLog } from "../lib/auditLog";
 import {
   unreserveStock,
@@ -74,14 +73,14 @@ export interface Order {
   couponId?: string;
   total: number;
   status:
-    | "pending"
-    | "reserved"
-    | "processing"
-    | "ready-for-pickup"
-    | "cancelled"
-    | "completed"
-    | "refund-requested"
-    | "refunded";
+  | "pending"
+  | "reserved"
+  | "processing"
+  | "ready-for-pickup"
+  | "cancelled"
+  | "completed"
+  | "refund-requested"
+  | "refunded";
   canceledBy?: "customer" | "admin";
   deliveryMethod: "store-pickup" | "customer-arranged" | "staff-delivery";
   deliveryStatus?: "preparing" | "out-for-delivery" | "delivered";
@@ -122,6 +121,8 @@ interface AuthContextType {
   loading: boolean;
   hasAdminAccess: () => boolean;
   isAuthenticated: () => boolean;
+  isAdmin: () => boolean;
+  isOwner: () => boolean;
   register: (userData: {
     email: string;
     password: string;
@@ -129,7 +130,7 @@ interface AuthContextType {
     lastName: string;
     phone?: string;
     role?: "customer" | "admin" | "owner";
-  }) => Promise<boolean>;
+  }) => Promise<{ success: boolean; error?: string }>;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   placeOrder: (orderData: {
@@ -178,6 +179,58 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// LocalStorage keys
+const STORAGE_KEYS = {
+  USERS: "poybash_users",
+  CURRENT_SESSION: "poybash_session",
+  ORDERS: "poybash_orders",
+};
+
+// Helper: Generate unique ID
+const generateId = () => {
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
+
+// Helper: Hash password (simple implementation - in production use bcrypt)
+const hashPassword = (password: string): string => {
+  // Simple hash for demo - NOT secure for production
+  let hash = 0;
+  for (let i = 0; i < password.length; i++) {
+    const char = password.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+  return hash.toString(36);
+};
+
+// Helper: Get all users from localStorage
+const getAllUsersFromStorage = (): Array<
+  User & { passwordHash: string }
+> => {
+  if (typeof window === "undefined") return [];
+  const stored = localStorage.getItem(STORAGE_KEYS.USERS);
+  return stored ? JSON.parse(stored) : [];
+};
+
+// Helper: Save users to localStorage
+const saveUsersToStorage = (users: Array<User & { passwordHash: string }>) => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+};
+
+// Helper: Get all orders from localStorage
+const getAllOrdersFromStorage = (): Order[] => {
+  if (typeof window === "undefined") return [];
+  const stored = localStorage.getItem(STORAGE_KEYS.ORDERS);
+  return stored ? JSON.parse(stored) : [];
+};
+
+// Helper: Save orders to localStorage
+const saveOrdersToStorage = (orders: Order[]) => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STORAGE_KEYS.ORDERS, JSON.stringify(orders));
+};
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -188,14 +241,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     loadUserSession();
   }, []);
 
-  const loadUserSession = async () => {
+  const loadUserSession = () => {
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      if (typeof window === "undefined") return;
 
-      if (session?.user) {
-        await loadUserData(session.user.id);
+      const sessionData = localStorage.getItem(STORAGE_KEYS.CURRENT_SESSION);
+      if (sessionData) {
+        const { userId } = JSON.parse(sessionData);
+        loadUserData(userId);
       }
     } catch (error) {
       console.error("Error loading session:", error);
@@ -204,136 +257,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const loadUserData = async (userId: string) => {
+  const loadUserData = (userId: string) => {
     try {
-      // Load user profile from database
-      const { data: userData, error: userError } = await supabase
-        .from("users")
-        .select(
-          `
-          *,
-          addresses (*)
-        `,
-        )
-        .eq("id", userId)
-        .single();
-
-      if (userError) throw userError;
+      const users = getAllUsersFromStorage();
+      const userData = users.find((u) => u.id === userId);
 
       if (userData) {
-        const formattedUser: User = {
-          id: userData.id,
-          email: userData.email,
-          firstName: userData.first_name,
-          lastName: userData.last_name,
-          role: userData.role,
-          phone: userData.phone,
-          active: userData.active,
-          createdAt: userData.created_at,
-          addresses: (userData.addresses || []).map((addr: any) => ({
-            id: addr.id,
-            label: addr.label,
-            firstName: addr.first_name,
-            lastName: addr.last_name,
-            address: addr.address,
-            barangay: addr.barangay,
-            city: addr.city,
-            state: addr.state,
-            zipCode: addr.zip_code,
-            country: addr.country,
-            phone: addr.phone,
-            isDefault: addr.is_default,
-          })),
-        };
-        setUser(formattedUser);
-
-        // Load user's orders
-        await loadUserOrders(userId);
+        const { passwordHash, ...userWithoutPassword } = userData;
+        setUser(userWithoutPassword);
+        loadUserOrders(userId);
       }
     } catch (error) {
       console.error("Error loading user data:", error);
     }
   };
 
-  const loadUserOrders = async (userId: string) => {
+  const loadUserOrders = (userId: string) => {
     try {
-      const { data: ordersData, error } = await supabase
-        .from("orders")
-        .select(
-          `
-          *,
-          order_items (*)
-        `,
-        )
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      // Transform database orders to app format
-      const formattedOrders: Order[] = (ordersData || []).map((order: any) => ({
-        id: order.id,
-        userId: order.user_id,
-        items: (order.order_items || []).map((item: any) => ({
-          productId: item.product_id,
-          name: item.product_name,
-          price: parseFloat(item.price_at_time),
-          quantity: item.quantity,
-          variantId: item.variant_id,
-          color: item.color || "",
-          size: item.size,
-          imageUrl: item.image_url || "",
-          warehouseSource: item.warehouse_source,
-        })),
-        subtotal: parseFloat(order.subtotal),
-        deliveryFee: order.delivery_fee
-          ? parseFloat(order.delivery_fee)
-          : undefined,
-        isReservation: order.is_reservation,
-        reservationFee: order.reservation_fee
-          ? parseFloat(order.reservation_fee)
-          : undefined,
-        reservationPercentage: order.reservation_percentage,
-        couponDiscount: order.coupon_discount
-          ? parseFloat(order.coupon_discount)
-          : undefined,
-        total: parseFloat(order.total),
-        status: order.status,
-        deliveryMethod:
-          order.fulfillment === "pickup" ? "store-pickup" : "customer-arranged",
-        pickupDetails: order.pickup_details,
-        shippingAddress: order.shipping_address || {},
-        paymentMethod: order.payment_method,
-        paymentStatus: order.payment_status,
-        paymentProof: order.payment_proof,
-        isManualOrder: order.is_manual_order,
-        createdAt: order.created_at,
-        updatedAt: order.updated_at,
-        completedAt: order.completed_at,
-        notes: order.notes,
-      }));
-
-      setOrders(formattedOrders);
+      const allOrders = getAllOrdersFromStorage();
+      const userOrders = allOrders.filter((order) => order.userId === userId);
+      setOrders(userOrders);
     } catch (error) {
       console.error("Error loading orders:", error);
     }
   };
-
-  // Listen for Supabase auth state changes
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === "SIGNED_IN" && session?.user) {
-        await loadUserData(session.user.id);
-      } else if (event === "SIGNED_OUT") {
-        setUser(null);
-        setOrders([]);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   const register = async (userData: {
     email: string;
@@ -342,73 +289,97 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     lastName: string;
     phone?: string;
     role?: "customer" | "admin" | "owner";
-  }): Promise<boolean> => {
+  }): Promise<{ success: boolean; error?: string }> => {
     try {
-      // Sign up with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: userData.email,
-        password: userData.password,
-      });
+      const users = getAllUsersFromStorage();
 
-      if (authError) {
-        console.error("Registration error:", authError);
-        return false;
+      // Check if email already exists
+      if (users.some((u) => u.email.toLowerCase() === userData.email.toLowerCase())) {
+        return {
+          success: false,
+          error: "An account with this email already exists.",
+        };
       }
 
-      if (!authData.user) return false;
-
-      // Create user profile in database
-      const { error: profileError } = await supabase.from("users").insert({
-        id: authData.user.id,
+      // Create new user
+      const newUser: User & { passwordHash: string } = {
+        id: generateId(),
         email: userData.email,
-        first_name: userData.firstName,
-        last_name: userData.lastName,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
         phone: userData.phone,
         role: userData.role || "customer",
-      });
+        addresses: [],
+        createdAt: new Date().toISOString(),
+        active: true,
+        passwordHash: hashPassword(userData.password),
+      };
 
-      if (profileError) {
-        console.error("Profile creation error:", profileError);
-        return false;
-      }
+      users.push(newUser);
+      saveUsersToStorage(users);
 
-      // Load the new user data
-      await loadUserData(authData.user.id);
+      // Create session
+      const { passwordHash, ...userWithoutPassword } = newUser;
+      localStorage.setItem(
+        STORAGE_KEYS.CURRENT_SESSION,
+        JSON.stringify({ userId: newUser.id }),
+      );
+      setUser(userWithoutPassword);
+      setOrders([]);
 
-      return true;
+      return { success: true };
     } catch (error) {
       console.error("Registration failed:", error);
-      return false;
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Registration failed",
+      };
     }
   };
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const users = getAllUsersFromStorage();
+      const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase());
 
-      if (error) {
-        console.error("Login error:", error);
+      if (!user) {
+        console.error("Login error: User not found");
         return false;
       }
 
-      if (data.user) {
-        await loadUserData(data.user.id);
-        return true;
+      // Check if account is active
+      if (user.active === false) {
+        console.error("Login error: Account is deactivated");
+        return false;
       }
 
-      return false;
+      // Verify password
+      const passwordHash = hashPassword(password);
+      if (user.passwordHash !== passwordHash) {
+        console.error("Login error: Invalid password");
+        return false;
+      }
+
+      // Create session
+      localStorage.setItem(
+        STORAGE_KEYS.CURRENT_SESSION,
+        JSON.stringify({ userId: user.id }),
+      );
+
+      const { passwordHash: _, ...userWithoutPassword } = user;
+      setUser(userWithoutPassword);
+      loadUserOrders(user.id);
+
+      return true;
     } catch (error) {
       console.error("Login failed:", error);
       return false;
     }
   };
 
-  const logout = async () => {
+  const logout = () => {
     try {
-      await supabase.auth.signOut();
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_SESSION);
       setUser(null);
       setOrders([]);
     } catch (error) {
@@ -420,63 +391,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return null;
 
     try {
-      // Get auth session for edge function
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const orderId = generateId();
+      const orderNumber = `ORD-${Date.now()}`;
 
-      if (!session) {
-        throw new Error("No active session");
+      // Reserve stock for all items
+      const stockReservation = reserveStock(
+        orderData.items.map((item: OrderItem) => ({
+          productId: item.productId,
+          variantId:
+            item.variantId ||
+            `one-size-${item.color.toLowerCase().replace(/\s+/g, "-")}`,
+          quantity: item.quantity,
+          warehouseSource: item.warehouseSource || "Lorenzo",
+        })),
+      );
+
+      if (!stockReservation.success) {
+        throw new Error(stockReservation.errors.join(", "));
       }
 
-      // Prepare items for edge function format
-      const edgeFunctionItems = orderData.items.map((item: OrderItem) => ({
-        product_id: item.productId,
-        variant_id:
-          item.variantId ||
-          `one-size-${item.color.toLowerCase().replace(/\s+/g, "-")}`,
-        quantity: item.quantity,
-        warehouse_source: item.warehouseSource || "Lorenzo",
-        price: item.price,
-        name: item.name,
-        color: item.color,
-        size: item.size,
-        image_url: item.imageUrl,
-      }));
+      const newOrder: Order = {
+        id: orderId,
+        userId: user.id,
+        items: orderData.items,
+        subtotal: orderData.subtotal,
+        deliveryFee: orderData.deliveryFee,
+        isReservation: orderData.isReservation || false,
+        reservationFee: orderData.reservationFee,
+        reservationPercentage: orderData.reservationPercentage,
+        couponCode: orderData.couponCode,
+        couponDiscount: orderData.couponDiscount,
+        couponId: orderData.couponId,
+        total: orderData.total,
+        status: orderData.isReservation ? "reserved" : "pending",
+        deliveryMethod: orderData.deliveryMethod,
+        shippingAddress: orderData.shippingAddress,
+        pickupDetails: orderData.pickupDetails,
+        paymentMethod: orderData.paymentMethod,
+        paymentStatus: "pending",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-      // Call edge function for secure server-side order processing
-      const { data, error } = await supabase.functions.invoke("place-order", {
-        body: {
-          items: edgeFunctionItems,
-          fulfillment:
-            orderData.deliveryMethod === "store-pickup" ? "pickup" : "delivery",
-          pickup_details: orderData.pickupDetails,
-          shipping_address: orderData.shippingAddress,
-          payment_method: orderData.paymentMethod,
-          payment_proof: orderData.paymentProof,
-          coupon_code: orderData.couponCode,
-          is_reservation: orderData.isReservation || false,
-          reservation_percentage: orderData.reservationPercentage,
-          subtotal: orderData.subtotal,
-          delivery_fee: orderData.deliveryFee || 0,
-          total: orderData.total,
-        },
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+      // Save order
+      const allOrders = getAllOrdersFromStorage();
+      allOrders.push(newOrder);
+      saveOrdersToStorage(allOrders);
 
-      if (error) {
-        console.error("Edge function error:", error);
-        throw new Error(error.message || "Failed to place order");
-      }
-
-      if (!data || !data.success) {
-        throw new Error(data?.error || "Order placement failed");
-      }
-
-      // Reload orders to get the new order
-      await loadUserOrders(user.id);
+      // Update local state
+      setOrders([newOrder, ...orders]);
 
       // Add audit log
       await addAuditLog({
@@ -489,17 +452,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
         targetEntity: {
           type: "order",
-          id: data.order_id,
-          name: `Order ${data.order_number}`,
+          id: orderId,
+          name: orderNumber,
         },
         metadata: {
-          orderNumber: data.order_number,
-          total: data.total,
+          orderNumber: orderNumber,
+          total: orderData.total,
           notes: `Order placed with ${orderData.items.length} items`,
         },
       });
 
-      return data.order_id;
+      return orderId;
     } catch (error) {
       console.error("Place order error:", error);
       return null;
@@ -515,15 +478,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!order) return false;
 
       // Update order status
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          status: "cancelled",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", orderId);
-
-      if (error) throw error;
+      const allOrders = getAllOrdersFromStorage();
+      const updatedOrders = allOrders.map((o) =>
+        o.id === orderId
+          ? {
+            ...o,
+            status: "cancelled" as const,
+            canceledBy,
+            updatedAt: new Date().toISOString(),
+          }
+          : o,
+      );
+      saveOrdersToStorage(updatedOrders);
 
       // Unreserve stock
       unreserveStock(
@@ -543,7 +509,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Reload orders
-      if (user) await loadUserOrders(user.id);
+      if (user) loadUserOrders(user.id);
 
       return true;
     } catch (error) {
@@ -584,19 +550,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     deliveryStatus?: Order["deliveryStatus"],
   ): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          status,
-          updated_at: new Date().toISOString(),
-          completed_at:
-            status === "completed" ? new Date().toISOString() : undefined,
-        })
-        .eq("id", orderId);
+      const allOrders = getAllOrdersFromStorage();
+      const updatedOrders = allOrders.map((o) =>
+        o.id === orderId
+          ? {
+            ...o,
+            status,
+            deliveryStatus,
+            updatedAt: new Date().toISOString(),
+            completedAt:
+              status === "completed" ? new Date().toISOString() : o.completedAt,
+          }
+          : o,
+      );
+      saveOrdersToStorage(updatedOrders);
 
-      if (error) throw error;
-
-      if (user) await loadUserOrders(user.id);
+      if (user) loadUserOrders(user.id);
       return true;
     } catch (error) {
       console.error("Update order status error:", error);
@@ -608,24 +577,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return false;
 
     try {
-      const { error } = await supabase.from("addresses").insert({
-        user_id: user.id,
-        label: address.label,
-        first_name: address.firstName,
-        last_name: address.lastName,
-        address: address.address,
-        barangay: address.barangay,
-        city: address.city,
-        state: address.state,
-        zip_code: address.zipCode,
-        country: address.country,
-        phone: address.phone,
-        is_default: address.isDefault,
-      });
+      const newAddress: Address = {
+        ...address,
+        id: generateId(),
+      };
 
-      if (error) throw error;
+      const users = getAllUsersFromStorage();
+      const updatedUsers = users.map((u) =>
+        u.id === user.id
+          ? { ...u, addresses: [...u.addresses, newAddress] }
+          : u,
+      );
+      saveUsersToStorage(updatedUsers);
 
-      await loadUserData(user.id);
+      loadUserData(user.id);
       return true;
     } catch (error) {
       console.error("Add address error:", error);
@@ -637,31 +602,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     addressId: string,
     updates: Partial<Address>,
   ): Promise<boolean> => {
+    if (!user) return false;
+
     try {
-      const dbUpdates: any = {};
-      if (updates.label !== undefined) dbUpdates.label = updates.label;
-      if (updates.firstName !== undefined)
-        dbUpdates.first_name = updates.firstName;
-      if (updates.lastName !== undefined)
-        dbUpdates.last_name = updates.lastName;
-      if (updates.address !== undefined) dbUpdates.address = updates.address;
-      if (updates.barangay !== undefined) dbUpdates.barangay = updates.barangay;
-      if (updates.city !== undefined) dbUpdates.city = updates.city;
-      if (updates.state !== undefined) dbUpdates.state = updates.state;
-      if (updates.zipCode !== undefined) dbUpdates.zip_code = updates.zipCode;
-      if (updates.country !== undefined) dbUpdates.country = updates.country;
-      if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
-      if (updates.isDefault !== undefined)
-        dbUpdates.is_default = updates.isDefault;
+      const users = getAllUsersFromStorage();
+      const updatedUsers = users.map((u) =>
+        u.id === user.id
+          ? {
+            ...u,
+            addresses: u.addresses.map((addr) =>
+              addr.id === addressId ? { ...addr, ...updates } : addr,
+            ),
+          }
+          : u,
+      );
+      saveUsersToStorage(updatedUsers);
 
-      const { error } = await supabase
-        .from("addresses")
-        .update(dbUpdates)
-        .eq("id", addressId);
-
-      if (error) throw error;
-
-      if (user) await loadUserData(user.id);
+      loadUserData(user.id);
       return true;
     } catch (error) {
       console.error("Update address error:", error);
@@ -670,15 +627,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteAddress = async (addressId: string): Promise<boolean> => {
+    if (!user) return false;
+
     try {
-      const { error } = await supabase
-        .from("addresses")
-        .delete()
-        .eq("id", addressId);
+      const users = getAllUsersFromStorage();
+      const updatedUsers = users.map((u) =>
+        u.id === user.id
+          ? {
+            ...u,
+            addresses: u.addresses.filter((addr) => addr.id !== addressId),
+          }
+          : u,
+      );
+      saveUsersToStorage(updatedUsers);
 
-      if (error) throw error;
-
-      if (user) await loadUserData(user.id);
+      loadUserData(user.id);
       return true;
     } catch (error) {
       console.error("Delete address error:", error);
@@ -690,21 +653,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return false;
 
     try {
-      // Unset all default addresses
-      await supabase
-        .from("addresses")
-        .update({ is_default: false })
-        .eq("user_id", user.id);
+      const users = getAllUsersFromStorage();
+      const updatedUsers = users.map((u) =>
+        u.id === user.id
+          ? {
+            ...u,
+            addresses: u.addresses.map((addr) => ({
+              ...addr,
+              isDefault: addr.id === addressId,
+            })),
+          }
+          : u,
+      );
+      saveUsersToStorage(updatedUsers);
 
-      // Set the new default
-      const { error } = await supabase
-        .from("addresses")
-        .update({ is_default: true })
-        .eq("id", addressId);
-
-      if (error) throw error;
-
-      await loadUserData(user.id);
+      loadUserData(user.id);
       return true;
     } catch (error) {
       console.error("Set default address error:", error);
@@ -716,21 +679,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) return false;
 
     try {
-      const dbUpdates: any = {};
-      if (updates.firstName !== undefined)
-        dbUpdates.first_name = updates.firstName;
-      if (updates.lastName !== undefined)
-        dbUpdates.last_name = updates.lastName;
-      if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
+      const users = getAllUsersFromStorage();
+      const updatedUsers = users.map((u) =>
+        u.id === user.id ? { ...u, ...updates } : u,
+      );
+      saveUsersToStorage(updatedUsers);
 
-      const { error } = await supabase
-        .from("users")
-        .update(dbUpdates)
-        .eq("id", user.id);
-
-      if (error) throw error;
-
-      await loadUserData(user.id);
+      loadUserData(user.id);
       return true;
     } catch (error) {
       console.error("Update profile error:", error);
@@ -745,38 +700,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const hasAdminAccess = () => {
-    if (!user) return false;
-    return ["admin", "owner", "staff", "inventory-clerk"].includes(user.role);
+    return user?.role === "admin" || user?.role === "owner" || user?.role === "staff" || user?.role === "inventory-clerk";
   };
 
   const isAuthenticated = () => {
     return user !== null;
   };
 
-  const value = {
-    user,
-    orders,
-    loading,
-    hasAdminAccess,
-    isAuthenticated,
-    register,
-    login,
-    logout,
-    placeOrder,
-    cancelOrder,
-    requestRefund,
-    approveRefund,
-    rejectRefund,
-    updateOrderStatus,
-    addAddress,
-    updateAddress,
-    deleteAddress,
-    setDefaultAddress,
-    updateProfile,
-    updateEmail,
+  const isAdmin = () => {
+    return user?.role === "admin";
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  const isOwner = () => {
+    return user?.role === "owner";
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        orders,
+        loading,
+        hasAdminAccess,
+        isAuthenticated,
+        isAdmin,
+        isOwner,
+        register,
+        login,
+        logout,
+        placeOrder,
+        cancelOrder,
+        requestRefund,
+        approveRefund,
+        rejectRefund,
+        updateOrderStatus,
+        addAddress,
+        updateAddress,
+        deleteAddress,
+        setDefaultAddress,
+        updateProfile,
+        updateEmail,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {

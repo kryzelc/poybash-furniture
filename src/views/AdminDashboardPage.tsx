@@ -44,7 +44,6 @@ import {
   TableRow,
 } from "../components/ui/table";
 import { Label } from "../components/ui/label";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { ProductManagement } from "../components/admin/ProductManagement";
 import { AccountManagement } from "../components/admin/AccountManagement";
 import { InventoryTracking } from "../components/admin/InventoryTracking";
@@ -60,9 +59,8 @@ import { InvoiceReceipt } from "../components/InvoiceReceipt";
 import { addAuditLog } from "../lib/auditLog";
 import { useAuditLog } from "../hooks/useAuditLog";
 import { toast } from "sonner";
-const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  "https://ktcadsqclaszdyymftvf.supabase.co";
+import { SUPABASE_URL } from "../utils/imageUrls";
+
 const poybashLogo = `${SUPABASE_URL}/storage/v1/object/public/assets/logos/poybash-logo.png`;
 import {
   Package,
@@ -381,9 +379,9 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
       productUpdates.active !== undefined && !productUpdates.active
         ? "product_deleted" // When deactivating
         : productUpdates.active !== undefined &&
-            productUpdates.active &&
-            oldProduct &&
-            !oldProduct.active
+          productUpdates.active &&
+          oldProduct &&
+          !oldProduct.active
           ? "product_reactivated" // When reactivating
           : "product_modified"; // Regular updates
 
@@ -558,21 +556,20 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
           <TabsList
             className="grid w-full"
             style={{
-              gridTemplateColumns: `repeat(${
-                [
-                  // Overview tab only for admin/owner
-                  user?.role === "admin" || user?.role === "owner",
-                  // Sales Dashboard only for staff
-                  user?.role === "staff",
-                  // Inventory Dashboard only for inventory-clerk
-                  user?.role === "inventory-clerk",
-                  hasPermission(user?.role || "customer", "view:products"),
-                  hasPermission(user?.role || "customer", "view:orders"),
-                  hasPermission(user?.role || "customer", "view:accounts"),
-                  hasPermission(user?.role || "customer", "edit:products"),
-                  hasPermission(user?.role || "customer", "view:coupons"),
-                ].filter(Boolean).length
-              }, 1fr)`,
+              gridTemplateColumns: `repeat(${[
+                // Overview tab only for admin/owner
+                user?.role === "admin" || user?.role === "owner",
+                // Sales Dashboard only for staff
+                user?.role === "staff",
+                // Inventory Dashboard only for inventory-clerk
+                user?.role === "inventory-clerk",
+                hasPermission(user?.role || "customer", "view:products"),
+                hasPermission(user?.role || "customer", "view:orders"),
+                hasPermission(user?.role || "customer", "view:accounts"),
+                hasPermission(user?.role || "customer", "edit:products"),
+                hasPermission(user?.role || "customer", "view:coupons"),
+              ].filter(Boolean).length
+                }, 1fr)`,
             }}
           >
             {/* Overview tab - Only for Admin & Owner */}

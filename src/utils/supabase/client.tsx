@@ -1,8 +1,10 @@
-import { createClient } from "@supabase/supabase-js";
+// Supabase client - ONLY used for image URLs
+// Authentication and database operations use localStorage
 
-const supabaseUrl =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-const supabaseAnonKey =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key";
+// Export only the URL for image fetching
+export const SUPABASE_URL =
+  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://ktcadsqclaszdyymftvf.supabase.co";
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Supabase client is NOT initialized - using localStorage for all backend operations
+// Images are fetched directly from Supabase Storage using public URLs
+export const supabase = null; // Disabled - using localStorage

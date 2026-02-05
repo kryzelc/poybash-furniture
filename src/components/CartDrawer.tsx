@@ -10,7 +10,6 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useCart } from "../contexts/CartContext";
-import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { Minus, Plus, X, Tag, ChevronDown, ChevronUp } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { useRouter } from "next/navigation";
@@ -292,9 +291,8 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                   return (
                     <div
                       key={itemKey}
-                      className={`flex gap-2 p-2 sm:p-2.5 rounded-lg border transition-colors ${
-                        isSelected ? "bg-white" : "bg-muted/30"
-                      }`}
+                      className={`flex gap-2 p-2 sm:p-2.5 rounded-lg border transition-colors ${isSelected ? "bg-white" : "bg-muted/30"
+                        }`}
                     >
                       {/* Checkbox for item selection */}
                       <div className="flex items-start pt-1">

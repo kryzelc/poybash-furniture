@@ -24,9 +24,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  "https://ktcadsqclaszdyymftvf.supabase.co";
+import { SUPABASE_URL } from "../utils/imageUrls";
+
 const poybashLogo = `${SUPABASE_URL}/storage/v1/object/public/assets/logos/poybash-logo.png`;
 
 interface HeaderProps {

@@ -37,6 +37,7 @@ import {
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { PhoneInput } from "../PhoneInput";
 import { Badge } from "../ui/badge";
 import {
   Select,
@@ -1586,44 +1587,27 @@ function AddUserForm({
         </p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="phone">
-          Phone Number {formData.role === "customer" && "*"}
-        </Label>
-        <Input
-          type="tel"
-          name="phone"
-          value={formData.phone}
-          onChange={(e) => {
-            const phone = e.target.value;
-            setFormData({ ...formData, phone });
-            if (phone && !validatePhoneNumber(phone).valid) {
-              setErrors({
-                ...errors,
-                phone:
-                  validatePhoneNumber(phone).error || "Invalid phone number",
-              });
+      <PhoneInput
+        id="editPhone"
+        label={`Phone Number ${formData.role === "customer" ? "*" : ""}`}
+        value={editedInfo.phone}
+        onChange={(value) => {
+          setEditedInfo({ ...editedInfo, phone: value });
+          if (value) {
+            const validation = validatePhoneNumber(value);
+            if (!validation.valid) {
+              setErrors({ ...errors, phone: validation.error || "" });
             } else {
               const newErrors = { ...errors };
               delete newErrors.phone;
               setErrors(newErrors);
             }
-          }}
-          onBlur={(e) => {
-            const phone = e.target.value;
-            if (phone) {
-              const formatted = formatPhoneNumber(phone);
-              if (formatted) {
-                setFormData({ ...formData, phone: formatted });
-              }
-            }
-          }}
-          required={formData.role === "customer"}
-          className={errors.phone ? "border-red-500" : ""}
-          placeholder="+63 XXX XXX XXXX"
-        />
-        {errors.phone && <p className="text-xs text-red-500">{errors.phone}</p>}
-      </div>
+          }
+        }}
+        error={errors.phone}
+        required={formData.role === "customer"}
+        placeholder="932 549 0596"
+      />
 
       <div className="space-y-2">
         <Label htmlFor="role">User Role *</Label>

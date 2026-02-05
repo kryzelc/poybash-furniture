@@ -10,7 +10,6 @@ import {
   getProductColors,
   getVariantStock,
 } from "../lib/products";
-import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
@@ -248,13 +247,12 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
                             key={size}
                             onClick={() => setSelectedSize(size)}
                             disabled={!hasStock}
-                            className={`px-4 py-2 rounded-lg border-2 transition-colors ${
-                              selectedSize === size
-                                ? "border-primary bg-primary/5"
-                                : hasStock
-                                  ? "border-border hover:border-primary/50"
-                                  : "border-border opacity-50 cursor-not-allowed"
-                            }`}
+                            className={`px-4 py-2 rounded-lg border-2 transition-colors ${selectedSize === size
+                              ? "border-primary bg-primary/5"
+                              : hasStock
+                                ? "border-border hover:border-primary/50"
+                                : "border-border opacity-50 cursor-not-allowed"
+                              }`}
                           >
                             {size}
                             {!hasStock && (
@@ -319,13 +317,12 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
                             key={color}
                             onClick={() => setSelectedColor(color)}
                             disabled={!isAvailable}
-                            className={`relative w-12 h-12 rounded-full border-2 transition-all ${
-                              selectedColor === color
-                                ? "border-primary ring-2 ring-primary/20"
-                                : isAvailable
-                                  ? "border-border hover:border-primary/50"
-                                  : "border-border opacity-50 cursor-not-allowed"
-                            }`}
+                            className={`relative w-12 h-12 rounded-full border-2 transition-all ${selectedColor === color
+                              ? "border-primary ring-2 ring-primary/20"
+                              : isAvailable
+                                ? "border-border hover:border-primary/50"
+                                : "border-border opacity-50 cursor-not-allowed"
+                              }`}
                             title={`${color}${!isAvailable ? " (Out of Stock)" : ""}`}
                           >
                             <div

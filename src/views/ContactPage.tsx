@@ -5,6 +5,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
+import { PhoneInput } from "../components/PhoneInput";
 import {
   Card,
   CardContent,
@@ -41,8 +42,6 @@ export function ContactPage() {
 
     if (name === "name") {
       processedValue = value.replace(/[^A-Za-zÀ-ÿ\s'-]/g, "");
-    } else if (name === "phone") {
-      processedValue = value.replace(/[^0-9\s+-]/g, "");
     }
 
     setFormData({
@@ -175,21 +174,17 @@ export function ContactPage() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone (Optional)</Label>
-                      <Input
-                        id="phone"
-                        name="phone"
-                        type="tel"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        className={errors.phone ? "border-red-500" : ""}
-                        placeholder="+63 XXX XXX XXXX"
-                      />
-                      {errors.phone && (
-                        <p className="text-xs text-red-500">{errors.phone}</p>
-                      )}
-                    </div>
+                    <PhoneInput
+                      id="phone"
+                      label="Phone (Optional)"
+                      value={formData.phone}
+                      onChange={(value) => {
+                        setErrors((prev) => ({ ...prev, phone: "" }));
+                        setFormData({ ...formData, phone: value });
+                      }}
+                      error={errors.phone}
+                      placeholder="932 549 0596"
+                    />
                     <div className="space-y-2">
                       <Label htmlFor="subject">Subject *</Label>
                       <Input

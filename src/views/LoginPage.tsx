@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAuth } from "../contexts/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -18,13 +19,13 @@ const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
   "https://ktcadsqclaszdyymftvf.supabase.co";
 const poybashLogo = `${SUPABASE_URL}/storage/v1/object/public/assets/logos/poybash-logo.png`;
-import { supabase } from "../utils/supabase/client";
 
 interface LoginPageProps {
   onNavigate: (page: string, id?: number | string, email?: string) => void;
 }
 
 export function LoginPage({ onNavigate }: LoginPageProps) {
+  const router = useRouter();
   const { login, hasAdminAccess } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,57 +36,24 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
     setIsLoading(true);
 
     try {
-      // Check Supabase Auth first
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        // Try local auth as fallback
-        const success = await login(email, password);
-        setIsLoading(false);
-
-        if (success) {
-          toast.success("Welcome back!", {
-            description: "You have successfully signed in to your account.",
-          });
-          if (hasAdminAccess()) {
-            onNavigate("admin");
-          } else {
-            onNavigate("account");
-          }
-        } else {
-          toast.error("Sign in failed", {
-            description: "Invalid email or password. Please try again.",
-          });
-        }
-        return;
-      }
-
-      // Check if email is verified
-      if (data.user && !data.user.email_confirmed_at) {
-        setIsLoading(false);
-        toast.error("Email verification required", {
-          description: "Please verify your email before signing in.",
-        });
-        onNavigate("verify-email", undefined, email);
-        return;
-      }
-
-      // Login successful with Supabase - also update local storage
       const success = await login(email, password);
       setIsLoading(false);
 
-      if (success || data.user) {
+      if (success) {
         toast.success("Welcome back!", {
           description: "You have successfully signed in to your account.",
         });
+        // Admin roles (staff, inventory-clerk, admin, owner) go to dashboard
+        // Customers go to home page
         if (hasAdminAccess()) {
-          onNavigate("admin");
+          router.push("/admin");
         } else {
-          onNavigate("account");
+          router.push("/");
         }
+      } else {
+        toast.error("Sign in failed", {
+          description: "Invalid email or password. Please try again.",
+        });
       }
     } catch (error) {
       setIsLoading(false);
@@ -120,7 +88,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="you@example.com"
+                    placeholder="juan.delacruz@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required

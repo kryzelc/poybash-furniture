@@ -6,6 +6,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { PhoneInput } from "../PhoneInput";
 import {
   Select,
   SelectContent,
@@ -1574,23 +1575,15 @@ export function ManualOrderCreation({
             )}
           </div>
         </div>
-        <div>
-          <Label htmlFor="phone" className="mb-1.5 block">
-            Phone Number *
-          </Label>
-          <Input
-            id="phone"
-            type="tel"
-            value={customerInfo.phone}
-            onChange={(e) => handleCustomerInfoChange("phone", e.target.value)}
-            className={errors.phone ? "border-red-500" : ""}
-            placeholder="+63 XXX XXX XXXX"
-            disabled={!!selectedCustomer}
-          />
-          {errors.phone && (
-            <p className="text-xs text-red-500 mt-1">{errors.phone}</p>
-          )}
-        </div>
+        <PhoneInput
+          id="phone"
+          label="Phone Number"
+          value={customerInfo.phone}
+          onChange={(value) => handleCustomerInfoChange("phone", value)}
+          error={errors.phone}
+          required
+          placeholder="932 549 0596"
+        />
       </div>
 
       {/* Delivery Method */}
@@ -1658,24 +1651,17 @@ export function ManualOrderCreation({
               <p className="text-xs text-red-500 mt-1">{errors.pickupPerson}</p>
             )}
           </div>
-          <div>
-            <Label htmlFor="pickupPhone" className="mb-1.5 block">
-              Contact Phone *
-            </Label>
-            <Input
-              id="pickupPhone"
-              type="tel"
-              value={pickupDetails.pickupPhone}
-              onChange={(e) =>
-                handlePickupDetailsChange("pickupPhone", e.target.value)
-              }
-              className={errors.pickupPhone ? "border-red-500" : ""}
-              placeholder="+63 XXX XXX XXXX"
-            />
-            {errors.pickupPhone && (
-              <p className="text-xs text-red-500 mt-1">{errors.pickupPhone}</p>
-            )}
-          </div>
+          <PhoneInput
+            id="pickupPhone"
+            label="Contact Phone"
+            value={pickupDetails.pickupPhone}
+            onChange={(value) =>
+              handlePickupDetailsChange("pickupPhone", value)
+            }
+            error={errors.pickupPhone}
+            required
+            placeholder="932 549 0596"
+          />
         </div>
         {deliveryMethod === "customer-arranged" && (
           <div>

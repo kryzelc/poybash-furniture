@@ -5,6 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
+import { PhoneInput } from "../components/PhoneInput";
 import {
   Card,
   CardContent,
@@ -18,7 +19,7 @@ const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
   "https://ktcadsqclaszdyymftvf.supabase.co";
 const poybashLogo = `${SUPABASE_URL}/storage/v1/object/public/assets/logos/poybash-logo.png`;
-import { supabase } from "../utils/supabase/client";
+// Removed Supabase import - using localStorage auth only
 import {
   validateName,
   validateEmail,
@@ -58,9 +59,6 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
     if (name === "firstName" || name === "lastName") {
       // Only allow letters, spaces, hyphens, and apostrophes
       processedValue = value.replace(/[^A-Za-zÀ-ÿ\s'-]/g, "");
-    } else if (name === "phone") {
-      // Only allow numbers, spaces, dashes, and plus sign
-      processedValue = value.replace(/[^0-9\s+-]/g, "");
     }
 
     setFormData({
@@ -128,35 +126,8 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
     setIsLoading(true);
 
     try {
-      // Try to register with Supabase Auth first
-      let supabaseSuccess = false;
-      let supabaseUserId: string | undefined;
-
-      try {
-        const { data, error } = await supabase.auth.signUp({
-          email: formData.email.trim().toLowerCase(),
-          password: formData.password,
-          options: {
-            data: {
-              first_name: sanitizeInput(formData.firstName),
-              last_name: sanitizeInput(formData.lastName),
-              phone: formData.phone ? formatPhoneNumber(formData.phone) : "",
-              role: "customer",
-            },
-          },
-        });
-
-        if (!error && data.user) {
-          supabaseSuccess = true;
-          supabaseUserId = data.user.id;
-        }
-        // Silently continue with local storage if Supabase fails
-      } catch (supabaseError) {
-        // Silently continue with local storage registration
-      }
-
-      // Register in local storage (works whether Supabase succeeded or not)
-      const registrationSuccess = await register({
+      // Register in local storage only
+      const registrationResult = await register({
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
         firstName: sanitizeInput(formData.firstName),
@@ -167,29 +138,20 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
 
       setIsLoading(false);
 
-      if (!registrationSuccess) {
+      if (!registrationResult.success) {
         toast.error("Account creation failed", {
-          description: "An account with this email already exists.",
+          description:
+            registrationResult.error || "An unexpected error occurred.",
         });
         return;
       }
 
       toast.success("Account created successfully!", {
-        description: supabaseSuccess
-          ? "Please check your email to verify your account."
-          : "You can now sign in to your account.",
+        description: "You can now sign in to your account.",
       });
 
-      // Navigate based on whether Supabase was successful
-      if (supabaseSuccess) {
-        onNavigate(
-          "verify-email",
-          undefined,
-          formData.email.trim().toLowerCase(),
-        );
-      } else {
-        onNavigate("login");
-      }
+      // Navigate to login page
+      onNavigate("login");
     } catch (error) {
       setIsLoading(false);
       toast.error("Account creation failed", {
@@ -255,7 +217,7 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="juan.delacruz@example.com"
+                    placeholder="juan.delacruz@email.com"
                     value={formData.email}
                     onChange={handleInputChange}
                     className={errors.email ? "border-red-500" : ""}
@@ -267,22 +229,17 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone (Optional)</Label>
-                  <Input
+                  <PhoneInput
                     id="phone"
-                    name="phone"
-                    type="tel"
-                    placeholder="+63 XXX XXX XXXX"
+                    label="Phone"
                     value={formData.phone}
-                    onChange={handleInputChange}
-                    className={errors.phone ? "border-red-500" : ""}
+                    onChange={(value) => {
+                      setErrors((prev) => ({ ...prev, phone: "" }));
+                      setFormData({ ...formData, phone: value });
+                    }}
+                    error={errors.phone}
+                    placeholder="932 549 0596"
                   />
-                  {errors.phone && (
-                    <p className="text-xs text-red-500">{errors.phone}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    Format: 09XX XXX XXXX or +63 XXX XXX XXXX
-                  </p>
                 </div>
 
                 <div className="space-y-2">

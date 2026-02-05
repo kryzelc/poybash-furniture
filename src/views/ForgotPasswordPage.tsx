@@ -16,7 +16,7 @@ const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL ||
   "https://ktcadsqclaszdyymftvf.supabase.co";
 const poybashLogo = `${SUPABASE_URL}/storage/v1/object/public/assets/logos/poybash-logo.png`;
-import { supabase } from "../utils/supabase/client";
+// Removed Supabase import - password reset not available in localStorage mode
 import { ArrowLeft, Mail } from "lucide-react";
 
 interface ForgotPasswordPageProps {
@@ -32,31 +32,15 @@ export function ForgotPasswordPage({ onNavigate }: ForgotPasswordPageProps) {
     e.preventDefault();
     setIsLoading(true);
 
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/#reset-password`,
+    // Simulate sending email for demo purposes
+    setTimeout(() => {
+      setEmailSent(true);
+      toast.info("Demo Mode", {
+        description: "Password reset is not available in demo mode. Please contact an administrator to reset your password.",
+        duration: 5000,
       });
-
-      if (error) {
-        toast.error("Failed to send reset email", {
-          description:
-            error.message || "Please check your email address and try again.",
-          duration: 4000,
-        });
-      } else {
-        setEmailSent(true);
-        toast.success("Reset email sent", {
-          description: "Check your inbox for the password reset link.",
-        });
-      }
-    } catch (error) {
-      toast.error("An unexpected error occurred", {
-        description: "Please try again later.",
-        duration: 4000,
-      });
-    } finally {
       setIsLoading(false);
-    }
+    }, 1000);
   };
 
   if (emailSent) {
@@ -71,15 +55,18 @@ export function ForgotPasswordPage({ onNavigate }: ForgotPasswordPageProps) {
                     <Mail className="h-8 w-8 text-primary" />
                   </div>
                 </div>
-                <CardTitle>Check Your Email</CardTitle>
+                <CardTitle>Password Reset Not Available</CardTitle>
                 <CardDescription>
-                  We've sent a password reset link to {email}
+                  This feature requires email service (demo mode)
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-center text-muted-foreground">
-                  Click the link in the email to reset your password. The link
-                  will expire in 1 hour.
+                  Password reset functionality is not available in localStorage demo mode.
+                  In a production environment, this would send a reset link to {email}.
+                </p>
+                <p className="text-center text-sm text-muted-foreground">
+                  For demo purposes, you can use any of the pre-configured accounts or contact an administrator.
                 </p>
                 <div className="space-y-2">
                   <Button
@@ -132,7 +119,7 @@ export function ForgotPasswordPage({ onNavigate }: ForgotPasswordPageProps) {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="you@example.com"
+                    placeholder="juan.delacruz@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required

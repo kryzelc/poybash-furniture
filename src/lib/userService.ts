@@ -1,4 +1,3 @@
-import { supabase } from "../utils/supabase/client";
 import type { User as UserType } from "../contexts/AuthContext";
 
 export interface DBUser {
@@ -13,23 +12,47 @@ export interface DBUser {
   updated_at: string;
 }
 
+// LocalStorage key for users
+const STORAGE_KEY = "poybash_users";
+
+// Helper: Generate unique ID
+const generateId = () => {
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
+
+// Helper: Hash password (simple implementation)
+const hashPassword = (password: string): string => {
+  let hash = 0;
+  for (let i = 0; i < password.length; i++) {
+    const char = password.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash;
+  }
+  return hash.toString(36);
+};
+
+// Helper: Get all users from localStorage
+const getAllUsersFromStorage = (): Array<
+  UserType & { passwordHash: string }
+> => {
+  if (typeof window === "undefined") return [];
+  const stored = localStorage.getItem(STORAGE_KEY);
+  return stored ? JSON.parse(stored) : [];
+};
+
+// Helper: Save users to localStorage
+const saveUsersToStorage = (users: Array<UserType & { passwordHash: string }>) => {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+};
+
 export async function getAllUsers(): Promise<
   (UserType & { password?: string })[]
 > {
   try {
-    const { data, error } = await supabase
-      .from("users")
-      .select(
-        `
-        *,
-        addresses (*)
-      `,
-      )
-      .order("created_at", { ascending: false });
-
-    if (error) throw error;
-
-    return (data || []).map(transformDBUserToAppUser);
+    const users = getAllUsersFromStorage();
+    // Remove password hash from returned data
+    return users.map(({ passwordHash, ...user }) => user);
   } catch (error) {
     console.error("Error fetching users:", error);
     return [];
@@ -38,20 +61,12 @@ export async function getAllUsers(): Promise<
 
 export async function getUserById(userId: string): Promise<UserType | null> {
   try {
-    const { data, error } = await supabase
-      .from("users")
-      .select(
-        `
-        *,
-        addresses (*)
-      `,
-      )
-      .eq("id", userId)
-      .single();
+    const users = getAllUsersFromStorage();
+    const user = users.find((u) => u.id === userId);
+    if (!user) return null;
 
-    if (error) throw error;
-
-    return data ? transformDBUserToAppUser(data) : null;
+    const { passwordHash, ...userWithoutPassword } = user;
+    return userWithoutPassword;
   } catch (error) {
     console.error("Error fetching user:", error);
     return null;
@@ -63,12 +78,11 @@ export async function updateUserRole(
   newRole: "customer" | "staff" | "inventory-clerk" | "admin" | "owner",
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from("users")
-      .update({ role: newRole, updated_at: new Date().toISOString() })
-      .eq("id", userId);
-
-    if (error) throw error;
+    const users = getAllUsersFromStorage();
+    const updatedUsers = users.map((u) =>
+      u.id === userId ? { ...u, role: newRole } : u,
+    );
+    saveUsersToStorage(updatedUsers);
     return true;
   } catch (error) {
     console.error("Error updating user role:", error);
@@ -81,12 +95,11 @@ export async function toggleUserActive(
   active: boolean,
 ): Promise<boolean> {
   try {
-    const { error } = await supabase
-      .from("users")
-      .update({ active, updated_at: new Date().toISOString() })
-      .eq("id", userId);
-
-    if (error) throw error;
+    const users = getAllUsersFromStorage();
+    const updatedUsers = users.map((u) =>
+      u.id === userId ? { ...u, active } : u,
+    );
+    saveUsersToStorage(updatedUsers);
     return true;
   } catch (error) {
     console.error("Error toggling user active status:", error);
@@ -104,19 +117,11 @@ export async function updateUserInfo(
   },
 ): Promise<boolean> {
   try {
-    const dbUpdates: any = { updated_at: new Date().toISOString() };
-    if (updates.firstName !== undefined)
-      dbUpdates.first_name = updates.firstName;
-    if (updates.lastName !== undefined) dbUpdates.last_name = updates.lastName;
-    if (updates.email !== undefined) dbUpdates.email = updates.email;
-    if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
-
-    const { error } = await supabase
-      .from("users")
-      .update(dbUpdates)
-      .eq("id", userId);
-
-    if (error) throw error;
+    const users = getAllUsersFromStorage();
+    const updatedUsers = users.map((u) =>
+      u.id === userId ? { ...u, ...updates } : u,
+    );
+    saveUsersToStorage(updatedUsers);
     return true;
   } catch (error) {
     console.error("Error updating user info:", error);
@@ -133,30 +138,31 @@ export async function createUser(userData: {
   role: "customer" | "admin" | "owner" | "staff" | "inventory-clerk";
 }): Promise<string | null> {
   try {
-    // Create auth user
-    const { data: authData, error: authError } =
-      await supabase.auth.admin.createUser({
-        email: userData.email,
-        password: userData.password,
-        email_confirm: true,
-      });
+    const users = getAllUsersFromStorage();
 
-    if (authError) throw authError;
-    if (!authData.user) return null;
+    // Check if email already exists
+    if (users.some((u) => u.email.toLowerCase() === userData.email.toLowerCase())) {
+      console.error("Email already exists");
+      return null;
+    }
 
-    // Create user profile
-    const { error: profileError } = await supabase.from("users").insert({
-      id: authData.user.id,
+    const newUser: UserType & { passwordHash: string } = {
+      id: generateId(),
       email: userData.email,
-      first_name: userData.firstName,
-      last_name: userData.lastName,
+      firstName: userData.firstName,
+      lastName: userData.lastName,
       phone: userData.phone,
       role: userData.role,
-    });
+      addresses: [],
+      createdAt: new Date().toISOString(),
+      active: true,
+      passwordHash: hashPassword(userData.password),
+    };
 
-    if (profileError) throw profileError;
+    users.push(newUser);
+    saveUsersToStorage(users);
 
-    return authData.user.id;
+    return newUser.id;
   } catch (error) {
     console.error("Error creating user:", error);
     return null;
@@ -168,16 +174,12 @@ export async function checkEmailExists(
   excludeUserId?: string,
 ): Promise<boolean> {
   try {
-    let query = supabase.from("users").select("id").eq("email", email);
-
-    if (excludeUserId) {
-      query = query.neq("id", excludeUserId);
-    }
-
-    const { data, error } = await query;
-
-    if (error) throw error;
-    return (data?.length || 0) > 0;
+    const users = getAllUsersFromStorage();
+    return users.some(
+      (u) =>
+        u.email.toLowerCase() === email.toLowerCase() &&
+        u.id !== excludeUserId,
+    );
   } catch (error) {
     console.error("Error checking email:", error);
     return false;
@@ -188,25 +190,25 @@ function transformDBUserToAppUser(dbUser: any): UserType {
   return {
     id: dbUser.id,
     email: dbUser.email,
-    firstName: dbUser.first_name,
-    lastName: dbUser.last_name,
+    firstName: dbUser.first_name || dbUser.firstName,
+    lastName: dbUser.last_name || dbUser.lastName,
     role: dbUser.role,
     phone: dbUser.phone,
     active: dbUser.active,
-    createdAt: dbUser.created_at,
+    createdAt: dbUser.created_at || dbUser.createdAt,
     addresses: (dbUser.addresses || []).map((addr: any) => ({
       id: addr.id,
       label: addr.label,
-      firstName: addr.first_name,
-      lastName: addr.last_name,
+      firstName: addr.first_name || addr.firstName,
+      lastName: addr.last_name || addr.lastName,
       address: addr.address,
       barangay: addr.barangay,
       city: addr.city,
       state: addr.state,
-      zipCode: addr.zip_code,
+      zipCode: addr.zip_code || addr.zipCode,
       country: addr.country,
       phone: addr.phone,
-      isDefault: addr.is_default,
+      isDefault: addr.is_default ?? addr.isDefault,
     })),
   };
 }
