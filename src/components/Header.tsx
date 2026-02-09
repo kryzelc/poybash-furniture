@@ -100,6 +100,12 @@ export function Header({ onCartOpen }: HeaderProps) {
             {/* Center: Desktop Navigation */}
             <nav className="hidden lg:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
               <Link
+                href="/"
+                className="text-sm font-medium transition-colors hover:text-primary"
+              >
+                Home
+              </Link>
+              <Link
                 href="/products"
                 className="text-sm font-medium transition-colors hover:text-primary"
               >
@@ -207,6 +213,15 @@ export function Header({ onCartOpen }: HeaderProps) {
 
               <div className="flex-1 overflow-y-auto px-6 min-h-0">
                 <nav className="space-y-2 pb-4 pt-2">
+                  {/* Home */}
+                  <Link
+                    href="/"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block w-full text-left px-4 py-3 rounded-lg hover:bg-accent transition-colors"
+                  >
+                    Home
+                  </Link>
+
                   {/* Shop */}
                   <Link
                     href="/products"
