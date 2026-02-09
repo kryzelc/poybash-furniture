@@ -489,19 +489,19 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
-        return "bg-green-500/10 text-green-700 hover:bg-green-500/20";
+        return "bg-[#D7CCC8] text-[#5D4037] hover:bg-[#D7CCC8]/80";
       case "ready-for-pickup":
-        return "bg-amber-500/10 text-amber-700 hover:bg-amber-500/20";
+        return "bg-[#D7CCC8] text-[#795548] hover:bg-[#D7CCC8]/80";
       case "processing":
-        return "bg-yellow-500/10 text-yellow-700 hover:bg-yellow-500/20";
+        return "bg-[#D7CCC8]/70 text-[#795548] hover:bg-[#D7CCC8]";
       case "pending":
-        return "bg-orange-500/10 text-orange-700 hover:bg-orange-500/20";
+        return "bg-[#D7CCC8]/50 text-[#795548] hover:bg-[#D7CCC8]/70";
       case "cancelled":
         return "bg-red-500/10 text-red-700 hover:bg-red-500/20";
       case "refund-requested":
-        return "bg-purple-500/10 text-purple-700 hover:bg-purple-500/20";
+        return "bg-[#D7CCC8] text-[#3E2723] hover:bg-[#D7CCC8]/80";
       case "refunded":
-        return "bg-purple-500/10 text-purple-700 hover:bg-purple-500/20";
+        return "bg-[#795548] text-white hover:bg-[#795548]/90";
       default:
         return "";
     }
@@ -535,7 +535,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="mb-2 text-[#6B4E3D]">My Account</h1>
+              <h1 className="mb-2 text-[#5D4037]">My Account</h1>
               <p className="text-muted-foreground">
                 Manage your profile and view your orders
               </p>
@@ -543,7 +543,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
             <Button
               variant="outline"
               onClick={handleLogout}
-              className="text-[#6B4E3D] border-[#6B4E3D]"
+              className="text-[#5D4037] border-[#795548] hover:bg-[#D7CCC8]"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Log Out
@@ -551,31 +551,31 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
           </div>
 
           <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="rounded-full bg-white border border-[#6B4E3D]/20">
+            <TabsList className="rounded-full bg-[#D7CCC8] border border-[#795548]/20">
               <TabsTrigger
                 value="orders"
-                className="rounded-full data-[state=active]:bg-[#6B4E3D] data-[state=active]:text-white data-[state=inactive]:text-[#6B4E3D]"
+                className="rounded-full data-[state=active]:bg-[#5D4037] data-[state=active]:text-white data-[state=inactive]:text-[#795548]"
               >
                 <Package className="h-4 w-4 mr-2" />
                 Orders {orders.length > 0 && `(${orders.length})`}
               </TabsTrigger>
               <TabsTrigger
                 value="profile"
-                className="rounded-full data-[state=active]:bg-[#6B4E3D] data-[state=active]:text-white data-[state=inactive]:text-[#6B4E3D]"
+                className="rounded-full data-[state=active]:bg-[#5D4037] data-[state=active]:text-white data-[state=inactive]:text-[#795548]"
               >
                 <User className="h-4 w-4 mr-2" />
                 Profile
               </TabsTrigger>
               <TabsTrigger
                 value="addresses"
-                className="rounded-full data-[state=active]:bg-[#6B4E3D] data-[state=active]:text-white data-[state=inactive]:text-[#6B4E3D]"
+                className="rounded-full data-[state=active]:bg-[#5D4037] data-[state=active]:text-white data-[state=inactive]:text-[#795548]"
               >
                 <MapPin className="h-4 w-4 mr-2" />
                 Addresses
               </TabsTrigger>
               <TabsTrigger
                 value="settings"
-                className="rounded-full data-[state=active]:bg-[#6B4E3D] data-[state=active]:text-white data-[state=inactive]:text-[#6B4E3D]"
+                className="rounded-full data-[state=active]:bg-[#5D4037] data-[state=active]:text-white data-[state=inactive]:text-[#795548]"
               >
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
@@ -676,7 +676,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                               {order.items.map((item: any, index: number) => (
                                 <div key={index}>
                                   <div className="flex gap-4">
-                                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
+                                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#D7CCC8] flex-shrink-0">
                                       <img
                                         src={getProductImage(
                                           item.productId,
@@ -704,7 +704,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                                       )}
                                     </div>
                                     <div className="text-right">
-                                      <p className="text-primary">
+                                      <p className="text-[#5D4037]">
                                         ₱
                                         {(item.price * item.quantity).toFixed(
                                           2,
@@ -727,7 +727,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                                   </div>
                                   {item.refundRequested &&
                                     item.refundReason && (
-                                      <div className="ml-20 mt-2 p-2 bg-secondary/30 rounded text-sm">
+                                      <div className="ml-20 mt-2 p-2 bg-[#D7CCC8]/50 rounded text-sm">
                                         <p className="text-muted-foreground">
                                           Refund reason: {item.refundReason}
                                         </p>
@@ -742,7 +742,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                             <div className="flex justify-between items-center">
                               <div>
                                 <p className="text-muted-foreground">Total</p>
-                                <p className="text-primary">
+                                <p className="text-[#5D4037]">
                                   ₱{order.total.toFixed(2)}
                                 </p>
                               </div>
@@ -809,8 +809,8 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-                      <User className="h-10 w-10 text-primary" />
+                    <div className="w-20 h-20 rounded-full bg-[#D7CCC8] flex items-center justify-center">
+                      <User className="h-10 w-10 text-[#5D4037]" />
                     </div>
                     <div>
                       <h3>
@@ -860,7 +860,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                           type="email"
                           value={profileData.email}
                           disabled
-                          className="bg-secondary/50 cursor-not-allowed"
+                          className="bg-[#D7CCC8]/50 cursor-not-allowed"
                         />
                         <p className="text-xs text-muted-foreground">
                           Email cannot be changed here. Use the Security section
@@ -1094,7 +1094,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
           {selectedOrder && (
             <div className="overflow-y-auto max-h-[calc(95vh-120px)] space-y-6 invoice-scroll pb-8">
               {/* Pickup Verification QR */}
-              <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+              <Card className="bg-gradient-to-br from-[#D7CCC8]/30 to-[#D7CCC8]/10 border-[#795548]/20">
                 <CardContent className="pt-6">
                   <div className="flex flex-col md:flex-row items-center gap-6">
                     <div className="flex-shrink-0">
@@ -1149,8 +1149,8 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
           </DialogHeader>
           <div className="space-y-6">
             {selectedItem && (
-              <div className="flex gap-4 p-3 bg-secondary/30 rounded-lg">
-                <div className="w-16 h-16 rounded-lg overflow-hidden bg-secondary flex-shrink-0">
+              <div className="flex gap-4 p-3 bg-[#D7CCC8]/50 rounded-lg">
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#D7CCC8] flex-shrink-0">
                   <img
                     src={getProductImage(
                       selectedItem.productId,
@@ -1165,7 +1165,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                   <p className="text-muted-foreground">
                     {selectedItem.color} × {selectedItem.quantity}
                   </p>
-                  <p className="text-primary">
+                  <p className="text-[#5D4037]">
                     ₱{(selectedItem.price * selectedItem.quantity).toFixed(2)}
                   </p>
                   <p className="text-muted-foreground mt-1">
@@ -1391,7 +1391,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
             )}
 
             {selectedOrder?.paymentMethod === "cash" && (
-              <div className="p-4 bg-amber-50 text-amber-900 rounded-lg border border-amber-200">
+              <div className="p-4 bg-[#D7CCC8]/50 text-[#5D4037] rounded-lg border border-[#795548]/30">
                 <p>
                   Since you paid with Cash on Pickup, your refund will be
                   processed as cash pickup at our store.
@@ -1399,7 +1399,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
               </div>
             )}
 
-            <div className="p-4 bg-secondary/30 rounded-lg">
+            <div className="p-4 bg-[#D7CCC8]/50 rounded-lg border border-[#795548]/20">
               <h4 className="mb-2">Refund Policy</h4>
               <ul className="text-muted-foreground space-y-1">
                 <li>
@@ -1709,7 +1709,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 type="email"
                 value={user?.email || ""}
                 disabled
-                className="bg-secondary"
+                className="bg-[#D7CCC8]/50"
               />
             </div>
 
