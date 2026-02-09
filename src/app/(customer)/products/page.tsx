@@ -9,6 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from '@/components/ui/sheet';
 import { Filter, X, Search, LayoutGrid, Package, Armchair, RectangleHorizontal } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
@@ -160,15 +161,176 @@ function ProductsPageContent() {
 
       <div className="container max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-16 py-8 lg:py-12">
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters Sidebar */}
-          <aside className={`w-full lg:w-80 ${showFilters ? 'block' : 'hidden'} lg:block`}>
-            <div className="bg-white rounded-2xl shadow-sm border p-6 sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto">
-              {/* Mobile close button */}
-              <Button variant="ghost" size="icon" className="lg:hidden absolute top-4 right-4" onClick={() => setShowFilters(false)}>
-                <X className="h-5 w-5" />
-              </Button>
+          {/* Mobile Filter Sheet */}
+          <Sheet open={showFilters} onOpenChange={setShowFilters}>
+            <SheetContent side="left" className="w-[85vw] sm:w-[400px] p-0">
+              <SheetHeader className="border-b px-4 py-4">
+                <div className="flex items-center justify-between">
+                  <SheetTitle className="text-lg font-bold flex items-center gap-2">
+                    <Filter className="h-5 w-5" />
+                    Filters
+                  </SheetTitle>
+                  {activeFiltersCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearAllFilters}
+                      className="h-8 text-xs"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Clear all
+                    </Button>
+                  )}
+                </div>
+              </SheetHeader>
+              
+              <div className="overflow-y-auto h-[calc(100vh-80px)] px-4 py-4 space-y-6">
+                {/* Category Filter */}
+                <div>
+                  <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-3 block">Category</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {mainCategories.map((cat) => (
+                      <button
+                        key={cat.value}
+                        onClick={() => { setMainCategory(cat.value); setSubCategory('all'); }}
+                        className={`flex flex-col items-center gap-1.5 p-2.5 rounded-lg border-2 transition-all ${
+                          mainCategory === cat.value
+                            ? 'border-primary bg-primary/5 shadow-sm text-primary'
+                            : 'border-border hover:border-primary/50 hover:bg-accent/50 text-muted-foreground'
+                        }`}
+                      >
+                        <div className="h-5 w-5">{cat.icon}</div>
+                        <span className="text-[10px] font-medium text-center leading-tight">{cat.label}</span>
+                      </button>
+                    ))}
+                  </div>
 
-              <div className="space-y-8">
+                  {/* Sub-categories */}
+                  {mainCategory !== 'all' && subCategories[mainCategory as keyof typeof subCategories] && (
+                    <div className="mt-3 space-y-1.5">
+                      <button
+                        onClick={() => setSubCategory('all')}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
+                          subCategory === 'all'
+                            ? 'bg-primary/10 text-primary font-medium'
+                            : 'hover:bg-accent'
+                        }`}
+                      >
+                        All {mainCategory}
+                      </button>
+                      {subCategories[mainCategory as keyof typeof subCategories].map((sub) => (
+                        <button
+                          key={sub}
+                          onClick={() => setSubCategory(sub)}
+                          className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
+                            subCategory === sub
+                              ? 'bg-primary/10 text-primary font-medium'
+                              : 'hover:bg-accent'
+                          }`}
+                        >
+                          {sub}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Material Filter */}
+                <div className="border-t pt-4">
+                  <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-3 block">Material</Label>
+                  <div className="space-y-1.5">
+                    <button
+                      onClick={() => setMaterialFilter('all')}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
+                        materialFilter === 'all'
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'hover:bg-accent'
+                      }`}
+                    >
+                      All Materials
+                    </button>
+                    {materials.map((material) => (
+                      <button
+                        key={material}
+                        onClick={() => setMaterialFilter(material)}
+                        className={`w-full text-left px-3 py-2 rounded-lg text-xs transition-colors ${
+                          materialFilter === material
+                            ? 'bg-primary/10 text-primary font-medium'
+                            : 'hover:bg-accent'
+                        }`}
+                      >
+                        {material}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Color Filter */}
+                <div className="border-t pt-4">
+                  <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-3 block">Color</Label>
+                  <div className="grid grid-cols-6 gap-2">
+                    <button
+                      onClick={() => setColorFilter('all')}
+                      className={`relative aspect-square rounded-full border-2 transition-all ${
+                        colorFilter === 'all'
+                          ? 'border-primary ring-2 ring-primary/20'
+                          : 'border-border hover:border-primary/50'
+                      }`}
+                      title="All Colors"
+                    >
+                      <div className="absolute inset-1 rounded-full bg-gradient-to-br from-red-200 via-blue-200 to-green-200"></div>
+                    </button>
+                    {colors.map((color) => (
+                      <button
+                        key={color.name}
+                        onClick={() => setColorFilter(color.name)}
+                        className={`relative aspect-square rounded-full border-2 transition-all ${
+                          colorFilter === color.name
+                            ? 'border-primary ring-2 ring-primary/20'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                        title={color.name}
+                      >
+                        <div 
+                          className="absolute inset-1 rounded-full"
+                          style={{ backgroundColor: color.hex }}
+                        ></div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Price Range Filter */}
+                <div className="border-t pt-4">
+                  <Label className="text-xs font-bold uppercase tracking-wide text-muted-foreground mb-3 block">
+                    Price Range
+                  </Label>
+                  <Slider
+                    min={0}
+                    max={50000}
+                    step={500}
+                    value={priceRange}
+                    onValueChange={(value) => setPriceRange(value as [number, number])}
+                    className="w-full mb-3"
+                  />
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-primary">
+                      ₱{priceRange[0].toLocaleString('en-PH')}
+                    </span>
+                    <span className="text-xs text-muted-foreground">-</span>
+                    <span className="text-xs font-medium text-primary">
+                      ₱{priceRange[1].toLocaleString('en-PH')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+
+          {/* Desktop Filters Sidebar */}
+          <aside className="hidden lg:block w-80">
+            <div className="bg-white rounded-2xl shadow-sm border p-6 sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto">
+              <div className="space-y-6">
                 {/* Category Filter */}
                 <div>
                   <div className="flex items-center justify-between mb-4">
@@ -177,7 +339,6 @@ function ProductsPageContent() {
                       <button
                         onClick={clearAllFilters}
                         className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                        title="Clear all filters"
                       >
                         <X className="h-4 w-4" />
                         <span className="font-medium">Clear all</span>
@@ -326,42 +487,39 @@ function ProductsPageContent() {
           {/* Products Grid */}
           <div className="flex-1">
             {/* Toolbar */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-              <div className="flex items-center gap-3">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 w-full sm:w-auto">
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="lg:hidden" 
+                  className="lg:hidden flex-1 sm:flex-initial" 
                   onClick={() => setShowFilters(true)}
                 >
                   <Filter className="h-4 w-4 mr-2" />
                   Filters
                   {activeFiltersCount > 0 && (
-                    <span className="ml-2 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
+                    <span className="ml-2 bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
                       {activeFiltersCount}
                     </span>
                   )}
                 </Button>
-                <span className="text-base text-muted-foreground">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
                   <span className="font-medium text-foreground">{filteredAndSortedProducts.length}</span> {filteredAndSortedProducts.length === 1 ? 'product' : 'products'}
                 </span>
               </div>
               
-              <div className="flex items-center gap-2">
-                <Label className="text-sm text-muted-foreground whitespace-nowrap">Sort:</Label>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sortOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {sortOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {filteredAndSortedProducts.length === 0 ? (
@@ -381,16 +539,31 @@ function ProductsPageContent() {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
-                {filteredAndSortedProducts.map(product => (
-                  <ProductCard
-                    key={product.id}
-                    name={product.name}
-                    price={product.price}
-                    imageUrl={product.imageUrl}
-                    category={product.category}
-                    onClick={() => handleProductClick(product.id)}
-                  />
-                ))}
+                {filteredAndSortedProducts.map(product => {
+                  // Check if product has size variations
+                  const hasSizeVariations = () => {
+                    if (product.variants && product.variants.length > 0) {
+                      const activeVariants = product.variants.filter((v) => v.active);
+                      const uniqueSizes = new Set(
+                        activeVariants.map((v) => v.size).filter((size) => size !== null)
+                      );
+                      return uniqueSizes.size > 1;
+                    }
+                    return false;
+                  };
+
+                  return (
+                    <ProductCard
+                      key={product.id}
+                      name={product.name}
+                      price={product.price}
+                      imageUrl={product.imageUrl}
+                      category={product.category}
+                      onClick={() => handleProductClick(product.id)}
+                      hasSizeOptions={hasSizeVariations()}
+                    />
+                  );
+                })}
               </div>
             )}
           </div>

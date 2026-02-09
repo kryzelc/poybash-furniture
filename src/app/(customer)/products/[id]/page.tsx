@@ -2,10 +2,19 @@
 
 import { ProductDetailPage } from '@/views/ProductDetailPage';
 import { useParams } from 'next/navigation';
+import { use, useMemo } from 'react';
 
 export default function Page() {
   const params = useParams();
-  const productId = parseInt(params.id as string);
+  
+  // Safely extract and parse the id parameter
+  const productId = useMemo(() => {
+    const id = params?.id;
+    if (typeof id === 'string') {
+      return parseInt(id, 10);
+    }
+    return 0;
+  }, [params]);
   
   return <ProductDetailPage productId={productId} />;
 }

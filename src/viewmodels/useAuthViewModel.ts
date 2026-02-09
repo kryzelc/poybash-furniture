@@ -24,7 +24,7 @@ export function useAuthViewModel() {
     try {
       setIsLoading(true);
       const session = await authService.getSession();
-      
+
       if (session?.user) {
         const userData = await authService.getUserById(session.user.id);
         setUser(userData);
@@ -44,14 +44,14 @@ export function useAuthViewModel() {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const result = await authService.signUp(data);
-      
+
       if (result.error) {
         setError(result.error);
         return { success: false, error: result.error };
       }
-      
+
       setUser(result.user);
       return { success: true, user: result.user };
     } catch (err) {
@@ -67,14 +67,14 @@ export function useAuthViewModel() {
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const result = await authService.signIn(data);
-      
+
       if (result.error) {
         setError(result.error);
         return { success: false, error: result.error };
       }
-      
+
       setUser(result.user);
       return { success: true, user: result.user };
     } catch (err) {
@@ -91,6 +91,14 @@ export function useAuthViewModel() {
       setIsLoading(true);
       await authService.signOut();
       setUser(null);
+
+      // Clear cart and coupon data on logout
+      localStorage.removeItem('cart');
+      localStorage.removeItem('appliedCoupon');
+
+      // Dispatch event to notify cart to clear
+      window.dispatchEvent(new Event('user-logout'));
+
       return { success: true };
     } catch (err) {
       return { success: false, error: 'Failed to sign out' };
@@ -121,11 +129,11 @@ export function useAuthViewModel() {
     try {
       setIsLoading(true);
       const result = await authService.changePassword(newPassword);
-      
+
       if (result.error) {
         return { success: false, error: result.error };
       }
-      
+
       return { success: true };
     } catch (err) {
       return { success: false, error: 'Failed to change password' };
@@ -153,7 +161,7 @@ export function useAuthViewModel() {
 
   const getMyOrders = useCallback(async () => {
     if (!user) return [];
-    
+
     try {
       return await orderService.getUserOrders(user.id);
     } catch (err) {
@@ -192,7 +200,7 @@ export function useAuthViewModel() {
     user,
     isLoading,
     error,
-    
+
     // Auth actions
     signUp,
     signIn,
@@ -200,12 +208,12 @@ export function useAuthViewModel() {
     updateProfile,
     changePassword,
     loadUser,
-    
+
     // Order actions
     placeOrder,
     getMyOrders,
     cancelOrder,
-    
+
     // Helpers
     isAuthenticated,
     hasRole,

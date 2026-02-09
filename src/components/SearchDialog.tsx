@@ -97,8 +97,8 @@ export function SearchDialog({
               placeholder="Try 'dining chair' or 'dining table'..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 pr-4 h-16 pt-5 pb-5 rounded-2xl border-2 focus-visible:ring-0 focus-visible:ring-offset-0 text-base"
-              style={{ lineHeight: "1.5" }}
+              className="pl-12 pr-4 h-16 pt-5 pb-5 rounded-2xl border-2 focus-visible:ring-0 focus-visible:ring-offset-0"
+              style={{ fontSize: '12px', lineHeight: '1.5' }}
               autoFocus
             />
           </div>

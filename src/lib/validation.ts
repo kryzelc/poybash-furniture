@@ -1,308 +1,750 @@
 /**
- * Philippines-based Form Validation Utilities
- * Comprehensive validation rules for PoyBash Furniture e-commerce platform
+ * Product and Cart Validation Utilities
+ * 
+ * Comprehensive validation for products, variants, stock, and cart operations.
  */
 
-// Name validation (no numbers or special symbols except hyphen and apostrophe)
-export const validateName = (
-  name: string,
-): { valid: boolean; error?: string } => {
-  if (!name || name.trim().length === 0) {
-    return { valid: false, error: "Name is required" };
+import { Product, ProductVariant } from '@/models/Product';
+import { CartItem } from '@/models/Cart';
+import { getVariantStock, getVariantById, findVariant } from './products';
+
+export interface ValidationResult {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+}
+
+/**
+ * Validate product data structure
+ */
+export function validateProduct(product: Product): ValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // Required fields
+  if (!product.id || product.id <= 0) {
+    errors.push('Product must have a valid ID');
+  }
+  if (!product.name || product.name.trim().length === 0) {
+    errors.push('Product must have a name');
+  }
+  if (typeof product.price !== 'number' || product.price < 0) {
+    errors.push('Product must have a valid price');
+  }
+  if (!product.category) {
+    errors.push('Product must have a category');
+  }
+  if (!product.imageUrl) {
+    errors.push('Product must have an image URL');
   }
 
-  if (name.trim().length < 2) {
-    return { valid: false, error: "Name must be at least 2 characters" };
+  // Variant validation
+  if (product.variants && product.variants.length > 0) {
+    const activeVariants = product.variants.filter(v => v.active);
+
+    if (activeVariants.length === 0) {
+      warnings.push('Product has no active variants');
+    }
+
+    // Validate each variant
+    activeVariants.forEach((variant, index) => {
+      const variantErrors = validateVariant(variant, index);
+      errors.push(...variantErrors);
+    });
+
+    // Check for duplicate variant IDs
+    const variantIds = product.variants.map(v => v.id);
+    const duplicates = variantIds.filter((id, index) => variantIds.indexOf(id) !== index);
+    if (duplicates.length > 0) {
+      errors.push(`Duplicate variant IDs found: ${duplicates.join(', ')}`);
+    }
+  } else {
+    warnings.push('Product has no variants defined');
   }
 
-  const nameRegex = /^[A-Za-zÀ-ÿ\s'-]+$/;
-  if (!nameRegex.test(name)) {
-    return {
-      valid: false,
-      error: "Name can only contain letters, spaces, hyphens, and apostrophes",
-    };
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
+/**
+ * Validate variant data structure
+ */
+function validateVariant(variant: ProductVariant, index: number): string[] {
+  const errors: string[] = [];
+
+  if (!variant.id) {
+    errors.push(`Variant ${index}: Missing ID`);
+  }
+  if (!variant.color) {
+    errors.push(`Variant ${index}: Missing color`);
+  }
+  if (typeof variant.price !== 'number' || variant.price < 0) {
+    errors.push(`Variant ${index}: Invalid price`);
+  }
+  if (!variant.warehouseStock || variant.warehouseStock.length === 0) {
+    errors.push(`Variant ${index}: Missing warehouse stock data`);
+  } else {
+    // Validate warehouse stock
+    variant.warehouseStock.forEach((ws, wsIndex) => {
+      if (!ws.warehouse) {
+        errors.push(`Variant ${index}, Warehouse ${wsIndex}: Missing warehouse name`);
+      }
+      if (typeof ws.quantity !== 'number' || ws.quantity < 0) {
+        errors.push(`Variant ${index}, Warehouse ${wsIndex}: Invalid quantity`);
+      }
+      if (typeof ws.reserved !== 'number' || ws.reserved < 0) {
+        errors.push(`Variant ${index}, Warehouse ${wsIndex}: Invalid reserved amount`);
+      }
+      if (ws.reserved > ws.quantity) {
+        errors.push(`Variant ${index}, Warehouse ${wsIndex}: Reserved (${ws.reserved}) exceeds quantity (${ws.quantity})`);
+      }
+    });
   }
 
-  return { valid: true };
-};
+  return errors;
+}
 
-// Email validation
-export const validateEmail = (
-  email: string,
-): { valid: boolean; error?: string } => {
-  if (!email || email.trim().length === 0) {
-    return { valid: false, error: "Email is required" };
+/**
+ * Validate stock availability for a product variant
+ */
+export function validateStockAvailability(
+  product: Product,
+  variantId: string,
+  requestedQuantity: number
+): ValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  if (requestedQuantity <= 0) {
+    errors.push('Quantity must be greater than 0');
+    return { isValid: false, errors, warnings };
   }
 
-  const trimmedEmail = email.trim();
-
-  // Basic email format check - must have @ and domain
-  if (!trimmedEmail.includes("@") || trimmedEmail.split("@").length !== 2) {
-    return { valid: false, error: "Please enter a valid email address" };
+  if (requestedQuantity > 100) {
+    errors.push('Quantity exceeds maximum limit of 100');
+    return { isValid: false, errors, warnings };
   }
 
-  const [localPart, domain] = trimmedEmail.split("@");
+  const variant = getVariantById(product, variantId);
 
-  // Local part validation
-  if (!localPart || localPart.length === 0) {
-    return { valid: false, error: "Email address format is invalid" };
+  if (!variant) {
+    errors.push('Variant not found');
+    return { isValid: false, errors, warnings };
   }
 
-  // Local part shouldn't start or end with special characters
-  if (localPart.startsWith(".") || localPart.endsWith(".")) {
-    return { valid: false, error: "Email address format is invalid" };
+  if (!variant.active) {
+    errors.push('Variant is no longer available');
+    return { isValid: false, errors, warnings };
   }
 
-  // Check for consecutive dots
-  if (trimmedEmail.includes("..")) {
-    return { valid: false, error: "Email address format is invalid" };
+  const availableStock = getVariantStock(variant);
+
+  if (availableStock === 0) {
+    errors.push('Product is out of stock');
+    return { isValid: false, errors, warnings };
   }
 
-  // Domain validation
-  if (!domain || !domain.includes(".")) {
-    return {
-      valid: false,
-      error: "Email must have a valid domain (e.g., @gmail.com)",
-    };
+  if (requestedQuantity > availableStock) {
+    errors.push(`Only ${availableStock} items available in stock`);
+    return { isValid: false, errors, warnings };
   }
 
-  // More comprehensive email regex - allows letters, numbers, dots, underscores, plus, percent, and hyphens
-  const emailRegex = /^[a-zA-Z0-9._+%-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  if (!emailRegex.test(trimmedEmail)) {
-    return { valid: false, error: "Please enter a valid email address" };
+  // Warning for low stock
+  if (availableStock <= 5 && availableStock > 0) {
+    warnings.push(`Low stock: Only ${availableStock} items remaining`);
   }
 
-  return { valid: true };
-};
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
 
-// Philippine phone number validation
-// Accepts: 10 digits starting with 9 (9XXXXXXXXXX for +63 9XX XXX XXXX format)
-export const validatePhoneNumber = (
-  phone: string,
-): { valid: boolean; error?: string } => {
-  if (!phone || phone.trim().length === 0) {
-    return { valid: false, error: "Phone number is required" };
+/**
+ * Validate size and color combination exists
+ */
+export function validateSizeColorCombination(
+  product: Product,
+  size: string | null,
+  color: string
+): ValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  if (!product.variants || product.variants.length === 0) {
+    errors.push('Product has no variants');
+    return { isValid: false, errors, warnings };
   }
 
-  // Remove +63 prefix if present
-  let cleaned = phone.startsWith("+63") ? phone.slice(3) : phone;
+  const variant = findVariant(product, size, color);
 
-  // Remove all spaces and dashes
-  cleaned = cleaned.replace(/[\s-]/g, "");
-
-  // Accept only 10 digits starting with 9
-  // Format: 9XX XXX XXXX (10 digits total)
-  const validFormat = /^9\d{9}$/;
-
-  if (!validFormat.test(cleaned)) {
-    return {
-      valid: false,
-      error:
-        "Phone number must be 10 digits starting with 9 (e.g., 9325490596)",
-    };
+  if (!variant) {
+    errors.push(`Size "${size || 'one-size'}" and color "${color}" combination not available`);
+    return { isValid: false, errors, warnings };
   }
 
-  return { valid: true };
-};
+  if (!variant.active) {
+    errors.push('Selected variant is no longer available');
+    return { isValid: false, errors, warnings };
+  }
 
-// Format phone number for display (adds +63 prefix and spaces)
-export const formatPhoneNumber = (phone: string): string => {
-  const cleaned = phone.replace(/[\s-]/g, "");
+  const availableStock = getVariantStock(variant);
+  if (availableStock === 0) {
+    errors.push('Selected variant is out of stock');
+    return { isValid: false, errors, warnings };
+  }
 
-  // Format the 10-digit number: +63 9XX XXX XXXX
-  const formatted = cleaned.replace(/^(\d{3})(\d{3})(\d{4})$/, "+63 $1 $2 $3");
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
 
-  return formatted || phone;
-};
+/**
+ * Validate add to cart operation
+ */
+export function validateAddToCart(
+  product: Product,
+  color: string,
+  quantity: number,
+  size?: string,
+  variantId?: string
+): ValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
 
-// Philippine postal code validation (4 digits)
-export const validatePostalCode = (
-  code: string,
-): { valid: boolean; error?: string } => {
+  // Basic product validation
+  if (!product) {
+    errors.push('Product is required');
+    return { isValid: false, errors, warnings };
+  }
+
+  if (!product.active) {
+    errors.push('Product is no longer available');
+    return { isValid: false, errors, warnings };
+  }
+
+  // Color validation
+  if (!color || color.trim().length === 0) {
+    errors.push('Color selection is required');
+  }
+
+  // Quantity validation
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    errors.push('Quantity must be a positive integer');
+  }
+
+  if (quantity > 100) {
+    errors.push('Quantity exceeds maximum limit of 100');
+  }
+
+  // Variant validation
+  if (!variantId) {
+    errors.push('Variant selection is required');
+    return { isValid: false, errors, warnings };
+  }
+
+  // Stock validation
+  const stockValidation = validateStockAvailability(product, variantId, quantity);
+  errors.push(...stockValidation.errors);
+  warnings.push(...stockValidation.warnings);
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
+/**
+ * Validate cart item
+ */
+export function validateCartItem(
+  item: CartItem,
+  products: Product[]
+): ValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // Find product
+  const product = products.find(p => p.id === item.productId);
+
+  if (!product) {
+    errors.push(`Product ${item.productId} not found`);
+    return { isValid: false, errors, warnings };
+  }
+
+  if (!product.active) {
+    errors.push(`Product "${item.name}" is no longer available`);
+    return { isValid: false, errors, warnings };
+  }
+
+  // Validate quantity
+  if (!Number.isInteger(item.quantity) || item.quantity <= 0) {
+    errors.push(`Invalid quantity for "${item.name}"`);
+  }
+
+  if (item.quantity > 100) {
+    errors.push(`Quantity for "${item.name}" exceeds maximum limit`);
+  }
+
+  // Validate variant
+  if (!item.variantId) {
+    errors.push(`Missing variant information for "${item.name}"`);
+    return { isValid: false, errors, warnings };
+  }
+
+  const variant = getVariantById(product, item.variantId);
+
+  if (!variant) {
+    errors.push(`Variant no longer exists for "${item.name}"`);
+    return { isValid: false, errors, warnings };
+  }
+
+  if (!variant.active) {
+    errors.push(`Selected variant of "${item.name}" is no longer available`);
+    return { isValid: false, errors, warnings };
+  }
+
+  // Validate stock
+  const availableStock = getVariantStock(variant);
+
+  if (availableStock === 0) {
+    errors.push(`"${item.name}" is out of stock`);
+  } else if (item.quantity > availableStock) {
+    errors.push(`Only ${availableStock} of "${item.name}" available`);
+  }
+
+  // Validate price hasn't changed significantly
+  const priceDifference = Math.abs(item.price - variant.price);
+  if (priceDifference > 0.01) {
+    warnings.push(`Price for "${item.name}" has changed from ₱${item.price.toFixed(2)} to ₱${variant.price.toFixed(2)}`);
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
+/**
+ * Validate entire cart
+ */
+export function validateCart(
+  items: CartItem[],
+  products: Product[]
+): ValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  if (items.length === 0) {
+    errors.push('Cart is empty');
+    return { isValid: false, errors, warnings };
+  }
+
+  // Validate each item
+  items.forEach((item, index) => {
+    const itemValidation = validateCartItem(item, products);
+
+    // Add item index to errors for clarity
+    itemValidation.errors.forEach(error => {
+      errors.push(`Item ${index + 1}: ${error}`);
+    });
+
+    itemValidation.warnings.forEach(warning => {
+      warnings.push(`Item ${index + 1}: ${warning}`);
+    });
+  });
+
+  // Validate cart totals
+  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+  if (subtotal <= 0) {
+    errors.push('Invalid cart total');
+  }
+
+  if (subtotal > 1000000) {
+    warnings.push('Cart total exceeds ₱1,000,000 - please verify order');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
+/**
+ * Validate quantity update
+ */
+export function validateQuantityUpdate(
+  currentQuantity: number,
+  newQuantity: number,
+  availableStock: number
+): ValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  if (!Number.isInteger(newQuantity)) {
+    errors.push('Quantity must be a whole number');
+  }
+
+  if (newQuantity < 0) {
+    errors.push('Quantity cannot be negative');
+  }
+
+  if (newQuantity === 0) {
+    // This is valid but should trigger removal
+    warnings.push('Quantity is 0 - item will be removed');
+  }
+
+  if (newQuantity > 100) {
+    errors.push('Quantity exceeds maximum limit of 100');
+  }
+
+  if (newQuantity > availableStock) {
+    errors.push(`Only ${availableStock} items available in stock`);
+  }
+
+  // Warnings for unusual changes
+  const difference = Math.abs(newQuantity - currentQuantity);
+  if (difference > 50) {
+    warnings.push('Large quantity change detected');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
+/**
+ * Sanitize and validate user input for product searches
+ */
+export function sanitizeSearchInput(input: string): string {
+  if (!input) return '';
+
+  // Remove any potentially dangerous characters
+  return input
+    .trim()
+    .replace(/[<>\"'`]/g, '') // Remove HTML/script characters
+    .substring(0, 100); // Limit length
+}
+
+/**
+ * Validate coupon code format
+ */
+export function validateCouponCode(code: string): ValidationResult {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
   if (!code || code.trim().length === 0) {
-    return { valid: false, error: "Postal code is required" };
+    errors.push('Coupon code is required');
+    return { isValid: false, errors, warnings };
   }
 
-  const postalRegex = /^[0-9]{4}$/;
-  if (!postalRegex.test(code)) {
-    return { valid: false, error: "Philippine postal code must be 4 digits" };
+  const sanitized = code.trim().toUpperCase();
+
+  if (sanitized.length < 3) {
+    errors.push('Coupon code too short');
+  }
+
+  if (sanitized.length > 20) {
+    errors.push('Coupon code too long');
+  }
+
+  // Check for valid format (alphanumeric only)
+  if (!/^[A-Z0-9]+$/.test(sanitized)) {
+    errors.push('Coupon code must contain only letters and numbers');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
+/**
+ * Form Validation Functions
+ * Used for checkout, contact forms, and user profile updates
+ */
+
+/**
+ * Validate name (first name, last name, etc.)
+ */
+export function validateName(name: string): { valid: boolean; error?: string } {
+  if (!name || name.trim().length === 0) {
+    return { valid: false, error: 'Name is required' };
+  }
+
+  const trimmed = name.trim();
+
+  if (trimmed.length < 2) {
+    return { valid: false, error: 'Name must be at least 2 characters' };
+  }
+
+  if (trimmed.length > 50) {
+    return { valid: false, error: 'Name must be less than 50 characters' };
+  }
+
+  // Allow letters, spaces, hyphens, and apostrophes
+  if (!/^[a-zA-Z\s'-]+$/.test(trimmed)) {
+    return { valid: false, error: 'Name can only contain letters, spaces, hyphens, and apostrophes' };
   }
 
   return { valid: true };
-};
+}
 
-// City/Province validation (letters and spaces only)
-export const validateCity = (
-  city: string,
-): { valid: boolean; error?: string } => {
-  if (!city || city.trim().length === 0) {
-    return { valid: false, error: "City is required" };
+/**
+ * Validate email address
+ */
+export function validateEmail(email: string): { valid: boolean; error?: string } {
+  if (!email || email.trim().length === 0) {
+    return { valid: false, error: 'Email is required' };
   }
 
-  const cityRegex = /^[A-Za-zÀ-ÿ\s.-]+$/;
-  if (!cityRegex.test(city)) {
-    return {
-      valid: false,
-      error: "City can only contain letters, spaces, periods, and hyphens",
-    };
+  const trimmed = email.trim();
+
+  // Basic email regex
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (!emailRegex.test(trimmed)) {
+    return { valid: false, error: 'Please enter a valid email address' };
+  }
+
+  if (trimmed.length > 100) {
+    return { valid: false, error: 'Email must be less than 100 characters' };
   }
 
   return { valid: true };
-};
+}
 
-// Address validation (allows letters, numbers, common punctuation)
-export const validateAddress = (
-  address: string,
-): { valid: boolean; error?: string } => {
+/**
+ * Validate Philippine phone number
+ */
+export function validatePhoneNumber(phone: string): { valid: boolean; error?: string } {
+  if (!phone || phone.trim().length === 0) {
+    return { valid: false, error: 'Phone number is required' };
+  }
+
+  // Remove all non-digit characters
+  const digits = phone.replace(/\D/g, '');
+
+  // Philippine mobile numbers: 09XX-XXX-XXXX (11 digits starting with 09)
+  // or +639XX-XXX-XXXX (12 digits starting with 639)
+  if (digits.length === 11 && digits.startsWith('09')) {
+    return { valid: true };
+  }
+
+  if (digits.length === 12 && digits.startsWith('639')) {
+    return { valid: true };
+  }
+
+  return {
+    valid: false,
+    error: 'Please enter a valid Philippine mobile number (e.g., 09XX-XXX-XXXX)'
+  };
+}
+
+/**
+ * Validate address
+ */
+export function validateAddress(address: string): { valid: boolean; error?: string } {
   if (!address || address.trim().length === 0) {
-    return { valid: false, error: "Address is required" };
+    return { valid: false, error: 'Address is required' };
   }
 
-  if (address.trim().length < 5) {
-    return { valid: false, error: "Please enter a complete address" };
+  const trimmed = address.trim();
+
+  if (trimmed.length < 10) {
+    return { valid: false, error: 'Please provide a complete address (at least 10 characters)' };
   }
 
-  // Allow letters, numbers, spaces, and common punctuation
-  const addressRegex = /^[A-Za-z0-9\s.,#'-]+$/;
-  if (!addressRegex.test(address)) {
-    return { valid: false, error: "Address contains invalid characters" };
-  }
-
-  return { valid: true };
-};
-
-// GCash number validation (+63 format)
-export const validateGCashNumber = (
-  number: string,
-): { valid: boolean; error?: string } => {
-  if (!number || number.trim().length === 0) {
-    return { valid: false, error: "GCash number is required" };
-  }
-
-  const cleaned = number.replace(/[\s-]/g, "");
-  // Philippine mobile numbers: +63 9XX XXX XXXX (9 digits after +639)
-  const gcashRegex = /^\+639\d{9}$/;
-
-  if (!gcashRegex.test(cleaned)) {
-    return {
-      valid: false,
-      error: "GCash number must be in +63 format (e.g., +63 9XX XXX XXXX)",
-    };
+  if (trimmed.length > 200) {
+    return { valid: false, error: 'Address must be less than 200 characters' };
   }
 
   return { valid: true };
-};
+}
 
-// GCash reference number validation (13 digits)
-export const validateGCashReference = (
-  reference: string,
-): { valid: boolean; error?: string } => {
+/**
+ * Validate city/municipality name
+ */
+export function validateCity(city: string): { valid: boolean; error?: string } {
+  if (!city || city.trim().length === 0) {
+    return { valid: false, error: 'City/Municipality is required' };
+  }
+
+  const trimmed = city.trim();
+
+  if (trimmed.length < 2) {
+    return { valid: false, error: 'City name must be at least 2 characters' };
+  }
+
+  if (trimmed.length > 50) {
+    return { valid: false, error: 'City name must be less than 50 characters' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validate postal/ZIP code
+ */
+export function validatePostalCode(zipCode: string): { valid: boolean; error?: string } {
+  if (!zipCode || zipCode.trim().length === 0) {
+    return { valid: false, error: 'Postal code is required' };
+  }
+
+  const trimmed = zipCode.trim();
+
+  // Philippine ZIP codes are 4 digits
+  if (!/^\d{4}$/.test(trimmed)) {
+    return { valid: false, error: 'Please enter a valid 4-digit postal code' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validate GCash number
+ */
+export function validateGCashNumber(gcashNumber: string): { valid: boolean; error?: string } {
+  // GCash numbers are Philippine mobile numbers
+  return validatePhoneNumber(gcashNumber);
+}
+
+/**
+ * Validate GCash reference number
+ */
+export function validateGCashReference(reference: string): { valid: boolean; error?: string } {
   if (!reference || reference.trim().length === 0) {
-    return { valid: false, error: "GCash reference number is required" };
+    return { valid: false, error: 'GCash reference number is required' };
   }
 
-  const cleaned = reference.replace(/[\s-]/g, "");
-  const referenceRegex = /^[0-9]{13}$/;
+  const trimmed = reference.trim();
 
-  if (!referenceRegex.test(cleaned)) {
-    return { valid: false, error: "GCash reference number must be 13 digits" };
+  if (trimmed.length < 8) {
+    return { valid: false, error: 'Please enter a valid reference number (at least 8 characters)' };
   }
 
-  return { valid: true };
-};
-
-// Bank account number validation (numbers only)
-export const validateBankAccount = (
-  account: string,
-): { valid: boolean; error?: string } => {
-  if (!account || account.trim().length === 0) {
-    return { valid: false, error: "Account number is required" };
-  }
-
-  const cleaned = account.replace(/[\s-]/g, "");
-  const accountRegex = /^[0-9]+$/;
-
-  if (!accountRegex.test(cleaned)) {
-    return { valid: false, error: "Account number must contain only digits" };
-  }
-
-  if (cleaned.length < 4) {
-    return { valid: false, error: "Account number is too short" };
+  if (trimmed.length > 50) {
+    return { valid: false, error: 'Reference number must be less than 50 characters' };
   }
 
   return { valid: true };
-};
+}
 
-// Password validation
-export const validatePassword = (
-  password: string,
-): { valid: boolean; error?: string } => {
+/**
+ * Validate bank account details
+ */
+export function validateBankAccount(accountNumber: string): { valid: boolean; error?: string } {
+  if (!accountNumber || accountNumber.trim().length === 0) {
+    return { valid: false, error: 'Bank account number is required' };
+  }
+
+  const trimmed = accountNumber.trim();
+
+  // Remove spaces and hyphens
+  const digits = trimmed.replace(/[\s-]/g, '');
+
+  if (!/^\d+$/.test(digits)) {
+    return { valid: false, error: 'Account number can only contain numbers' };
+  }
+
+  if (digits.length < 8 || digits.length > 20) {
+    return { valid: false, error: 'Please enter a valid account number (8-20 digits)' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Format phone number for display
+ */
+export function formatPhoneNumber(phone: string): string {
+  // Remove all non-digit characters
+  const digits = phone.replace(/\D/g, '');
+
+  // Format as 09XX-XXX-XXXX
+  if (digits.length === 11 && digits.startsWith('09')) {
+    return `${digits.slice(0, 4)}-${digits.slice(4, 7)}-${digits.slice(7)}`;
+  }
+
+  // Format as +639XX-XXX-XXXX
+  if (digits.length === 12 && digits.startsWith('639')) {
+    return `+${digits.slice(0, 2)} ${digits.slice(2, 5)}-${digits.slice(5, 8)}-${digits.slice(8)}`;
+  }
+
+  // Return as-is if format doesn't match
+  return phone;
+}
+
+/**
+ * Validate password strength
+ */
+export function validatePassword(password: string): { valid: boolean; error?: string } {
   if (!password || password.length === 0) {
-    return { valid: false, error: "Password is required" };
+    return { valid: false, error: 'Password is required' };
   }
 
   if (password.length < 8) {
-    return {
-      valid: false,
-      error: "Password must be at least 8 characters long",
-    };
+    return { valid: false, error: 'Password must be at least 8 characters' };
   }
 
-  // Check for at least one letter and one number
-  const hasLetter = /[a-zA-Z]/.test(password);
-  const hasNumber = /[0-9]/.test(password);
+  if (password.length > 100) {
+    return { valid: false, error: 'Password must be less than 100 characters' };
+  }
 
-  if (!hasLetter || !hasNumber) {
-    return {
-      valid: false,
-      error: "Password must contain both letters and numbers",
-    };
+  // Check for at least one uppercase letter
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one uppercase letter' };
+  }
+
+  // Check for at least one lowercase letter
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one lowercase letter' };
+  }
+
+  // Check for at least one number
+  if (!/[0-9]/.test(password)) {
+    return { valid: false, error: 'Password must contain at least one number' };
   }
 
   return { valid: true };
-};
+}
 
-// Confirm password validation
-export const validatePasswordMatch = (
-  password: string,
-  confirmPassword: string,
-): { valid: boolean; error?: string } => {
+/**
+ * Validate password confirmation matches
+ */
+export function validatePasswordMatch(password: string, confirmPassword: string): { valid: boolean; error?: string } {
+  if (!confirmPassword || confirmPassword.length === 0) {
+    return { valid: false, error: 'Please confirm your password' };
+  }
+
   if (password !== confirmPassword) {
-    return { valid: false, error: "Passwords do not match" };
+    return { valid: false, error: 'Passwords do not match' };
   }
 
   return { valid: true };
-};
+}
 
-// Generic number validation
-export const validateNumber = (
-  value: string,
-  min?: number,
-  max?: number,
-): { valid: boolean; error?: string } => {
-  const num = parseFloat(value);
+/**
+ * Sanitize user input to prevent XSS
+ */
+export function sanitizeInput(input: string): string {
+  if (!input) return '';
 
-  if (isNaN(num)) {
-    return { valid: false, error: "Please enter a valid number" };
-  }
-
-  if (min !== undefined && num < min) {
-    return { valid: false, error: `Value must be at least ${min}` };
-  }
-
-  if (max !== undefined && num > max) {
-    return { valid: false, error: `Value must be at most ${max}` };
-  }
-
-  return { valid: true };
-};
-
-// Sanitize input - remove leading/trailing spaces
-export const sanitizeInput = (value: string): string => {
-  return value.trim();
-};
-
-// Format currency for display (Philippine Peso)
-export const formatCurrency = (amount: number): string => {
-  return `₱${amount.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-};
+  return input
+    .trim()
+    .replace(/[<>\"'`]/g, '') // Remove potentially dangerous characters
+    .substring(0, 500); // Limit length
+}

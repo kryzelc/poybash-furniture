@@ -226,6 +226,25 @@ export function useProductListViewModel(initialCategory?: 'chairs' | 'tables') {
     return false;
   }, []);
 
+  // Check if product has size variations (not just color variations)
+  const hasSizeVariations = useCallback((product: Product): boolean => {
+    // Check for legacy sizeOptions
+    if (product.sizeOptions && product.sizeOptions.length > 0) {
+      return true;
+    }
+    
+    // Check for variants with different sizes
+    if (product.variants && product.variants.length > 0) {
+      const activeVariants = product.variants.filter(v => v.active);
+      const uniqueSizes = new Set(
+        activeVariants.map(v => v.size).filter(size => size !== null)
+      );
+      return uniqueSizes.size > 1;
+    }
+    
+    return false;
+  }, []);
+
   return {
     // State
     products: filteredProducts,
@@ -260,5 +279,6 @@ export function useProductListViewModel(initialCategory?: 'chairs' | 'tables') {
     // Helpers
     getDisplayPrice,
     hasVariations,
+    hasSizeVariations,
   };
 }

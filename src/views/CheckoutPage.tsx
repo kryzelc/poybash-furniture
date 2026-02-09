@@ -73,8 +73,8 @@ export function CheckoutPage() {
   useEffect(() => {
     if (!isAuthenticated() && !hasShownToast.current) {
       hasShownToast.current = true;
-      toast.info("Sign in required", {
-        description: "Please sign in to complete your order.",
+      toast.info("Sign In Required", {
+        description: "You need to be signed in to proceed with checkout. Don't have an account? You can create one quickly on the next page.",
       });
       router.push("/login");
     }
@@ -221,8 +221,9 @@ export function CheckoutPage() {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast.error("File too large", {
-          description: "Please upload a file smaller than 5MB.",
+        const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        toast.error("File Size Too Large", {
+          description: `Your file is ${fileSizeMB}MB. Please upload a payment proof image smaller than 5MB. Try compressing the image or taking a new photo.`,
         });
         return;
       }
@@ -237,8 +238,8 @@ export function CheckoutPage() {
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
-      toast.error("Coupon code required", {
-        description: "Please enter a coupon code to apply.",
+      toast.error("Coupon Code Required", {
+        description: "Please enter a valid coupon code before applying. Check your email or our promotions page for available discount codes.",
       });
       return;
     }
@@ -269,20 +270,21 @@ export function CheckoutPage() {
         };
 
         setAppliedCoupon(coupon);
-        toast.success("Coupon applied successfully", {
-          description: `₱${validation.discount?.toFixed(2)} discount applied to your order.`,
+        const newTotal = subtotal - (validation.discount || 0);
+        toast.success("Coupon Applied Successfully! 🎉", {
+          description: `You're saving ₱${validation.discount?.toFixed(2)} with "${coupon.code}". Your new total is ₱${newTotal.toFixed(2)}.`,
         });
       } else {
-        toast.error("Invalid coupon code", {
+        toast.error("Invalid Coupon Code", {
           description:
             validation.error ||
-            "This coupon is expired, invalid, or already used.",
+            "This coupon code is invalid, expired, already used, or doesn't meet the minimum purchase requirement. Please verify the code.",
         });
       }
     } catch (error) {
       console.error("Coupon validation error:", error);
-      toast.error("Validation failed", {
-        description: "Unable to validate coupon. Please try again.",
+      toast.error("Coupon Validation Failed", {
+        description: "We couldn't validate your coupon code at this time. Please check your internet connection and try again.",
       });
     } finally {
       setIsCouponLoading(false);
@@ -290,9 +292,13 @@ export function CheckoutPage() {
   };
 
   const handleRemoveCoupon = () => {
+    const previousCode = appliedCoupon?.code;
+    const previousDiscount = appliedCoupon ? calculateCouponDiscount(appliedCoupon, subtotal) : 0;
     setAppliedCoupon(null);
     setCouponCode("");
-    toast.info("Coupon removed");
+    toast.info("Coupon Removed", {
+      description: `"${previousCode}" has been removed. Your ₱${previousDiscount.toFixed(2)} discount is no longer applied. You can add a different coupon if you have one.`,
+    });
   };
 
   const handleAddressSelect = (addressId: string) => {
@@ -433,9 +439,9 @@ export function CheckoutPage() {
       );
 
       if (!stockValidation.success) {
-        toast.error("Item out of stock", {
+        toast.error("Stock Unavailable", {
           description:
-            "One or more items in your cart are no longer available.",
+            "One or more items in your cart are out of stock or no longer available. Please review your cart and update quantities or remove unavailable items.",
         });
         return;
       }
@@ -450,16 +456,16 @@ export function CheckoutPage() {
       );
 
       if (!allocation.success) {
-        toast.error("Order processing failed", {
-          description: "Unable to process your order. Please try again.",
+        toast.error("Order Processing Failed", {
+          description: "We couldn't allocate inventory for your order from our warehouses. Please contact us if this issue persists.",
         });
         return;
       }
 
       // If user is not logged in, suggest creating an account
       if (!isAuthenticated()) {
-        toast.info("Order placed successfully", {
-          description: "Create an account to easily track your order status.",
+        toast.info("Order Placed Successfully!", {
+          description: "Your order has been received. Create an account to easily track your order status and view your order history.",
         });
       }
 
@@ -543,8 +549,8 @@ export function CheckoutPage() {
       setAppliedCoupon(null); // Clear coupon after order placement
       router.push(`/order-confirmation/${orderId}`);
     } catch (error) {
-      toast.error("Order failed", {
-        description: "We couldn't process your order. Please try again.",
+      toast.error("Order Processing Failed", {
+        description: "We couldn't complete your order due to an unexpected error. Please check your information and try again, or contact us for assistance.",
       });
     } finally {
       setIsLoading(false);

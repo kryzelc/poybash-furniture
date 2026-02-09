@@ -119,8 +119,8 @@ export const calculateDiscount = (coupon: Coupon, subtotal: number): number => {
     }
     return discount;
   } else {
-    // Fixed discount
-    return coupon.discountValue;
+    // Fixed discount - cap at subtotal to prevent negative totals
+    return Math.min(coupon.discountValue, subtotal);
   }
 };
 

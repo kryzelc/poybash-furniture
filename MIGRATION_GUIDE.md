@@ -1,399 +1,186 @@
-# Backend Migration Guide
+# Backend Migration & Architecture Guide
 
 ## 🎯 Overview
 
-This guide helps you migrate from **localStorage (mock data)** to **Supabase (real backend)** incrementally, one feature at a time.
+This comprehensive guide covers:
+1. **Architecture Documentation** - MVVM pattern and role-based access
+2. **Backend Migration** - Step-by-step Supabase integration
+3. **Security Requirements** - Critical fixes needed for production
 
 **Current Status:** ✅ Frontend working with localStorage  
-**Goal:** 🚀 Gradually connect each feature to Supabase backend
+**Goal:** 🚀 Gradually connect to Supabase backend with production-grade security
 
 ---
 
-## 📋 Migration Priority Order
+# 🏗️ PART 1: MVVM ARCHITECTURE
 
-Migrate in this order to minimize risk and maximize learning:
+## Project Structure
+
+```
+src/
+├── models/              ✅ MODEL Layer
+│   ├── Cart.ts, Product.ts, Order.ts, User.ts
+│   └── Domain entities with business rules
+│
+├── views/               ✅ VIEW Layer  
+│   ├── HomePage.tsx, ProductsPage.tsx, CheckoutPage.tsx
+│   └── UI presentation components
+│
+├── viewmodels/          ✅ VIEWMODEL Layer
+│   ├── useAuthViewModel.ts, useCartViewModel.ts
+│   └── Business logic and state management
+│
+├── services/            ✅ INFRASTRUCTURE Layer
+│   ├── authService.ts, productService.ts, orderService.ts
+│   └── Data access (localStorage → Supabase)
+│
+├── lib/                 ✅ DOMAIN LOGIC Layer
+│   ├── products.ts, coupons.ts, validation.ts
+│   └── Business logic + mock data (to be migrated)
+```
+
+## MVVM Data Flow
+
+```
+View → ViewModel → Service → Database → Service → ViewModel → View
+ │         │          │                    │          │         │
+ │         │          └─ Data access       │          │         └─ UI updates
+ │         └─ Business logic               └─ Return data
+ └─ User interaction
+```
+
+## Role-Based Access Control (RBAC)
+
+### Roles & Permissions
+
+| Role | Capabilities |
+|------|-------------|
+| **Customer** | Browse, shop, manage own orders |
+| **Staff** | + Sales operations, refunds, manual orders |
+| **Inventory Clerk** | + Stock management, fulfillment |
+| **Admin** | + Product management, coupons, reports |
+| **Owner** | Full system access |
+
+### Demo Accounts
+
+| Role | Email | Password |
+|------|-------|----------|
+| Owner | owner@poybash.com | Owner@2024 |
+| Admin | admin@poybash.com | Admin@2024 |
+| Staff | staff@poybash.com | Staff@2024 |
+| Clerk | clerk@poybash.com | Clerk@2024 |
+| Customer | customer@poybash.com | Customer@2024 |
+
+**Create accounts:** Open `/seed-accounts` page
+
+---
+
+# 🚀 PART 2: BACKEND MIGRATION
+
+## Migration Priority Order
 
 1. **Products** (Start here - foundational, low risk)
-2. **Authentication** (Critical for user security)
+2. **Authentication** (Critical for security)
 3. **Orders** (Core business functionality)
 4. **Coupons** (Marketing features)
 5. **Inventory** (Warehouse management)
-6. **Audit Logs** (Compliance & tracking)
+6. **Audit Logs** (Compliance)
 7. **Taxonomies** (Configuration)
 
----
+## Current vs Target Architecture
 
-## 🏗️ Current Architecture
-
-### Frontend (localStorage)
+### Before (localStorage)
 ```
-/lib/
-├── products.ts       → Mock data + localStorage CRUD
-├── coupons.ts        → Mock data + localStorage CRUD
-├── inventory.ts      → localStorage operations
-├── auditLog.ts       → localStorage operations
-└── taxonomies.ts     → localStorage operations
-
-/services/
-├── productService.ts     → Ready but uses lib/products
-├── couponService.ts      → Ready but uses Supabase (not wired)
-├── orderService.ts       → Ready
-├── inventoryService.ts   → Ready
-└── (others to be created)
+/lib/products.ts → Mock data + CRUD operations
+/services/productService.ts → Unused
 ```
 
-### After Migration (Supabase)
+### After (Supabase)
 ```
-/lib/
-├── products.ts       → Type definitions + business logic ONLY
-├── coupons.ts        → Validation logic ONLY
-├── inventory.ts      → Calculations ONLY
-└── (pure domain logic)
-
-/services/
-├── productService.ts     → Real Supabase queries
-├── couponService.ts      → Real Supabase queries
-├── orderService.ts       → Real Supabase queries
-└── (all data access through services)
+/lib/products.ts → Type definitions + helpers ONLY
+/services/productService.ts → Real Supabase queries
 ```
 
----
-
-## 📦 Migration Template (Use for Each Feature)
+## Migration Template
 
 ### Phase 1: Prepare Service Layer
-
-1. **Enhance service file** (e.g., `services/productService.ts`)
-   ```typescript
-   // Add localStorage fallback during transition
-   class ProductService {
-     private useBackend = false; // Feature flag
-     
-     async getProducts() {
-       if (this.useBackend) {
-         return this.getFromSupabase();
-       }
-       return this.getFromLocalStorage();
-     }
-   }
-   ```
-
-2. **Test service in isolation**
-   - Verify localStorage mode works
-   - Verify Supabase mode works (once connected)
-
-### Phase 2: Update Imports
-
-3. **Find all imports** of the lib file
-   ```bash
-   # Example for products
-   grep -r "from.*lib/products" src/
-   ```
-
-4. **Update imports one file at a time**
-   ```typescript
-   // Before
-   import { getProducts } from '../lib/products';
-   
-   // After
-   import { productService } from '../services/productService';
-   const products = await productService.getProducts();
-   ```
-
-5. **Test each file change** before moving to next
-
-### Phase 3: Enable Backend
-
-6. **Flip feature flag** when ready
-   ```typescript
-   private useBackend = true; // Now using Supabase!
-   ```
-
-7. **Monitor for issues**
-   - Check browser console
-   - Test all CRUD operations
-   - Verify data integrity
-
-8. **Remove localStorage code** once stable
-   - Clean up old localStorage functions from `/lib/`
-   - Keep only business logic
-
----
-
-## 🎯 Feature-Specific Migration Plans
-
-### 1. Products Migration
-
-**Complexity:** ⭐⭐⭐ Medium  
-**Time Estimate:** 4-6 hours  
-**Risk:** Low (foundational feature)
-
-#### Files to Update:
-```
-/lib/products.ts
-  Keep: Type definitions, helper functions (getTotalStock, etc.)
-  Remove: getProducts(), addProduct(), updateProduct(), deleteProduct()
-  
-/services/productService.ts
-  Add: localStorage fallback mode
-  Enhance: All CRUD operations with real Supabase
-  
-Files importing from lib/products:
-  ✓ src/viewmodels/useProductListViewModel.ts
-  ✓ src/viewmodels/useProductDetailViewModel.ts
-  ✓ src/views/AdminDashboardPage.tsx
-  ✓ src/components/admin/ProductManagement.tsx
-  ✓ (Find others with grep)
-```
-
-#### Migration Steps:
-1. Enhance `services/productService.ts` with dual mode
-2. Update viewmodels to use productService
-3. Test admin product management
-4. Test customer product browsing
-5. Enable Supabase mode
-6. Monitor for issues
-7. Clean up localStorage code
-
-#### Rollback Plan:
-- Set `useBackend = false` to revert to localStorage
-- No data loss (keep both modes working)
-
----
-
-### 2. Authentication Migration
-
-**Complexity:** ⭐⭐⭐⭐ High  
-**Time Estimate:** 6-8 hours  
-**Risk:** High (security critical)
-
-#### Files to Update:
-```
-/services/authService.ts
-  Enhance: Supabase Auth integration
-  Add: Session management
-  Add: Email verification
-  
-/contexts/AuthContext.tsx
-  Update: Use authService instead of localStorage
-  
-Files using localStorage auth:
-  ✓ All pages checking user session
-  ✓ Protected routes
-  ✓ Admin dashboard
-```
-
-#### Migration Steps:
-1. Set up Supabase Auth in dashboard
-2. Implement authService with Supabase
-3. Keep localStorage as fallback during testing
-4. Update AuthContext
-5. Test login/logout flows
-6. Test protected routes
-7. Enable email verification
-8. Monitor sessions
-
-#### Rollback Plan:
-- Keep localStorage auth working in parallel
-- Feature flag to switch between modes
-
----
-
-### 3. Orders Migration
-
-**Complexity:** ⭐⭐⭐⭐ High  
-**Time Estimate:** 8-10 hours  
-**Risk:** High (business critical)
-
-#### Files to Update:
-```
-/services/orderService.ts
-  Already exists: place-order edge function
-  Enhance: Full CRUD operations
-  Add: Order status updates
-  Add: Payment integration
-  
-Files using orders:
-  ✓ src/viewmodels/useCheckoutViewModel.ts
-  ✓ src/components/admin/OrderManagement.tsx
-  ✓ src/views/OrderConfirmationPage.tsx
-```
-
-#### Migration Steps:
-1. Test existing place-order edge function
-2. Enhance orderService with all operations
-3. Update checkout flow
-4. Update admin order management
-5. Test order lifecycle (pending → confirmed → shipped)
-6. Enable real payment gateway
-7. Monitor orders
-
----
-
-### 4. Coupons Migration
-
-**Complexity:** ⭐⭐ Easy  
-**Time Estimate:** 2-3 hours  
-**Risk:** Low
-
-#### Files to Update:
-```
-/lib/coupons.ts
-  Keep: Validation logic (calculateDiscount, etc.)
-  Remove: getCoupons(), localStorage operations
-  
-/services/couponService.ts
-  Already has Supabase code!
-  Add: localStorage fallback
-  
-Files using coupons:
-  ✓ src/viewmodels/useCheckoutViewModel.ts
-  ✓ src/components/admin/CouponManagement.tsx
-```
-
-#### Migration Steps:
-1. Wire up existing couponService
-2. Update checkout to use service
-3. Update admin coupon management
-4. Test coupon validation
-5. Test usage tracking
-
----
-
-### 5. Inventory Migration
-
-**Complexity:** ⭐⭐⭐ Medium  
-**Time Estimate:** 4-5 hours  
-**Risk:** Medium (stock accuracy critical)
-
-#### Files to Update:
-```
-/lib/inventory.ts
-  Keep: Stock calculations (FIFO logic, etc.)
-  Remove: localStorage operations
-  
-/services/inventoryService.ts
-  Already exists!
-  Enhance: Warehouse stock management
-  
-Files using inventory:
-  ✓ src/components/admin/InventoryTracking.tsx
-  ✓ Order placement (stock reservation)
-```
-
----
-
-### 6. Audit Logs Migration
-
-**Complexity:** ⭐⭐ Easy  
-**Time Estimate:** 2-3 hours  
-**Risk:** Low
-
-#### Files to Create/Update:
-```
-/services/auditLogService.ts (CREATE)
-  Add: Write logs to Supabase
-  Add: Query logs with filters
-  
-/lib/auditLog.ts
-  Keep: Log formatting logic
-  Remove: localStorage operations
-  
-/hooks/useAuditLog.ts
-  Update: Use auditLogService
-```
-
----
-
-### 7. Taxonomies Migration
-
-**Complexity:** ⭐ Very Easy  
-**Time Estimate:** 1-2 hours  
-**Risk:** Very Low
-
-#### Files to Create/Update:
-```
-/services/taxonomyService.ts (CREATE)
-  Add: CRUD for categories, materials, colors
-  
-/lib/taxonomies.ts
-  Keep: Taxonomy helpers
-  Remove: localStorage operations
-```
-
----
-
-## 🚦 Feature Flags Pattern
-
-Use environment variables to control migration:
-
-```typescript
-// .env.local
-NEXT_PUBLIC_USE_BACKEND_PRODUCTS=true
-NEXT_PUBLIC_USE_BACKEND_ORDERS=false
-NEXT_PUBLIC_USE_BACKEND_COUPONS=false
-```
 
 ```typescript
 // services/productService.ts
 class ProductService {
-  private useBackend = 
-    process.env.NEXT_PUBLIC_USE_BACKEND_PRODUCTS === 'true';
-    
+  private useBackend = process.env.NEXT_PUBLIC_USE_BACKEND === 'true';
+  
   async getProducts() {
     if (this.useBackend) {
       return this.getFromSupabase();
     }
-    return this.getFromLocalStorage();
+    return this.getFromLocalStorage(); // Fallback
   }
 }
 ```
 
-**Benefits:**
-- ✅ Instant rollback (change env var)
-- ✅ Test in production with small % of users
-- ✅ No code deployment needed to switch
+### Phase 2: Update Imports
 
----
+```typescript
+// Before
+import { getProducts } from '../lib/products';
 
-## ✅ Testing Checklist (Per Feature)
+// After
+import { productService } from '../services/productService';
+const products = await productService.getProducts();
+```
 
-Before enabling backend for any feature:
+### Phase 3: Enable Backend
 
-### Functional Testing
+```bash
+# .env.local
+NEXT_PUBLIC_USE_BACKEND_PRODUCTS=true
+```
+
+## Feature-Specific Migration Plans
+
+### 1. Products Migration
+- **Complexity:** ⭐⭐⭐ Medium
+- **Time:** 4-6 hours
+- **Files:** `lib/products.ts`, `services/productService.ts`, all ViewModels
+- **Steps:** Enhance service → Update imports → Test → Enable backend
+
+### 2. Authentication Migration
+- **Complexity:** ⭐⭐⭐⭐ High
+- **Time:** 6-8 hours
+- **Risk:** High (security critical)
+- **Steps:** Set up Supabase Auth → Implement service → Test flows → Enable
+
+### 3. Orders Migration
+- **Complexity:** ⭐⭐⭐⭐ High
+- **Time:** 8-10 hours
+- **Risk:** High (business critical)
+- **Steps:** Test edge function → Enhance service → Update checkout → Monitor
+
+### 4. Coupons Migration
+- **Complexity:** ⭐⭐ Easy
+- **Time:** 2-3 hours
+- **Note:** Service already has Supabase code, just wire it up
+
+### 5. Inventory Migration
+- **Complexity:** ⭐⭐⭐ Medium
+- **Time:** 4-5 hours
+- **Risk:** Medium (stock accuracy critical)
+
+## Testing Checklist (Per Feature)
+
 - [ ] Create operation works
 - [ ] Read/List operation works
 - [ ] Update operation works
 - [ ] Delete operation works
 - [ ] Error handling works
-- [ ] Loading states work
-- [ ] Empty states work
-
-### Data Integrity
-- [ ] No data loss during migration
-- [ ] Data format matches expectations
-- [ ] Relationships maintained (foreign keys)
-- [ ] Timestamps correct
-
-### Performance
-- [ ] Page load time acceptable
-- [ ] Query response time < 1s
-- [ ] No N+1 query issues
-- [ ] Proper indexes in place
-
-### Security
 - [ ] RLS policies working
 - [ ] User can't access other's data
-- [ ] Admin-only features protected
-- [ ] SQL injection prevented
+- [ ] Performance acceptable (\<1s queries)
 
----
+## Rollback Procedures
 
-## 🆘 Rollback Procedures
-
-If something goes wrong:
-
-### Immediate Rollback (< 1 minute)
+### Immediate Rollback (\<1 minute)
 ```bash
 # Change env variable
 NEXT_PUBLIC_USE_BACKEND_PRODUCTS=false
@@ -402,73 +189,249 @@ NEXT_PUBLIC_USE_BACKEND_PRODUCTS=false
 npm run dev
 ```
 
-### Data Recovery
-```sql
--- If bad data got into Supabase
--- Restore from backup or localStorage export
+---
+
+# 🔒 PART 3: SECURITY REQUIREMENTS FOR PRODUCTION
+
+## ✅ Client-Side Fixes (COMPLETED)
+
+### 1. Coupon Discount Cap ✅
+**Fixed:** Prevents negative totals from fixed discounts
+```typescript
+// src/lib/coupons.ts:122
+return Math.min(coupon.discountValue, subtotal);
 ```
 
-### Communication
-1. Alert team
-2. Document issue
-3. Fix root cause
-4. Re-test before re-enabling
+### 2. Cart Size Limit ✅
+**Fixed:** Maximum 50 different items in cart
+```typescript
+// src/viewmodels/useCartViewModel.ts:135
+if (!existingItem && items.length >= 50) {
+  return { success: false, error: 'Maximum 50 items...' };
+}
+```
+
+### 3. Session Expiration ✅
+**Fixed:** Auto-logout after 24 hours
+```typescript
+// src/services/authService.ts:54
+const expiresAt = new Date();
+expiresAt.setHours(expiresAt.getHours() + 24);
+```
+
+## 🚨 Backend Fixes Required (TODO)
+
+### 1. Password Hashing (CRITICAL)
+**Current Issue:** Weak bitwise hash, easily cracked
+**Required Fix:**
+```typescript
+// Replace in authService.ts
+import bcrypt from 'bcrypt';
+
+async hashPassword(password: string): Promise<string> {
+  return await bcrypt.hash(password, 10);
+}
+
+async verifyPassword(password: string, hash: string): Promise<boolean> {
+  return await bcrypt.compare(password, hash);
+}
+```
+**Migration:** Users must reset passwords
+
+### 2. Server-Side Price Validation (CRITICAL)
+**Current Issue:** Client can manipulate cart prices via localStorage
+**Required Fix:**
+```typescript
+// In Supabase Edge Function: place-order
+async function validateOrder(orderData) {
+  // Recalculate total from database prices
+  const items = await getProductPrices(orderData.items);
+  const calculatedTotal = items.reduce((sum, item) => 
+    sum + (item.dbPrice * item.quantity), 0
+  );
+  
+  if (Math.abs(calculatedTotal - orderData.total) > 0.01) {
+    throw new Error('Price mismatch detected');
+  }
+}
+```
+
+### 3. Atomic Coupon Usage (CRITICAL)
+**Current Issue:** Race condition allows unlimited coupon usage
+**Required Fix:**
+```sql
+-- In Supabase
+BEGIN;
+  SELECT * FROM coupons WHERE id = $1 FOR UPDATE;
+  UPDATE coupons 
+  SET used_count = used_count + 1 
+  WHERE id = $1 AND used_count < usage_limit;
+COMMIT;
+```
+
+### 4. Inventory Reservation (HIGH)
+**Current Issue:** Multiple users can buy last item
+**Required Fix:**
+```typescript
+// Reserve stock during checkout
+async function reserveStock(items: CartItem[]) {
+  // Use database transaction
+  const reserved = await supabase.rpc('reserve_inventory', {
+    items: items,
+    timeout_minutes: 15
+  });
+  
+  if (!reserved) {
+    throw new Error('Insufficient stock');
+  }
+}
+```
+
+### 5. Rate Limiting (MEDIUM)
+**Required Fix:**
+```typescript
+// Add to Supabase Edge Functions
+import { RateLimiter } from '@upstash/ratelimit';
+
+const limiter = new RateLimiter({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimiter.slidingWindow(5, '1 m'), // 5 requests per minute
+});
+
+// In coupon validation endpoint
+const { success } = await limiter.limit(userId);
+if (!success) {
+  return new Response('Too many requests', { status: 429 });
+}
+```
+
+## Security Implementation Priority
+
+### Immediate (Before Production)
+1. ✅ Coupon discount cap (DONE)
+2. ✅ Cart size limit (DONE)
+3. ✅ Session expiration (DONE)
+4. ❌ Server-side price validation (REQUIRED)
+5. ❌ Password hashing with bcrypt (REQUIRED)
+
+### Short Term (First Month)
+6. ❌ Atomic coupon operations
+7. ❌ Inventory reservation system
+8. ❌ Rate limiting on sensitive endpoints
+
+### Long Term (Ongoing)
+9. ❌ Security audits
+10. ❌ Penetration testing
+11. ❌ Compliance reviews
+
+## Supabase Row Level Security (RLS)
+
+### Example: Products Table
+```sql
+-- Customers can only read active products
+CREATE POLICY "Customers read active products"
+ON products FOR SELECT
+TO authenticated
+USING (active = true);
+
+-- Only admins can modify products
+CREATE POLICY "Admins manage products"
+ON products FOR ALL
+TO authenticated
+USING (
+  auth.jwt() ->> 'role' IN ('admin', 'owner')
+);
+```
+
+### Example: Orders Table
+```sql
+-- Users can only see their own orders
+CREATE POLICY "Users read own orders"
+ON orders FOR SELECT
+TO authenticated
+USING (user_id = auth.uid());
+
+-- Staff can see all orders
+CREATE POLICY "Staff read all orders"
+ON orders FOR SELECT
+TO authenticated
+USING (
+  auth.jwt() ->> 'role' IN ('staff', 'admin', 'owner')
+);
+```
+
+## Security Testing Scenarios
+
+### Test 1: Price Manipulation
+```javascript
+// Should FAIL in production
+const cart = JSON.parse(localStorage.getItem('cart'));
+cart[0].price = 0.01;
+localStorage.setItem('cart', JSON.stringify(cart));
+// Expected: Order rejected with "Price mismatch"
+```
+
+### Test 2: Coupon Race Condition
+```
+1. Open 5 browser tabs
+2. Apply same coupon in all tabs simultaneously
+3. Expected: Only 1 succeeds, others get "Coupon limit reached"
+```
+
+### Test 3: Inventory Overselling
+```
+1. Product has 1 item in stock
+2. Two users add to cart simultaneously
+3. Expected: Second user gets "Out of stock" error
+```
 
 ---
 
-## 📊 Migration Progress Tracker
+# 📊 MIGRATION PROGRESS TRACKER
 
-| Feature      | Status | Started | Completed | Notes |
-|--------------|--------|---------|-----------|-------|
-| Products     | 📝 TODO |         |           |       |
-| Auth         | 📝 TODO |         |           |       |
-| Orders       | 📝 TODO |         |           |       |
-| Coupons      | 📝 TODO |         |           |       |
-| Inventory    | 📝 TODO |         |           |       |
-| Audit Logs   | 📝 TODO |         |           |       |
-| Taxonomies   | 📝 TODO |         |           |       |
-
-Update this as you progress!
+| Feature | Status | Client Security | Backend Security |
+|---------|--------|----------------|------------------|
+| Products | 📝 TODO | N/A | Price validation needed |
+| Auth | 📝 TODO | ✅ Session expiry | ❌ bcrypt needed |
+| Orders | 📝 TODO | N/A | ❌ Price validation needed |
+| Coupons | 📝 TODO | ✅ Discount cap | ❌ Atomic ops needed |
+| Inventory | 📝 TODO | ✅ Cart limit | ❌ Reservation needed |
+| Audit Logs | 📝 TODO | N/A | N/A |
+| Taxonomies | 📝 TODO | N/A | N/A |
 
 ---
 
-## 🎓 Best Practices
+# 🎓 Best Practices
 
-### Do's ✅
+## Do's ✅
 - Migrate one feature at a time
 - Keep localStorage as fallback during testing
 - Write tests before migrating
-- Monitor logs after enabling
-- Communicate with users about changes
+- Use feature flags for easy rollback
+- Implement RLS policies for all tables
+- Validate all inputs server-side
+- Use database transactions for critical operations
 
-### Don'ts ❌
+## Don'ts ❌
 - Don't migrate multiple features simultaneously
+- Don't trust client-side data (prices, permissions, etc.)
+- Don't skip security testing
 - Don't remove localStorage code until stable
-- Don't skip testing
-- Don't assume Supabase queries work like localStorage
-- Don't forget RLS policies
+- Don't forget to hash passwords properly
+- Don't allow SQL injection vulnerabilities
 
 ---
 
-## 🔗 Resources
+# 🔗 Resources
 
 - [Supabase Documentation](https://supabase.com/docs)
 - [Row Level Security Guide](https://supabase.com/docs/guides/auth/row-level-security)
 - [Next.js + Supabase](https://supabase.com/docs/guides/getting-started/quickstarts/nextjs)
-- Edge Functions: `./supabase/functions/`
-- Database Schema: `./supabase/migrations/`
-
----
-
-## 💡 Tips
-
-1. **Start on Friday** - Gives weekend to fix issues
-2. **Migrate in staging first** - Test with real data
-3. **Use feature flags** - Easy rollback
-4. **Keep team informed** - Communication is key
-5. **Document everything** - Future you will thank you
+- [OWASP Security Guidelines](https://owasp.org/www-community/)
+- [bcrypt Documentation](https://www.npmjs.com/package/bcrypt)
 
 ---
 
 **Last Updated:** 2026-02-09  
-**Next Migration:** Products (recommended start)
+**Version:** 2.0.0 (Consolidated Architecture + Migration + Security)  
+**Status:** ✅ Client-side security fixes complete | ⏸️ Backend migration pending

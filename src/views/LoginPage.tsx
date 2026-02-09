@@ -40,25 +40,27 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
       setIsLoading(false);
 
       if (result.success) {
-        toast.success("Welcome back!", {
-          description: "You have successfully signed in to your account.",
+        const firstName = result.user.firstName || result.user.email.split('@')[0];
+        const isAdmin = canAccessAdmin();
+        toast.success(`Welcome Back, ${firstName}! 👋`, {
+          description: `You've successfully signed in to your ${isAdmin ? 'admin ' : ''}account. ${isAdmin ? 'Redirecting to dashboard...' : 'Happy shopping!'}`,
         });
         // Admin roles (staff, inventory-clerk, admin, owner) go to dashboard
         // Customers go to home page
-        if (canAccessAdmin()) {
+        if (isAdmin) {
           router.push("/admin");
         } else {
           router.push("/");
         }
       } else {
-        toast.error("Sign in failed", {
-          description: "Invalid email or password. Please try again.",
+        toast.error("Sign In Failed", {
+          description: "The email or password you entered is incorrect. Please double-check your credentials and try again. Forgot your password? Click the link below.",
         });
       }
     } catch (error) {
       setIsLoading(false);
-      toast.error("Sign in failed", {
-        description: "An unexpected error occurred. Please try again.",
+      toast.error("Sign In Failed", {
+        description: "An unexpected error occurred while signing in. Please check your internet connection and try again.",
       });
     }
   };

@@ -39,16 +39,31 @@ export function NewArrivalsPage({ onProductClick }: NewArrivalsPageProps) {
       {/* Products Grid */}
       <div className="container mx-auto px-4 lg:px-8 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {newArrivals.map((product) => (
-            <ProductCard
-              key={product.id}
-              name={product.name}
-              price={product.price}
-              imageUrl={product.imageUrl}
-              category={product.subCategory}
-              onClick={() => handleClick(product.id)}
-            />
-          ))}
+          {newArrivals.map((product) => {
+            // Check if product has size variations
+            const hasSizeVariations = () => {
+              if (product.variants && product.variants.length > 0) {
+                const activeVariants = product.variants.filter((v) => v.active);
+                const uniqueSizes = new Set(
+                  activeVariants.map((v) => v.size).filter((size) => size !== null)
+                );
+                return uniqueSizes.size > 1;
+              }
+              return false;
+            };
+
+            return (
+              <ProductCard
+                key={product.id}
+                name={product.name}
+                price={product.price}
+                imageUrl={product.imageUrl}
+                category={product.subCategory}
+                onClick={() => handleClick(product.id)}
+                hasSizeOptions={hasSizeVariations()}
+              />
+            );
+          })}
         </div>
 
         {newArrivals.length === 0 && (

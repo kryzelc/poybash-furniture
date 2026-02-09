@@ -4,6 +4,7 @@ import { useProductDetailViewModel } from "@/viewmodels/useProductDetailViewMode
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
+import { ProductCard } from "../components/ProductCard";
 import { getVariantStock, findVariant, products as staticProducts } from "../lib/products";
 import {
   Minus,
@@ -38,6 +39,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
     inStock,
     handleSizeChange,
     handleColorChange,
+    handleQuantityChange,
     incrementQuantity,
     decrementQuantity,
     handleAddToCart,
@@ -147,7 +149,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
             {/* Product Header */}
             <div>
               {/* Category Badge - Enhanced visibility */}
-              <Badge variant="secondary" className="badge-text mb-3 px-3 py-1.5">
+              <Badge className="badge-text mb-3">
                 {product.subCategory}
               </Badge>
               
@@ -192,8 +194,13 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
                         return (
                           <button
                             key={size}
-                            onClick={() => handleSizeChange(size)}
+                            onClick={() => {
+                              if (hasStock) {
+                                handleSizeChange(size);
+                              }
+                            }}
                             disabled={!hasStock}
+                            aria-label={`Select size ${size}${!hasStock ? ' (Out of stock)' : ''}`}
                             className={`px-5 py-3 rounded-lg border-2 transition-all cta-text-small ${selectedSize === size
                               ? "border-primary bg-primary/5 font-bold"
                               : hasStock
@@ -232,8 +239,13 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
                         return (
                           <button
                             key={color}
-                            onClick={() => handleColorChange(color)}
+                            onClick={() => {
+                              if (isAvailable) {
+                                handleColorChange(color);
+                              }
+                            }}
                             disabled={!isAvailable}
+                            aria-label={`Select ${color} color${!isAvailable ? ' (Out of stock)' : ''}`}
                             className={`relative w-12 h-12 rounded-full border-2 transition-all ${selectedColor === color
                               ? "border-primary ring-2 ring-primary/20"
                               : isAvailable
@@ -271,25 +283,51 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
             {/* Quantity Selector */}
             <div>
               <h4 className="label-text mb-3">Quantity</h4>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={decrementQuantity}
                   disabled={quantity <= 1}
-                  className="h-12 w-12"
+                  className="h-8 w-8"
                 >
-                  <Minus className="h-5 w-5" />
+                  <Minus className="h-3 w-3" />
                 </Button>
-                <span className="number-display text-xl font-semibold w-16 text-center">{quantity}</span>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (!isNaN(value)) {
+                      handleQuantityChange(value);
+                    } else if (e.target.value === '') {
+                      // Allow empty field while typing
+                      handleQuantityChange(1);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    // Ensure valid quantity on blur
+                    const value = parseInt(e.target.value);
+                    if (isNaN(value) || value < 1) {
+                      handleQuantityChange(1);
+                    } else if (value > availableStock) {
+                      handleQuantityChange(availableStock);
+                    }
+                  }}
+                  min="1"
+                  max={availableStock}
+                  className="number-display font-semibold w-16 text-center border border-input rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-ring bg-background"
+                  style={{ fontSize: '16px' }}
+                  disabled={isOutOfStock}
+                />
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={incrementQuantity}
                   disabled={quantity >= availableStock}
-                  className="h-12 w-12"
+                  className="h-8 w-8"
                 >
-                  <Plus className="h-5 w-5" />
+                  <Plus className="h-3 w-3" />
                 </Button>
               </div>
               {availableStock > 0 && (
@@ -371,46 +409,43 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
         {relatedProducts.length > 0 && (
           <div className="mt-20">
             <h2 className="mb-8">You May Also Like</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 lg:gap-8">
               {relatedProducts.map((relatedProduct) => {
-                // Get the minimum price for products with size options
+                // Get the minimum price for products with variants
                 const getDisplayPrice = () => {
-                  if (
-                    relatedProduct.sizeOptions &&
-                    relatedProduct.sizeOptions.length > 0
-                  ) {
-                    return Math.min(
-                      ...relatedProduct.sizeOptions.map((s) => s.price),
-                    );
+                  if (relatedProduct.variants && relatedProduct.variants.length > 0) {
+                    const activeVariants = relatedProduct.variants.filter((v) => v.active);
+                    if (activeVariants.length > 0) {
+                      return Math.min(...activeVariants.map((v) => v.price));
+                    }
                   }
                   return relatedProduct.price;
                 };
-                const displayPrice = getDisplayPrice();
-                const hasSizes =
-                  relatedProduct.sizeOptions &&
-                  relatedProduct.sizeOptions.length > 0;
+
+                // Check if product has size variations (not just color variations)
+                const hasSizeVariations = () => {
+                  if (relatedProduct.variants && relatedProduct.variants.length > 0) {
+                    const activeVariants = relatedProduct.variants.filter((v) => v.active);
+                    const uniqueSizes = new Set(
+                      activeVariants.map((v) => v.size).filter((size) => size !== null)
+                    );
+                    return uniqueSizes.size > 1;
+                  }
+                  return false;
+                };
 
                 return (
-                  <Link
+                  <ProductCard
                     key={relatedProduct.id}
-                    href={`/products/${relatedProduct.id}`}
-                    className="cursor-pointer block"
-                  >
-                    <div className="aspect-square rounded-lg overflow-hidden bg-secondary mb-4">
-                      <img
-                        src={relatedProduct.imageUrl}
-                        alt={relatedProduct.name}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <p className="text-muted-foreground">
-                      {relatedProduct.subCategory}
-                    </p>
-                    <h4 className="line-clamp-2">{relatedProduct.name}</h4>
-                    <p className="text-primary font-semibold">
-                      {hasSizes && "From "}₱{displayPrice.toFixed(2)}
-                    </p>
-                  </Link>
+                    name={relatedProduct.name}
+                    price={getDisplayPrice()}
+                    imageUrl={relatedProduct.imageUrl}
+                    category={relatedProduct.subCategory}
+                    onClick={() => {
+                      window.location.href = `/products/${relatedProduct.id}`;
+                    }}
+                    hasSizeOptions={hasSizeVariations()}
+                  />
                 );
               })}
             </div>

@@ -43,6 +43,18 @@ export function FeaturedProducts({
               return product.price;
             };
 
+            // Check if product has size variations (not just color variations)
+            const hasSizeVariations = () => {
+              if (product.variants && product.variants.length > 0) {
+                const activeVariants = product.variants.filter((v) => v.active);
+                const uniqueSizes = new Set(
+                  activeVariants.map((v) => v.size).filter((size) => size !== null)
+                );
+                return uniqueSizes.size > 1;
+              }
+              return false;
+            };
+
             return (
               <ProductCard
                 key={product.id}
@@ -51,7 +63,7 @@ export function FeaturedProducts({
                 imageUrl={product.imageUrl}
                 category={product.subCategory}
                 onClick={() => onProductClick(product.id)}
-                hasSizeOptions={product.variants && product.variants.length > 1}
+                hasSizeOptions={hasSizeVariations()}
               />
             );
           })}

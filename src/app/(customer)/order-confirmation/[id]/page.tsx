@@ -2,11 +2,17 @@
 
 import { OrderConfirmationPage as OrderConfirmationPageContent } from '@/views/OrderConfirmationPage';
 import { useRouter, useParams } from 'next/navigation';
+import { useMemo } from 'react';
 
 export default function OrderConfirmationPage() {
   const router = useRouter();
   const params = useParams();
-  const orderId = params.id as string;
+  
+  // Safely extract the id parameter
+  const orderId = useMemo(() => {
+    const id = params?.id;
+    return typeof id === 'string' ? id : '';
+  }, [params]);
   
   const handleNavigate = (page: string) => {
     if (page === 'home') {

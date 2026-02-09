@@ -41,7 +41,7 @@ export function ProductsPage({ category, onProductClick }: ProductsPageProps) {
     toggleColor,
     clearFilters,
     getDisplayPrice,
-    hasVariations,
+    hasSizeVariations,
     handleProductClick: vmHandleProductClick,
   } = useProductListViewModel(category);
 
@@ -244,7 +244,7 @@ export function ProductsPage({ category, onProductClick }: ProductsPageProps) {
                     imageUrl={product.imageUrl}
                     category={product.subCategory}
                     onClick={() => handleClick(product.id)}
-                    hasSizeOptions={hasVariations(product)}
+                    hasSizeOptions={hasSizeVariations(product)}
                   />
                 ))}
               </div>

@@ -58,30 +58,45 @@ export function SalePage({ onProductClick }: SalePageProps) {
       {/* Products Grid */}
       <div className="container mx-auto px-4 lg:px-8 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {saleProducts.map((product) => (
-            <div key={product.id} className="relative">
-              <Badge 
-                variant="destructive" 
-                className="absolute top-4 right-4 z-10"
-              >
-                -{product.discount}%
-              </Badge>
-              <div onClick={() => handleClick(product.id)}>
-                <ProductCard
-                  name={product.name}
-                  price={product.salePrice}
-                  imageUrl={product.imageUrl}
-                  category={product.subCategory}
-                  onClick={() => handleClick(product.id)}
-                />
-                <div className="mt-2 px-4">
-                  <p className="text-muted-foreground line-through">
-                    ₱{product.originalPrice.toFixed(2)}
-                  </p>
+          {saleProducts.map((product) => {
+            // Check if product has size variations
+            const hasSizeVariations = () => {
+              if (product.variants && product.variants.length > 0) {
+                const activeVariants = product.variants.filter((v) => v.active);
+                const uniqueSizes = new Set(
+                  activeVariants.map((v) => v.size).filter((size) => size !== null)
+                );
+                return uniqueSizes.size > 1;
+              }
+              return false;
+            };
+
+            return (
+              <div key={product.id} className="relative">
+                <Badge 
+                  variant="destructive" 
+                  className="absolute top-4 right-4 z-10"
+                >
+                  -{product.discount}%
+                </Badge>
+                <div onClick={() => handleClick(product.id)}>
+                  <ProductCard
+                    name={product.name}
+                    price={product.salePrice}
+                    imageUrl={product.imageUrl}
+                    category={product.subCategory}
+                    onClick={() => handleClick(product.id)}
+                    hasSizeOptions={hasSizeVariations()}
+                  />
+                  <div className="mt-2 px-4">
+                    <p className="text-muted-foreground line-through">
+                      ₱{product.originalPrice.toFixed(2)}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {saleProducts.length === 0 && (

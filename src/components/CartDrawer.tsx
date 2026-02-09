@@ -145,7 +145,9 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   const handleApplyCoupon = () => {
     // Input validation
     if (!couponCode.trim()) {
-      toast.error("Enter coupon code");
+      toast.error("Coupon Code Required", {
+        description: "Please enter a coupon code before applying. Check your email or promotions page for available codes.",
+      });
       return;
     }
 
@@ -156,7 +158,9 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
       .replace(/[^A-Z0-9]/g, "");
 
     if (sanitizedCode.length === 0) {
-      toast.error("Invalid coupon format");
+      toast.error("Invalid Coupon Format", {
+        description: "Coupon codes should only contain letters and numbers. Please check your code and try again.",
+      });
       return;
     }
 
@@ -168,18 +172,26 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
 
       if (validation.valid && validation.coupon) {
         setAppliedCoupon(validation.coupon);
+        const discount = calculateDiscount(validation.coupon, subtotal);
         setCouponCode("");
-        toast.success("Coupon applied");
+        toast.success("Coupon Applied Successfully! 🎉", {
+          description: `You're saving ₱${discount.toFixed(2)} with code "${validation.coupon.code}". Your new total is ₱${(subtotal - discount).toFixed(2)}.`,
+        });
       } else {
-        toast.error("Invalid coupon");
+        toast.error("Invalid or Expired Coupon", {
+          description: validation.error || "This coupon code is not valid or has expired. Please check the code or try a different one.",
+        });
       }
       setIsCouponLoading(false);
     }, 300);
   };
 
   const handleRemoveCoupon = () => {
+    const previousDiscount = discount;
     setAppliedCoupon(null);
-    toast.info("Coupon removed");
+    toast.info("Coupon Removed", {
+      description: `Your ₱${previousDiscount.toFixed(2)} discount has been removed. You can apply a different coupon code if you have one.`,
+    });
   };
 
   const handleApplySuggestedCoupon = (code: string) => {
@@ -192,36 +204,98 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   };
 
   const handleCheckout = () => {
-    // Validate cart is not empty
-    if (items.length === 0) {
-      toast.error("Cart is empty");
+    // Validate selected items count
+    if (selectedItems.size === 0) {
+      toast.error("No items selected", {
+        description: "Select at least one item to checkout.",
+      });
       return;
     }
 
-    // Validate all items have valid quantities
-    const hasInvalidQuantity = items.some((item) => item.quantity <= 0);
+    // Validate cart is not empty
+    if (items.length === 0) {
+      toast.error("Cart is empty", {
+        description: "Add items to your cart before checkout.",
+      });
+      return;
+    }
+
+    // Validate all selected items have valid quantities
+    const selectedItemsList = items.filter((item) => selectedItems.has(item.lineKey));
+    const hasInvalidQuantity = selectedItemsList.some((item) => item.quantity <= 0);
     if (hasInvalidQuantity) {
-      toast.error("Invalid quantity");
+      toast.error("Invalid quantity", {
+        description: "All items must have a quantity of at least 1.",
+      });
       return;
     }
 
     // Validate total amount is reasonable (prevent manipulation)
     if (subtotal <= 0 || total < 0) {
-      toast.error("Invalid total");
+      toast.error("Invalid total amount", {
+        description: "Please refresh and try again.",
+      });
       return;
     }
 
     // Validate discount doesn't exceed subtotal
     if (discount > subtotal) {
-      toast.error("Invalid discount");
+      toast.error("Invalid discount amount", {
+        description: "Discount cannot exceed subtotal.",
+      });
       setAppliedCoupon(null);
       return;
     }
 
-    // Check for potential stock issues (basic validation)
-    const hasHighQuantity = items.some((item) => item.quantity > 100);
+    // Check for quantity limits
+    const hasHighQuantity = selectedItemsList.some((item) => item.quantity > 100);
     if (hasHighQuantity) {
-      toast.error("Quantity limit exceeded");
+      toast.error("Quantity limit exceeded", {
+        description: "Maximum 100 items per product.",
+      });
+      return;
+    }
+
+    // Validate stock availability for all selected items
+    const stockIssues: string[] = [];
+    selectedItemsList.forEach((item) => {
+      const availableStock = getItemAvailableStock(item);
+      const product = products.find((p) => p.id === item.productId);
+
+      if (!product) {
+        stockIssues.push(`${item.name}: Product not found`);
+        return;
+      }
+
+      if (!product.active) {
+        stockIssues.push(`${item.name}: No longer available`);
+        return;
+      }
+
+      if (item.variantId) {
+        const variant = getVariantById(product, item.variantId);
+        if (!variant) {
+          stockIssues.push(`${item.name}: Variant not found`);
+          return;
+        }
+
+        if (!variant.active) {
+          stockIssues.push(`${item.name}: Selected variant unavailable`);
+          return;
+        }
+      }
+
+      if (availableStock === 0) {
+        stockIssues.push(`${item.name}: Out of stock`);
+      } else if (item.quantity > availableStock) {
+        stockIssues.push(`${item.name}: Only ${availableStock} available`);
+      }
+    });
+
+    if (stockIssues.length > 0) {
+      toast.error("Stock validation failed", {
+        description: stockIssues[0], // Show first issue
+      });
       return;
     }
 
@@ -229,12 +303,15 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
     if (appliedCoupon) {
       const validation = validateCoupon(appliedCoupon.code, subtotal);
       if (!validation.valid) {
-        toast.error("Coupon expired");
+        toast.error("Coupon validation failed", {
+          description: validation.error || "Coupon is no longer valid.",
+        });
         setAppliedCoupon(null);
         return;
       }
     }
 
+    // All validation passed
     onClose();
     router.push("/checkout");
   };
@@ -291,9 +368,8 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                   return (
                     <div
                       key={itemKey}
-                      className={`flex gap-2 p-2 sm:p-2.5 rounded-lg border transition-colors ${
-                        isSelected ? "bg-white" : "bg-muted/30"
-                      }`}
+                      className={`flex gap-2 p-2 sm:p-2.5 rounded-lg border transition-colors ${isSelected ? "bg-white" : "bg-muted/30"
+                        }`}
                     >
                       {/* Checkbox for item selection */}
                       <div className="flex items-start pt-1">
@@ -344,7 +420,9 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                             onClick={() => {
                               try {
                                 removeLine(item.lineKey);
-                                toast.success("Removed");
+                                toast.success("Item Removed from Cart", {
+                                  description: `${item.name} has been removed from your shopping cart.`,
+                                });
 
                                 // Update selected items to remove the deleted item
                                 setSelectedItems((prev) => {
@@ -353,7 +431,9 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                                   return newSet;
                                 });
                               } catch (error) {
-                                toast.error("Removal failed");
+                                toast.error("Unable to Remove Item", {
+                                  description: "Something went wrong while removing this item. Please refresh the page and try again.",
+                                });
                               }
                             }}
                           >
@@ -369,7 +449,9 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                               className="h-6 w-6"
                               onClick={() => {
                                 if (item.quantity <= 1) {
-                                  toast.error("Use X to remove item");
+                                  toast.error("Minimum Quantity Reached", {
+                                    description: "This item already has the minimum quantity. Use the × button above to remove it from your cart.",
+                                  });
                                   return;
                                 }
                                 updateQuantity(
@@ -396,14 +478,16 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                                   getItemAvailableStock(item);
 
                                 if (item.quantity >= availableStock) {
-                                  toast.error(
-                                    `Only ${availableStock} in stock`,
-                                  );
+                                  toast.error("Maximum Stock Reached", {
+                                    description: `Only ${availableStock} ${availableStock === 1 ? 'unit' : 'units'} of "${item.name}" ${availableStock === 1 ? 'is' : 'are'} currently available in stock.`,
+                                  });
                                   return;
                                 }
 
                                 if (item.quantity >= 100) {
-                                  toast.error("Max 100 items");
+                                  toast.error("Maximum Quantity Limit", {
+                                    description: "You've reached the maximum of 100 items per product. For bulk orders, please contact us via Facebook Messenger.",
+                                  });
                                   return;
                                 }
 
@@ -441,7 +525,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
               </div>
             </div>
 
-            <div className="border-t bg-background px-4 sm:px-6 py-3 flex-shrink-0 space-y-3">
+            <div className="border-t bg-background px-4 sm:px-6 py-3 flex-shrink-0 space-y-3 text-sm">
               {/* Coupon Section */}
               <div className="space-y-2">
                 <div className="flex gap-2">
@@ -454,14 +538,16 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                     }
                     disabled={!!appliedCoupon || isCouponLoading}
                     maxLength={20}
-                    className="flex-1"
+                    className="flex-1 text-sm h-11"
+                    style={{ fontSize: '14px' }}
                   />
                   {!appliedCoupon ? (
                     <Button
                       variant="outline"
                       onClick={handleApplyCoupon}
                       disabled={isCouponLoading || !couponCode.trim()}
-                      className="gap-2"
+                      className="gap-2 h-11 px-4"
+                      style={{ fontSize: '14px' }}
                     >
                       {isCouponLoading ? (
                         <svg
@@ -493,7 +579,8 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                     <Button
                       variant="outline"
                       onClick={handleRemoveCoupon}
-                      className="gap-2"
+                      className="gap-2 h-11 px-4"
+                      style={{ fontSize: '14px' }}
                     >
                       <X className="h-4 w-4" />
                       Remove
@@ -599,7 +686,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
 
               <div className="flex justify-between items-center">
                 <p className="text-sm font-medium">Total</p>
-                <p className="text-base sm:text-lg font-semibold text-primary">
+                <p className="text-sm font-semibold text-primary">
                   ₱
                   {total.toLocaleString("en-PH", {
                     minimumFractionDigits: 2,
@@ -608,7 +695,7 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                 </p>
               </div>
 
-              <Button className="w-full" onClick={handleCheckout}>
+              <Button className="w-full text-sm" onClick={handleCheckout}>
                 Proceed to Checkout
               </Button>
             </div>

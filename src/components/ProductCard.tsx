@@ -1,5 +1,7 @@
 "use client";
 
+import { Maximize2 } from "lucide-react";
+
 interface ProductCardProps {
   name: string;
   price: number;
@@ -32,10 +34,10 @@ export function ProductCard({
         {/* Gradient Overlay on Hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        {/* Badge for size options - Enhanced typography */}
+        {/* Size options icon */}
         {hasSizeOptions && (
-          <div className="absolute top-3 left-3 px-3 py-1.5 bg-primary/90 backdrop-blur-sm text-white badge-text rounded-full shadow-md">
-            Multiple Sizes
+          <div className="absolute top-3 left-3 p-2 bg-primary/90 backdrop-blur-sm text-white rounded-full shadow-md" title="Multiple sizes available">
+            <Maximize2 className="w-4 h-4" />
           </div>
         )}
       </div>

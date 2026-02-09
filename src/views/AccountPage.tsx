@@ -203,16 +203,16 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
 
   const handleLogout = () => {
     logout();
-    toast.success("Signed out successfully", {
-      description: "You have been securely logged out of your account.",
+    toast.success("Signed Out Successfully", {
+      description: "You've been securely logged out of your account. Come back soon to shop for more quality furniture!",
     });
     onNavigate("home");
   };
 
   const handleProfileUpdate = () => {
     // In a real app, this would update the user profile
-    toast.success("Profile updated successfully", {
-      description: "Your account information has been saved.",
+    toast.success("Profile Updated Successfully! ✅", {
+      description: "Your account information has been saved and will be used for future orders and communications.",
     });
     setEditMode(false);
   };
@@ -239,14 +239,18 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
 
   const handleSubmitItemRefund = () => {
     if (!refundReason.trim()) {
-      toast.error("Please provide a reason for the refund");
+      toast.error("Refund Reason Required", {
+        description: "Please explain why you're requesting a refund. This helps us process your request faster and improve our service.",
+      });
       return;
     }
 
     // Validate refund account info if not cash payment
     if (selectedOrder?.paymentMethod !== "cash") {
       if (!refundAccountInfo.refundMethod) {
-        toast.error("Please select a refund method");
+        toast.error("Refund Method Required", {
+          description: "Please select how you'd like to receive your refund - GCash or Bank Transfer.",
+        });
         return;
       }
 
@@ -254,7 +258,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
         refundAccountInfo.refundMethod === "gcash" &&
         !refundAccountInfo.gcashNumber
       ) {
-        toast.error("Please provide your GCash number");
+        toast.error("GCash Number Required", {
+          description: "Please provide your registered GCash mobile number (e.g., 09XX-XXX-XXXX) to receive your refund.",
+        });
         return;
       }
 
@@ -264,27 +270,31 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
           !refundAccountInfo.accountName ||
           !refundAccountInfo.accountNumber)
       ) {
-        toast.error("Please provide complete bank account details");
+        toast.error("Bank Details Required", {
+          description: "Please provide your complete bank account information including bank name, account name, and number for the refund transfer.",
+        });
         return;
       }
     }
 
     if (refundProofImages.length < 3) {
-      toast.error(
-        "Please upload at least 3 proof images showing the item condition/issue",
-      );
+      toast.error("More Photos Needed", {
+        description: "Please upload at least 3 clear photos showing the item's condition or issue from different angles. This helps us process your refund faster.",
+      });
       return;
     }
 
     if (refundProofImages.length > 5) {
-      toast.error("Maximum 5 proof images allowed");
+      toast.error("Too Many Photos", {
+        description: "Maximum 5 proof images allowed. Please select your 5 best photos that clearly show the issue.",
+      });
       return;
     }
 
     if (selectedOrder && selectedItem) {
       requestRefund(selectedOrder.id, selectedItem.productId, refundReason);
-      toast.success("Refund request submitted", {
-        description: "We will review your request and get back to you soon.",
+      toast.success("Refund Request Submitted Successfully! 📋", {
+        description: `We've received your refund request for "${selectedItem.name}". Our team will review it within 2-3 business days and contact you via email.`,
       });
       setShowItemRefundDialog(false);
       setRefundReason("");
@@ -308,14 +318,19 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
 
       // Check if adding these files would exceed the limit
       if (refundProofImages.length + fileArray.length > 5) {
-        toast.error("Maximum 5 images allowed");
+        toast.error("Photo Limit Reached", {
+          description: `You can only upload up to 5 photos. You currently have ${refundProofImages.length} photo${refundProofImages.length > 1 ? 's' : ''} uploaded.`,
+        });
         return;
       }
 
       // Validate each file
       for (const file of fileArray) {
         if (file.size > 5 * 1024 * 1024) {
-          toast.error("Each image size should be less than 5MB");
+          const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+          toast.error("File Too Large", {
+            description: `"${file.name}" is ${fileSizeMB}MB. Each image must be under 5MB. Try compressing the image or taking a new photo.`,
+          });
           return;
         }
       }
@@ -370,16 +385,22 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
 
   const handleSaveAddress = () => {
     if (!addressForm.label || !addressForm.address || !addressForm.city) {
-      toast.error("Please fill in all required fields");
+      toast.error("Required Fields Missing", {
+        description: "Please fill in all required fields: address label, complete address, and city/municipality.",
+      });
       return;
     }
 
     if (editingAddress) {
       updateAddress(editingAddress.id, addressForm);
-      toast.success("Address updated successfully");
+      toast.success("Address Updated! ✅", {
+        description: `Your "${addressForm.label}" address has been updated and will be used for future deliveries.`,
+      });
     } else {
       addAddress(addressForm);
-      toast.success("Address added successfully");
+      toast.success("Address Added Successfully!", {
+        description: `"${addressForm.label}" address has been saved. You can now select it during checkout for faster ordering.`,
+      });
     }
 
     setShowAddressDialog(false);
@@ -388,13 +409,18 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
   const handleDeleteAddress = (id: string) => {
     if (confirm("Are you sure you want to delete this address?")) {
       deleteAddress(id);
-      toast.success("Address deleted successfully");
+      toast.success("Address Deleted", {
+        description: "The address has been removed from your saved addresses. You can add new addresses anytime.",
+      });
     }
   };
 
   const handleSetDefaultAddress = (id: string) => {
     setDefaultAddress(id);
-    toast.success("Default address updated");
+    const address = user?.addresses.find(a => a.id === id);
+    toast.success("Default Address Updated", {
+      description: `"${address?.label || 'Selected address'}" is now your default shipping address and will be pre-selected during checkout.`,
+    });
   };
 
   const handleChangePassword = async () => {
@@ -404,29 +430,37 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
       !passwordData.newPassword ||
       !passwordData.confirmPassword
     ) {
-      toast.error("Please fill in all password fields");
+      toast.error("Password Fields Required", {
+        description: "Please fill in your current password, new password, and confirm the new password to continue.",
+      });
       return;
     }
 
     if (passwordData.newPassword.length < 6) {
-      toast.error("New password must be at least 6 characters long");
+      toast.error("Password Too Short", {
+        description: "Your new password must be at least 6 characters long for security. Try adding more characters, numbers, or symbols.",
+      });
       return;
     }
 
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error("New passwords do not match");
+      toast.error("Passwords Don't Match", {
+        description: "The new password and confirmation password don't match. Please make sure both fields are identical.",
+      });
       return;
     }
 
     if (passwordData.currentPassword === passwordData.newPassword) {
-      toast.error("New password must be different from current password");
+      toast.error("Same Password", {
+        description: "Your new password must be different from your current password. Please choose a new one.",
+      });
       return;
     }
 
     // Note: Password change functionality is simplified for localStorage
     // In a real app, you would verify the current password against stored hash
-    toast.success("Password changed successfully", {
-      description: "Your password has been updated.",
+    toast.success("Password Changed Successfully! 🔒", {
+      description: "Your password has been updated. Use your new password the next time you sign in. Keep it secure!",
     });
     const success = true;
 
@@ -469,8 +503,8 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
 
     // Note: Email change functionality is simplified for localStorage implementation
     // In a real app with backend, you would verify password and send verification email
-    toast.success("Email updated successfully", {
-      description: "Your email address has been changed.",
+    toast.success("Email Updated Successfully! 📧", {
+      description: "Your email address has been changed. Use this new email for signing in and receiving order updates.",
       duration: 5000,
     });
 
@@ -522,7 +556,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
   const handleCancelOrder = () => {
     if (orderToCancel) {
       cancelOrder(orderToCancel.id, "customer");
-      toast.success("Order cancelled successfully");
+      toast.success("Order Cancelled Successfully", {
+        description: `Order #${orderToCancel.id} has been cancelled. If you paid online, your refund will be processed within 3-5 business days.`,
+      });
       setShowCancelOrderDialog(false);
       setOrderToCancel(null);
     }

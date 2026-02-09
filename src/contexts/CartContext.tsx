@@ -31,7 +31,7 @@ interface CartContextType {
     quantity?: number,
     size?: string,
     variantId?: string
-  ) => void;
+  ) => { success: boolean; error?: string; availableStock?: number };
   removeFromCart: (
     productId: number,
     color: string,

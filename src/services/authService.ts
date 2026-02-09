@@ -38,24 +38,44 @@ class AuthService {
     }
     return hash.toString(36);
   }
-  
+
   /**
    * Get current user session from localStorage
+   * Returns null if session is expired
    */
-  private getLocalStorageSession(): { userId: string } | null {
+  private getLocalStorageSession(): { userId: string; expiresAt: string } | null {
     if (typeof window === 'undefined') return null;
     const session = localStorage.getItem('auth_session');
-    return session ? JSON.parse(session) : null;
+    if (!session) return null;
+
+    const parsed = JSON.parse(session);
+
+    // Check if session has expired (24 hours)
+    if (parsed.expiresAt && new Date(parsed.expiresAt) < new Date()) {
+      console.log('Session expired, clearing...');
+      this.clearLocalStorageSession();
+      return null;
+    }
+
+    return parsed;
   }
-  
+
   /**
-   * Set current user session in localStorage
+   * Set current user session in localStorage with 24-hour expiration
    */
   private setLocalStorageSession(userId: string): void {
     if (typeof window === 'undefined') return;
-    localStorage.setItem('auth_session', JSON.stringify({ userId }));
+
+    // Session expires in 24 hours
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
+
+    localStorage.setItem('auth_session', JSON.stringify({
+      userId,
+      expiresAt: expiresAt.toISOString()
+    }));
   }
-  
+
   /**
    * Clear current user session from localStorage
    */
@@ -63,7 +83,7 @@ class AuthService {
     if (typeof window === 'undefined') return;
     localStorage.removeItem('auth_session');
   }
-  
+
   /**
    * Sign in with localStorage
    */
@@ -71,23 +91,23 @@ class AuthService {
     try {
       const users = await getUsersFromStorage();
       const passwordHash = this.hashPassword(data.password);
-      
+
       const user = users.find(
-        (u: any) => 
+        (u: any) =>
           u.email.toLowerCase() === data.email.toLowerCase() &&
           u.passwordHash === passwordHash &&
           u.active
       );
-      
+
       if (!user) {
         return { user: null, error: 'Invalid email or password' };
       }
-      
+
       // Create session
       this.setLocalStorageSession(user.id);
-      
+
       console.log('✅ Logged in as:', user.email, '-', user.role);
-      
+
       return { user, error: null };
     } catch (error) {
       console.error('LocalStorage sign in error:', error);
@@ -148,7 +168,7 @@ class AuthService {
     if (USE_LOCALSTORAGE) {
       return this.signInWithLocalStorage(data);
     }
-    
+
     // Supabase authentication (production)
     try {
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -166,7 +186,7 @@ class AuthService {
 
       // Get user profile
       const user = await this.getUserById(authData.user.id);
-      
+
       if (!user) {
         return { user: null, error: 'User profile not found' };
       }
@@ -190,7 +210,7 @@ class AuthService {
       this.clearLocalStorageSession();
       return { error: null };
     }
-    
+
     // Supabase sign out (production)
     try {
       const { error } = await supabase.auth.signOut();
@@ -209,15 +229,15 @@ class AuthService {
     if (USE_LOCALSTORAGE) {
       const session = this.getLocalStorageSession();
       if (!session) return null;
-      
+
       return {
         user: { id: session.userId }
       };
     }
-    
+
     // Supabase session (production)
     const { data, error } = await supabase.auth.getSession();
-    
+
     if (error || !data.session) {
       return null;
     }
@@ -235,7 +255,7 @@ class AuthService {
       const user = users.find((u: any) => u.id === userId && u.active);
       return user || null;
     }
-    
+
     // Supabase (production)
     const { data, error } = await supabase
       .from('users')

@@ -138,23 +138,23 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
       setIsLoading(false);
 
       if (!registrationResult.success) {
-        toast.error("Account creation failed", {
+        toast.error("Account Creation Failed", {
           description:
-            registrationResult.error || "An unexpected error occurred.",
+            registrationResult.error || "We couldn't create your account. This email may already be registered. Please try a different email or sign in instead.",
         });
         return;
       }
 
-      toast.success("Account created successfully!", {
-        description: "You can now sign in to your account.",
+      toast.success("Account Created Successfully! 🎉", {
+        description: `Welcome to PoyBash Furniture, ${firstName}! You can now sign in with your email and start shopping for quality furniture.`,
       });
 
       // Navigate to login page
       onNavigate("login");
     } catch (error) {
       setIsLoading(false);
-      toast.error("Account creation failed", {
-        description: "An unexpected error occurred. Please try again.",
+      toast.error("Account Creation Failed", {
+        description: "An unexpected error occurred while creating your account. Please check your internet connection and try again.",
       });
     }
   };
