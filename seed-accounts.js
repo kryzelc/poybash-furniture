@@ -2,12 +2,22 @@
 
 /**
  * Seed Demo Accounts Script
- * Creates 5 demo accounts directly in localStorage
+ * Creates 5 demo accounts (owner, admin, staff, clerk, customer)
  * 
- * Usage: node seed-accounts.js
+ * USAGE:
+ *   1. Run: node seed-accounts.js
+ *   2. Copy the generated JavaScript code
+ *   3. Open your app in browser (http://localhost:3000)
+ *   4. Open DevTools Console (F12)
+ *   5. Paste and run the code
+ *   6. Go to /login and test with the credentials shown
  * 
- * Note: This script outputs the accounts data.
- * Copy the localStorage commands and paste in browser console.
+ * CREDENTIALS:
+ *   - Owner:    owner@poybash.com    / Owner@2024
+ *   - Admin:    admin@poybash.com    / Admin@2024
+ *   - Staff:    staff@poybash.com    / Staff@2024
+ *   - Clerk:    clerk@poybash.com    / Clerk@2024
+ *   - Customer: customer@poybash.com / Customer@2024
  */
 
 const demoUsers = [
