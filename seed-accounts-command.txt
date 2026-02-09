@@ -1,0 +1,90 @@
+// Seed Demo Accounts
+(function() {
+  const accounts = [
+  {
+    "id": "1770633697888-xmqcw7z4l",
+    "email": "owner@poybash.com",
+    "firstName": "Maria",
+    "lastName": "Santos",
+    "phone": "+63 912 345 6789",
+    "role": "owner",
+    "addresses": [],
+    "createdAt": "2026-02-09T10:41:37.888Z",
+    "updatedAt": "2026-02-09T10:41:37.889Z",
+    "emailVerified": true,
+    "active": true,
+    "passwordHash": "-tcp5rn"
+  },
+  {
+    "id": "1770633697889-6w4bckma4",
+    "email": "admin@poybash.com",
+    "firstName": "Juan",
+    "lastName": "Dela Cruz",
+    "phone": "+63 912 345 6780",
+    "role": "admin",
+    "addresses": [],
+    "createdAt": "2026-02-09T10:41:37.889Z",
+    "updatedAt": "2026-02-09T10:41:37.889Z",
+    "emailVerified": true,
+    "active": true,
+    "passwordHash": "-r6tj7z"
+  },
+  {
+    "id": "1770633697889-0ci21no0p",
+    "email": "staff@poybash.com",
+    "firstName": "Ana",
+    "lastName": "Reyes",
+    "phone": "+63 912 345 6781",
+    "role": "staff",
+    "addresses": [],
+    "createdAt": "2026-02-09T10:41:37.889Z",
+    "updatedAt": "2026-02-09T10:41:37.889Z",
+    "emailVerified": true,
+    "active": true,
+    "passwordHash": "-y962yo"
+  },
+  {
+    "id": "1770633697889-opynltigg",
+    "email": "clerk@poybash.com",
+    "firstName": "Pedro",
+    "lastName": "Garcia",
+    "phone": "+63 912 345 6782",
+    "role": "inventory-clerk",
+    "addresses": [],
+    "createdAt": "2026-02-09T10:41:37.889Z",
+    "updatedAt": "2026-02-09T10:41:37.889Z",
+    "emailVerified": true,
+    "active": true,
+    "passwordHash": "-hkpgwl"
+  },
+  {
+    "id": "1770633697889-885hm2jvc",
+    "email": "customer@poybash.com",
+    "firstName": "Sofia",
+    "lastName": "Gonzales",
+    "phone": "+63 912 345 6783",
+    "role": "customer",
+    "addresses": [],
+    "createdAt": "2026-02-09T10:41:37.889Z",
+    "updatedAt": "2026-02-09T10:41:37.889Z",
+    "emailVerified": true,
+    "active": true,
+    "passwordHash": "-mqtxby"
+  }
+];
+  
+  const existingUsers = JSON.parse(localStorage.getItem('poybash_users') || '[]');
+  const demoEmails = ["owner@poybash.com","admin@poybash.com","staff@poybash.com","clerk@poybash.com","customer@poybash.com"];
+  
+  // Remove existing demo accounts
+  const filteredUsers = existingUsers.filter(u => !demoEmails.includes(u.email));
+  
+  // Add new demo accounts
+  const allUsers = [...filteredUsers, ...accounts];
+  localStorage.setItem('poybash_users', JSON.stringify(allUsers));
+  
+  console.log('✅ Created 5 demo accounts!');
+  console.log('🔐 You can now login at /login with the credentials shown above.');
+})();
+
+// Copy and paste this entire script into your browser console
