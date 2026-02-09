@@ -590,7 +590,7 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
             />
             <div>
               <h1>{getDashboardTitle(user?.role || "admin")}</h1>
-              <p className="text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {getDashboardGreeting(
                   user?.role || "admin",
                   user?.firstName || "User",
