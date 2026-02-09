@@ -12,22 +12,22 @@ export default function CustomerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { hasAdminAccess } = useAuth();
+  const { canAccessAdmin } = useAuth();
   const router = useRouter();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     // Redirect admin users to admin dashboard
-    if (hasAdminAccess()) {
+    if (canAccessAdmin()) {
       router.push('/admin');
     } else {
       setIsChecking(false);
     }
-  }, [hasAdminAccess, router]);
+  }, [canAccessAdmin, router]);
 
   // Show nothing while checking auth
-  if (isChecking && hasAdminAccess()) {
+  if (isChecking && canAccessAdmin()) {
     return null;
   }
 

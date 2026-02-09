@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import type { User as UserType } from "../../contexts/AuthContext";
+import type { User as UserType } from "@/models/User";
 import {
   validateName,
   validateEmail,
@@ -1590,9 +1590,9 @@ function AddUserForm({
       <PhoneInput
         id="editPhone"
         label={`Phone Number ${formData.role === "customer" ? "*" : ""}`}
-        value={editedInfo.phone}
+        value={formData.phone}
         onChange={(value) => {
-          setEditedInfo({ ...editedInfo, phone: value });
+          setFormData({ ...formData, phone: value });
           if (value) {
             const validation = validatePhoneNumber(value);
             if (!validation.valid) {

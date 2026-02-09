@@ -131,7 +131,7 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
     processManualRefund,
     isAdmin,
     isOwner,
-    hasAdminAccess,
+    canAccessAdmin,
     placeOrder,
     logout,
   } = useAuth();
@@ -163,7 +163,7 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
   };
 
   // Redirect if not admin or owner
-  if (!hasAdminAccess()) {
+  if (!canAccessAdmin()) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -379,9 +379,9 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
       productUpdates.active !== undefined && !productUpdates.active
         ? "product_deleted" // When deactivating
         : productUpdates.active !== undefined &&
-          productUpdates.active &&
-          oldProduct &&
-          !oldProduct.active
+            productUpdates.active &&
+            oldProduct &&
+            !oldProduct.active
           ? "product_reactivated" // When reactivating
           : "product_modified"; // Regular updates
 
@@ -556,20 +556,21 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
           <TabsList
             className="grid w-full"
             style={{
-              gridTemplateColumns: `repeat(${[
-                // Overview tab only for admin/owner
-                user?.role === "admin" || user?.role === "owner",
-                // Sales Dashboard only for staff
-                user?.role === "staff",
-                // Inventory Dashboard only for inventory-clerk
-                user?.role === "inventory-clerk",
-                hasPermission(user?.role || "customer", "view:products"),
-                hasPermission(user?.role || "customer", "view:orders"),
-                hasPermission(user?.role || "customer", "view:accounts"),
-                hasPermission(user?.role || "customer", "edit:products"),
-                hasPermission(user?.role || "customer", "view:coupons"),
-              ].filter(Boolean).length
-                }, 1fr)`,
+              gridTemplateColumns: `repeat(${
+                [
+                  // Overview tab only for admin/owner
+                  user?.role === "admin" || user?.role === "owner",
+                  // Sales Dashboard only for staff
+                  user?.role === "staff",
+                  // Inventory Dashboard only for inventory-clerk
+                  user?.role === "inventory-clerk",
+                  hasPermission(user?.role || "customer", "view:products"),
+                  hasPermission(user?.role || "customer", "view:orders"),
+                  hasPermission(user?.role || "customer", "view:accounts"),
+                  hasPermission(user?.role || "customer", "edit:products"),
+                  hasPermission(user?.role || "customer", "view:coupons"),
+                ].filter(Boolean).length
+              }, 1fr)`,
             }}
           >
             {/* Overview tab - Only for Admin & Owner */}

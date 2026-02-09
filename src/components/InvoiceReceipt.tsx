@@ -1,4 +1,4 @@
-import { Order } from "../contexts/AuthContext";
+import { Order } from "@/models/Order";
 import { Card, CardContent } from "./ui/card";
 import { Separator } from "./ui/separator";
 import { Button } from "./ui/button";
@@ -76,7 +76,7 @@ export function InvoiceReceipt({ order }: InvoiceReceiptProps) {
     switch (status) {
       case "completed":
         return "bg-green-500/10 text-green-700 px-3 py-1 rounded";
-      case "ready-for-pickup":
+      case "ready":
         return "bg-blue-500/10 text-blue-700 px-3 py-1 rounded";
       case "processing":
         return "bg-yellow-500/10 text-yellow-700 px-3 py-1 rounded";
@@ -162,36 +162,36 @@ export function InvoiceReceipt({ order }: InvoiceReceiptProps) {
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
               <p className="text-xs mb-1.5">Bill To:</p>
-              <div className="space-y-0.5 text-xs">
-                <p>
-                  {order.shippingAddress.firstName}{" "}
-                  {order.shippingAddress.lastName}
-                </p>
-                <p className="text-muted-foreground text-[11px]">
-                  {order.shippingAddress.address}
-                </p>
-                {order.shippingAddress.barangay && (
-                  <p className="text-muted-foreground text-[11px]">
-                    Brgy. {order.shippingAddress.barangay}
+              {order.shippingAddress && (
+                <div className="space-y-0.5 text-xs">
+                  <p>
+                    {order.shippingAddress.firstName}{" "}
+                    {order.shippingAddress.lastName}
                   </p>
-                )}
-                <p className="text-muted-foreground text-[11px]">
-                  {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
-                  {order.shippingAddress.zipCode}
-                </p>
-                <p className="text-muted-foreground text-[11px]">
-                  {order.shippingAddress.country}
-                </p>
-              </div>
+                  <p className="text-muted-foreground text-[11px]">
+                    {order.shippingAddress.address}
+                  </p>
+                  {order.shippingAddress.barangay && (
+                    <p className="text-muted-foreground text-[11px]">
+                      Brgy. {order.shippingAddress.barangay}
+                    </p>
+                  )}
+                  <p className="text-muted-foreground text-[11px]">
+                    {order.shippingAddress.city}, {order.shippingAddress.state}{" "}
+                    {order.shippingAddress.zipCode}
+                  </p>
+                  <p className="text-muted-foreground text-[11px]">
+                    {order.shippingAddress.country}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div>
               <p className="text-xs mb-1.5">Fulfillment Method:</p>
               <div className="space-y-0.5 text-xs">
                 <p>
-                  {order.deliveryMethod === "store-pickup"
-                    ? "Store Pickup"
-                    : "Customer Arranged Delivery"}
+                  {order.fulfillment === "pickup" ? "Store Pickup" : "Delivery"}
                 </p>
                 {order.pickupDetails && (
                   <>

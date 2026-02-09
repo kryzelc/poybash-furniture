@@ -1,8 +1,7 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useProductViewModel } from '@/viewmodels';
 import { ProductCard } from '../components/ProductCard';
-import { getProducts } from '../lib/products';
 import { Badge } from '../components/ui/badge';
 
 interface BestSellersPageProps {
@@ -10,11 +9,13 @@ interface BestSellersPageProps {
 }
 
 export function BestSellersPage({ onProductClick }: BestSellersPageProps) {
-  // Featured products are our best sellers
-  const bestSellers = useMemo(() => {
-    const allProducts = getProducts();
-    return allProducts.filter(p => p.featured && p.active);
-  }, []);
+  // Use ViewModel to get featured products (best sellers)
+  const { products: bestSellers, handleProductClick } = useProductViewModel({
+    filters: { featured: true },
+    autoLoad: true,
+  });
+
+  const handleClick = onProductClick || handleProductClick;
 
   return (
     <div className="min-h-screen bg-background">
@@ -50,7 +51,7 @@ export function BestSellersPage({ onProductClick }: BestSellersPageProps) {
                 price={product.price}
                 imageUrl={product.imageUrl}
                 category={product.subCategory}
-                onClick={() => onProductClick(product.id)}
+                onClick={() => handleClick(product.id)}
               />
             </div>
           ))}

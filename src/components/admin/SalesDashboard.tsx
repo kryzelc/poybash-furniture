@@ -11,7 +11,7 @@ import {
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
-import type { Order } from "../../contexts/AuthContext";
+import type { Order } from "@/models/Order";
 import type { Product as ProductType } from "../../lib/products";
 import { getPriceRangeText } from "../../lib/productUtils";
 import {
@@ -158,12 +158,17 @@ export function SalesDashboard({
       { variant: any; icon: any; color: string }
     > = {
       pending: { variant: "secondary", icon: Clock, color: "text-[#d2691e]" },
+      confirmed: {
+        variant: "default",
+        icon: CheckCircle,
+        color: "text-blue-700",
+      },
       processing: {
         variant: "default",
         icon: Package,
         color: "text-[#8b4513]",
       },
-      "ready-for-pickup": {
+      ready: {
         variant: "default",
         icon: CheckCircle,
         color: "text-[#cd853f]",
@@ -178,17 +183,11 @@ export function SalesDashboard({
         icon: AlertCircle,
         color: "text-destructive",
       },
-      "refund-requested": {
+      refunded: {
         variant: "secondary",
         icon: AlertCircle,
         color: "text-[#d2691e]",
       },
-      refunded: {
-        variant: "secondary",
-        icon: AlertCircle,
-        color: "text-muted-foreground",
-      },
-      reserved: { variant: "default", icon: Clock, color: "text-[#cd853f]" },
     };
 
     const { variant, icon: Icon } = variants[status];
@@ -498,8 +497,8 @@ export function SalesDashboard({
                       <div>
                         <p className="text-sm">Order #{order.id}</p>
                         <p className="text-xs text-muted-foreground">
-                          {order.shippingAddress.firstName}{" "}
-                          {order.shippingAddress.lastName} •{" "}
+                          {order.shippingAddress?.firstName || "N/A"}{" "}
+                          {order.shippingAddress?.lastName || ""} •{" "}
                           {new Date(order.createdAt).toLocaleDateString()}
                         </p>
                       </div>

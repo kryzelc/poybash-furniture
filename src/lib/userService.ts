@@ -1,4 +1,4 @@
-import type { User as UserType } from "../contexts/AuthContext";
+import type { User as UserType } from "@/models/User";
 
 export interface DBUser {
   id: string;
@@ -41,7 +41,9 @@ const getAllUsersFromStorage = (): Array<
 };
 
 // Helper: Save users to localStorage
-const saveUsersToStorage = (users: Array<UserType & { passwordHash: string }>) => {
+const saveUsersToStorage = (
+  users: Array<UserType & { passwordHash: string }>,
+) => {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
 };
@@ -141,7 +143,9 @@ export async function createUser(userData: {
     const users = getAllUsersFromStorage();
 
     // Check if email already exists
-    if (users.some((u) => u.email.toLowerCase() === userData.email.toLowerCase())) {
+    if (
+      users.some((u) => u.email.toLowerCase() === userData.email.toLowerCase())
+    ) {
       console.error("Email already exists");
       return null;
     }
@@ -155,6 +159,8 @@ export async function createUser(userData: {
       role: userData.role,
       addresses: [],
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      emailVerified: false,
       active: true,
       passwordHash: hashPassword(userData.password),
     };
@@ -177,8 +183,7 @@ export async function checkEmailExists(
     const users = getAllUsersFromStorage();
     return users.some(
       (u) =>
-        u.email.toLowerCase() === email.toLowerCase() &&
-        u.id !== excludeUserId,
+        u.email.toLowerCase() === email.toLowerCase() && u.id !== excludeUserId,
     );
   } catch (error) {
     console.error("Error checking email:", error);
@@ -196,6 +201,9 @@ function transformDBUserToAppUser(dbUser: any): UserType {
     phone: dbUser.phone,
     active: dbUser.active,
     createdAt: dbUser.created_at || dbUser.createdAt,
+    updatedAt:
+      dbUser.updated_at || dbUser.updatedAt || new Date().toISOString(),
+    emailVerified: dbUser.email_verified || dbUser.emailVerified || false,
     addresses: (dbUser.addresses || []).map((addr: any) => ({
       id: addr.id,
       label: addr.label,

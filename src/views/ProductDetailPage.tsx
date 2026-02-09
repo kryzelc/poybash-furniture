@@ -1,19 +1,10 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import {
-  Product,
-  products,
-  ProductVariant,
-  findVariant,
-  getProductSizes,
-  getProductColors,
-  getVariantStock,
-} from "../lib/products";
+import { useProductDetailViewModel } from "@/viewmodels/useProductDetailViewModel";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 import { Separator } from "../components/ui/separator";
-import { useCart } from "../contexts/CartContext";
+import { getVariantStock, findVariant, products as staticProducts } from "../lib/products";
 import {
   Minus,
   Plus,
@@ -23,8 +14,6 @@ import {
   MessageCircle,
   MapPin,
 } from "lucide-react";
-import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 interface ProductDetailPageProps {
@@ -32,63 +21,47 @@ interface ProductDetailPageProps {
 }
 
 export function ProductDetailPage({ productId }: ProductDetailPageProps) {
-  const router = useRouter();
-  const product = products.find((p) => p.id === productId);
-  const { addToCart } = useCart();
+  // ViewModel handles all business logic
+  const {
+    product,
+    isLoading,
+    error,
+    isMounted,
+    selectedVariant,
+    selectedSize,
+    selectedColor,
+    quantity,
+    sizes,
+    colors,
+    currentPrice,
+    availableStock,
+    inStock,
+    handleSizeChange,
+    handleColorChange,
+    incrementQuantity,
+    decrementQuantity,
+    handleAddToCart,
+    handleBack,
+  } = useProductDetailViewModel(productId);
 
-  // Track if component is mounted (for hydration)
-  const [isMounted, setIsMounted] = useState(false);
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-muted-foreground">Loading product...</p>
+        </div>
+      </div>
+    );
+  }
 
-  // Variant-based state
-  const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(
-    null,
-  );
-  const [selectedSize, setSelectedSize] = useState<string | null>(null);
-  const [selectedColor, setSelectedColor] = useState<string>("");
-  const [quantity, setQuantity] = useState(1);
-
-  // Get sizes and colors from product
-  const sizes = useMemo(
-    () => (product ? getProductSizes(product) : []),
-    [product],
-  );
-  const colors = useMemo(
-    () => (product ? getProductColors(product) : []),
-    [product],
-  );
-
-  // Set mounted state
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  // Initialize selection when product loads
-  useEffect(() => {
-    if (product?.variants && product.variants.length > 0) {
-      const activeVariants = product.variants.filter((v) => v.active);
-      if (activeVariants.length > 0) {
-        const firstVariant = activeVariants[0];
-        setSelectedSize(firstVariant.size);
-        setSelectedColor(firstVariant.color);
-        setSelectedVariant(firstVariant);
-      }
-    }
-  }, [product]);
-
-  // Update selected variant when size or color changes
-  useEffect(() => {
-    if (product?.variants && selectedColor) {
-      const variant = findVariant(product, selectedSize, selectedColor);
-      setSelectedVariant(variant || null);
-    }
-  }, [selectedSize, selectedColor, product]);
-
-  if (!product) {
+  // Error or not found state
+  if (error || !product) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
           <h2>Product not found</h2>
-          <Button onClick={() => router.push("/products")}>
+          <Button onClick={handleBack}>
             Back to Products
           </Button>
         </div>
@@ -96,75 +69,42 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
     );
   }
 
-  // Get current price from selected variant
-  const getCurrentPrice = () => {
-    if (selectedVariant) {
-      return selectedVariant.price;
-    }
-    // Fallback to old system
-    if (product.sizeOptions && selectedSize) {
-      const sizeOption = product.sizeOptions.find(
-        (s) => s.label === selectedSize,
-      );
-      if (sizeOption) return sizeOption.price;
-    }
-    return product.price;
-  };
+  const isOutOfStock = !inStock;
 
-  const currentPrice = getCurrentPrice();
-
-  const handleAddToCart = () => {
-    if (!selectedVariant) {
-      toast.error("Please select your preferences", {
-        description: "Choose a valid size and color combination to continue.",
-      });
-      return;
-    }
-
-    addToCart(
-      product,
-      selectedColor,
-      quantity,
-      selectedSize || undefined,
-      selectedVariant.id,
-    );
-    toast.success("Added to cart", {
-      description: `${quantity} ${product.name} - ${selectedSize ? `${selectedSize}, ` : ""}${selectedColor}`,
-    });
-  };
-
-  // Get available stock for selected variant
-  const getAvailableStock = () => {
-    if (selectedVariant) {
-      return getVariantStock(selectedVariant);
-    }
-    // Fallback to old system
-    if (product.sizeOptions && selectedSize) {
-      const sizeOption = product.sizeOptions.find(
-        (s) => s.label === selectedSize,
-      );
-      if (sizeOption) {
-        return sizeOption.warehouseStock.reduce(
-          (sum, ws) => sum + (ws.quantity - ws.reserved),
-          0,
-        );
-      }
-    }
-    if (product.warehouseStock) {
-      return product.warehouseStock.reduce(
-        (sum, ws) => sum + (ws.quantity - ws.reserved),
-        0,
-      );
-    }
-    return 0;
-  };
-
-  const availableStock = getAvailableStock();
-  const isOutOfStock = availableStock === 0;
-
-  const relatedProducts = products
+  // Related products
+  const relatedProducts = staticProducts
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4);
+
+  // Color hex mapping - based on actual furniture tones
+  const colorHexMap: Record<string, string> = {
+    // New color names
+    "Warm Sand": "#F0D29E",
+    "Warm Taupe": "#9B8B7E",
+    Terracotta: "#CA6F48",
+    "Chestnut Brown": "#9B715A",
+    "Deep Espresso": "#3A3022",
+    "Brick Brown": "#9D6347",
+    "Slate Green": "#4A5952",
+    "Antique Olive": "#C7BA59",
+    "Clay Rose": "#AE7971",
+    "Cloud White": "#E2E0DE",
+    "Linen Beige": "#DAD0C6",
+    "Pebble Gray": "#BEBBBD",
+    "Storm Gray": "#61636F",
+    Black: "#1a1a1a",
+    // Old color names mapped to new colors
+    Beige: "#F0D29E",
+    "Dark Brown": "#3A3022",
+    Walnut: "#9D6347",
+    "Natural Wood": "#F0D29E",
+    White: "#E2E0DE",
+    Grey: "#BEBBBD",
+    Gray: "#BEBBBD",
+    Brown: "#9B715A",
+    Green: "#4A5952",
+    Pink: "#AE7971",
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -245,7 +185,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
                         return (
                           <button
                             key={size}
-                            onClick={() => setSelectedSize(size)}
+                            onClick={() => handleSizeChange(size)}
                             disabled={!hasStock}
                             className={`px-4 py-2 rounded-lg border-2 transition-colors ${selectedSize === size
                               ? "border-primary bg-primary/5"
@@ -282,40 +222,10 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
                           variant.active &&
                           getVariantStock(variant) > 0;
 
-                        // Color hex mapping - based on actual furniture tones
-                        const colorHexMap: Record<string, string> = {
-                          // New color names
-                          "Warm Sand": "#F0D29E",
-                          "Warm Taupe": "#9B8B7E",
-                          Terracotta: "#CA6F48",
-                          "Chestnut Brown": "#9B715A",
-                          "Deep Espresso": "#3A3022",
-                          "Brick Brown": "#9D6347",
-                          "Slate Green": "#4A5952",
-                          "Antique Olive": "#C7BA59",
-                          "Clay Rose": "#AE7971",
-                          "Cloud White": "#E2E0DE",
-                          "Linen Beige": "#DAD0C6",
-                          "Pebble Gray": "#BEBBBD",
-                          "Storm Gray": "#61636F",
-                          Black: "#1a1a1a",
-                          // Old color names mapped to new colors
-                          Beige: "#F0D29E", // Maps to Warm Sand
-                          "Dark Brown": "#3A3022", // Maps to Deep Espresso
-                          Walnut: "#9D6347", // Maps to Brick Brown
-                          "Natural Wood": "#F0D29E", // Maps to Warm Sand
-                          White: "#E2E0DE", // Maps to Cloud White
-                          Grey: "#BEBBBD", // Maps to Pebble Gray
-                          Gray: "#BEBBBD", // Maps to Pebble Gray
-                          Brown: "#9B715A", // Maps to Chestnut Brown
-                          Green: "#4A5952", // Maps to Slate Green
-                          Pink: "#AE7971", // Maps to Clay Rose
-                        };
-
                         return (
                           <button
                             key={color}
-                            onClick={() => setSelectedColor(color)}
+                            onClick={() => handleColorChange(color)}
                             disabled={!isAvailable}
                             className={`relative w-12 h-12 rounded-full border-2 transition-all ${selectedColor === color
                               ? "border-primary ring-2 ring-primary/20"
@@ -358,7 +268,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  onClick={decrementQuantity}
                   disabled={quantity <= 1}
                 >
                   <Minus className="h-4 w-4" />
@@ -367,9 +277,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() =>
-                    setQuantity(Math.min(availableStock, quantity + 1))
-                  }
+                  onClick={incrementQuantity}
                   disabled={quantity >= availableStock}
                 >
                   <Plus className="h-4 w-4" />

@@ -66,7 +66,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { validateEmail } from "../lib/validation";
-import { getProducts } from "../lib/products";
+import { products as staticProducts } from "../lib/products"; // Using static products for reference data
 import { QRCodeSVG } from "qrcode.react";
 import type { Address } from "../contexts/AuthContext";
 
@@ -84,7 +84,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
     deleteAddress,
     setDefaultAddress,
     requestRefund,
-    hasAdminAccess,
+    canAccessAdmin,
     cancelOrder,
     updateProfile,
   } = useAuth();
@@ -94,12 +94,9 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
   const [orderToCancel, setOrderToCancel] = useState<any>(null);
   const [orderFilter, setOrderFilter] = useState<string>("all");
 
-  // Get products to fetch correct images
-  const products = getProducts();
-
   // Helper function to get product image
   const getProductImage = (productId: number, fallbackUrl: string) => {
-    const product = products.find((p) => p.id === productId);
+    const product = staticProducts.find((p) => p.id === productId);
     return product?.imageUrl || fallbackUrl;
   };
   const [showItemRefundDialog, setShowItemRefundDialog] = useState(false);
@@ -153,12 +150,12 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
   useEffect(() => {
     if (!user) {
       onNavigate("login");
-    } else if (hasAdminAccess()) {
+    } else if (canAccessAdmin()) {
       onNavigate("admin");
     }
-  }, [user, onNavigate, hasAdminAccess]);
+  }, [user, onNavigate, canAccessAdmin]);
 
-  if (!user || hasAdminAccess()) {
+  if (!user || canAccessAdmin()) {
     return null;
   }
 

@@ -14,8 +14,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { Search, Package, Clock, CheckCircle, XCircle, AlertCircle, TrendingUp, Receipt, Shield, QrCode, Eye, Filter } from 'lucide-react';
 import { toast } from 'sonner';
-import type { Order } from '../../contexts/AuthContext';
-import { getProducts } from '../../lib/products';
+import type { Order } from '@/models';
+import { products as staticProducts } from '../../lib/products'; // Using static data for reference
 import { ManualRefundDialog } from './ManualRefundDialog';
 import { Separator } from '../ui/separator';
 import { QRCodeSVG } from 'qrcode.react';
@@ -23,8 +23,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
 import { InvoiceReceipt } from '../InvoiceReceipt';
 
 interface OrderManagementProps {
-  orders: Order[];
-  onUpdateOrderStatus: (orderId: string, status: Order['status']) => void;
+  orders: any[]; // TODO: Use Order type from models
+  onUpdateOrderStatus: (orderId: string, status: any) => void;
   onCancelOrder: (orderId: string, canceledBy: 'customer' | 'admin') => void;
   onProcessRefund: (orderId: string, refundData: {
     refundMethod: 'gcash' | 'bank' | 'cash';

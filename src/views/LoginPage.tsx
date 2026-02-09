@@ -26,7 +26,7 @@ interface LoginPageProps {
 
 export function LoginPage({ onNavigate }: LoginPageProps) {
   const router = useRouter();
-  const { login, hasAdminAccess } = useAuth();
+  const { login, canAccessAdmin } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +45,7 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
         });
         // Admin roles (staff, inventory-clerk, admin, owner) go to dashboard
         // Customers go to home page
-        if (hasAdminAccess()) {
+        if (canAccessAdmin()) {
           router.push("/admin");
         } else {
           router.push("/");

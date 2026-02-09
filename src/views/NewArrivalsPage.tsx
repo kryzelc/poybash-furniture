@@ -1,22 +1,25 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useProductViewModel } from '@/viewmodels';
 import { ProductCard } from '../components/ProductCard';
-import { getProducts } from '../lib/products';
 
 interface NewArrivalsPageProps {
   onProductClick: (productId: number) => void;
 }
 
 export function NewArrivalsPage({ onProductClick }: NewArrivalsPageProps) {
-  // Simulate new arrivals by getting the latest 6 products (highest IDs)
-  const newArrivals = useMemo(() => {
-    const allProducts = getProducts();
-    return [...allProducts]
-      .filter(p => p.active)
-      .sort((a, b) => b.id - a.id)
-      .slice(0, 6);
-  }, []);
+  // Use ViewModel to get products, sorted by newest (highest IDs)
+  const { products: allProducts, handleProductClick } = useProductViewModel({
+    filters: { featured: false },
+    autoLoad: true,
+  });
+
+  // Get the latest 6 products (highest IDs)
+  const newArrivals = [...allProducts]
+    .sort((a, b) => b.id - a.id)
+    .slice(0, 6);
+
+  const handleClick = onProductClick || handleProductClick;
 
   return (
     <div className="min-h-screen bg-background">
@@ -43,7 +46,7 @@ export function NewArrivalsPage({ onProductClick }: NewArrivalsPageProps) {
               price={product.price}
               imageUrl={product.imageUrl}
               category={product.subCategory}
-              onClick={() => onProductClick(product.id)}
+              onClick={() => handleClick(product.id)}
             />
           ))}
         </div>

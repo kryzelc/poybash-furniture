@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "./ui/dialog";
 import { Input } from "./ui/input";
-import { products } from "../lib/products";
+import { products } from "../lib/products"; // Temporary: still using static products for search
 import { Search } from "lucide-react";
 
 interface SearchDialogProps {

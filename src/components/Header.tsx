@@ -34,7 +34,7 @@ interface HeaderProps {
 
 export function Header({ onCartOpen }: HeaderProps) {
   const { getCartCount } = useCart();
-  const { isAuthenticated, hasAdminAccess, logout } = useAuth();
+  const { isAuthenticated, canAccessAdmin, signOut } = useAuth();
   const router = useRouter();
   const [cartCount, setCartCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -51,7 +51,7 @@ export function Header({ onCartOpen }: HeaderProps) {
   };
 
   const handleLogout = () => {
-    logout();
+    signOut();
     router.push("/");
   };
 
@@ -157,7 +157,7 @@ export function Header({ onCartOpen }: HeaderProps) {
                       <DropdownMenuItem asChild>
                         <Link href="/account">My Account</Link>
                       </DropdownMenuItem>
-                      {hasAdminAccess() && (
+                      {canAccessAdmin() && (
                         <>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem asChild>

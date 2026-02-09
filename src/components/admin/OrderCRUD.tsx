@@ -42,12 +42,9 @@ import {
   type Product,
   type WarehouseStock,
 } from "../../lib/products";
-import {
-  useAuth,
-  type Order,
-  type OrderItem,
-  type User,
-} from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
+import type { Order, OrderItem } from "@/models/Order";
+import type { User } from "@/models/User";
 import { addAuditLog } from "../../lib/auditLog";
 import {
   getCoupons,
@@ -1629,16 +1626,20 @@ export function EditOrderDialog({
   const [deliveryFee, setDeliveryFee] = useState(order.deliveryFee || 0);
 
   // Shipping address
-  const [firstName, setFirstName] = useState(order.shippingAddress.firstName);
-  const [lastName, setLastName] = useState(order.shippingAddress.lastName);
-  const [phone, setPhone] = useState(order.shippingAddress.phone || "");
-  const [address, setAddress] = useState(order.shippingAddress.address);
-  const [city, setCity] = useState(order.shippingAddress.city);
-  const [province, setProvince] = useState(order.shippingAddress.state);
-  const [barangay, setBarangay] = useState(
-    order.shippingAddress.barangay || "",
+  const [firstName, setFirstName] = useState(
+    order.shippingAddress?.firstName || "",
   );
-  const [zipCode, setZipCode] = useState(order.shippingAddress.zipCode);
+  const [lastName, setLastName] = useState(
+    order.shippingAddress?.lastName || "",
+  );
+  const [phone, setPhone] = useState(order.shippingAddress?.phone || "");
+  const [address, setAddress] = useState(order.shippingAddress?.address || "");
+  const [city, setCity] = useState(order.shippingAddress?.city || "");
+  const [province, setProvince] = useState(order.shippingAddress?.state || "");
+  const [barangay, setBarangay] = useState(
+    order.shippingAddress?.barangay || "",
+  );
+  const [zipCode, setZipCode] = useState(order.shippingAddress?.zipCode || "");
 
   const updateQuantity = (index: number, newQuantity: number) => {
     const newItems = [...items];
@@ -1669,7 +1670,6 @@ export function EditOrderDialog({
       deliveryFee: deliveryFee,
       total: calculateTotal(),
       shippingAddress: {
-        ...order.shippingAddress,
         firstName,
         lastName,
         phone,
@@ -1678,6 +1678,7 @@ export function EditOrderDialog({
         state: province,
         barangay,
         zipCode,
+        country: order.shippingAddress?.country || "Philippines",
       },
       updatedAt: new Date().toISOString(),
     };
@@ -1848,7 +1849,7 @@ export function EditOrderDialog({
             <div className="space-y-4">
               <h3 className="font-semibold">Order Details</h3>
               <div className="grid grid-cols-2 gap-4">
-                {order.deliveryMethod === "staff-delivery" && (
+                {order.fulfillment === "delivery" && (
                   <div className="space-y-2">
                     <Label>Delivery Fee</Label>
                     <Input
@@ -1976,8 +1977,8 @@ export function DeleteOrderDialog({
               <p className="text-sm">
                 You are about to delete order <strong>{order.id}</strong> for{" "}
                 <strong>
-                  {order.shippingAddress.firstName}{" "}
-                  {order.shippingAddress.lastName}
+                  {order.shippingAddress?.firstName || "N/A"}{" "}
+                  {order.shippingAddress?.lastName || ""}
                 </strong>
                 .
               </p>

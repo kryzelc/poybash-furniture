@@ -21,7 +21,8 @@ import {
   Layers,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { Product, SizeOption, ProductVariant } from "../../lib/products";
+import type { Product, ProductVariant } from "@/models";
+import type { SizeOption } from "../../lib/products"; // TODO: Move to models
 import {
   getPriceRangeText,
   hasSizeOptions as checkHasSizeOptions,

@@ -38,17 +38,14 @@ import {
   Loader2,
   Upload,
 } from "lucide-react";
-import {
-  validateCoupon,
-  validateCouponViaEdgeFunction,
-  calculateDiscount,
-  useCoupon,
-  Coupon,
-} from "../lib/coupons";
+// Services imports (MVVM pattern)
+import { couponService } from "@/services/couponService";
+import { Coupon, calculateCouponDiscount } from "@/models/Coupon";
 import {
   validateStockAvailability,
   allocateWarehouseSources,
-} from "../lib/inventory";
+} from "../lib/inventory"; // TODO: Migrate to inventoryService
+// Note: CheckoutPage will be fully migrated to use ViewModels and Services in a future update
 import {
   validateName,
   validateEmail,
@@ -129,7 +126,7 @@ export function CheckoutPage() {
 
   const subtotal = getCartTotal();
   const discount = appliedCoupon
-    ? calculateDiscount(appliedCoupon, subtotal)
+    ? calculateCouponDiscount(appliedCoupon, subtotal)
     : 0;
   const total = subtotal - discount;
 
@@ -250,7 +247,7 @@ export function CheckoutPage() {
 
     try {
       // Use edge function for server-side validation
-      const validation = await validateCouponViaEdgeFunction(
+      const validation = await couponService.validateCouponViaEdgeFunction(
         couponCode,
         subtotal,
       );
@@ -535,7 +532,7 @@ export function CheckoutPage() {
 
         // Use coupon after successful order
         if (appliedCoupon) {
-          useCoupon(appliedCoupon.id);
+          await couponService.useCoupon(appliedCoupon.id);
         }
       } else {
         // Guest checkout - just generate order ID

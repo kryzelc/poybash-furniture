@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { Product, products as allProducts, getVariantStock } from '../lib/products';
+import { useProductListViewModel } from '@/viewmodels/useProductListViewModel';
 import { ProductCard } from '../components/ProductCard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Checkbox } from '../components/ui/checkbox';
@@ -9,7 +8,6 @@ import { Label } from '../components/ui/label';
 import { Slider } from '../components/ui/slider';
 import { Button } from '../components/ui/button';
 import { Filter, X } from 'lucide-react';
-import { getSubCategories, getMaterials, getColors } from '../lib/taxonomies';
 
 interface ProductsPageProps {
   category?: 'chairs' | 'tables';
@@ -17,165 +15,38 @@ interface ProductsPageProps {
 }
 
 export function ProductsPage({ category, onProductClick }: ProductsPageProps) {
-  const [sortBy, setSortBy] = useState('all');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(category ? [category] : []);
-  const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>([]);
-  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
-  const [selectedColors, setSelectedColors] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState([0, 5000]);
-  const [inStockOnly, setInStockOnly] = useState(false);
-  const [showFilters, setShowFilters] = useState(true);
+  // ViewModel handles all business logic
+  const {
+    products: filteredProducts,
+    allProducts: availableProducts,
+    isLoading,
+    sortBy,
+    setSortBy,
+    selectedCategories,
+    selectedSubCategories,
+    selectedMaterials,
+    selectedColors,
+    priceRange,
+    setPriceRange,
+    inStockOnly,
+    setInStockOnly,
+    showFilters,
+    toggleFiltersVisibility,
+    hasActiveFilters,
+    taxonomies,
+    maxPrice,
+    toggleCategory,
+    toggleSubCategory,
+    toggleMaterial,
+    toggleColor,
+    clearFilters,
+    getDisplayPrice,
+    hasVariations,
+    handleProductClick: vmHandleProductClick,
+  } = useProductListViewModel(category);
 
-  // Update selected categories when category prop changes
-  useEffect(() => {
-    if (category) {
-      setSelectedCategories([category]);
-    } else {
-      setSelectedCategories([]);
-    }
-  }, [category]);
-
-  const filteredProducts = useMemo(() => {
-    // Start with all active products
-    let filtered = allProducts.filter(p => p.active);
-
-    // Filter by main category
-    if (selectedCategories.length > 0) {
-      filtered = filtered.filter(p => selectedCategories.includes(p.category));
-    }
-
-    // Filter by subcategory
-    if (selectedSubCategories.length > 0) {
-      filtered = filtered.filter(p => selectedSubCategories.includes(p.subCategory));
-    }
-
-    // Filter by material
-    if (selectedMaterials.length > 0) {
-      filtered = filtered.filter(p => selectedMaterials.includes(p.material));
-    }
-
-    // Filter by color - check variants
-    if (selectedColors.length > 0) {
-      filtered = filtered.filter(p => {
-        // Check if product has variants with selected colors
-        if (p.variants && p.variants.length > 0) {
-          return p.variants.some(v => v.active && selectedColors.includes(v.color));
-        }
-        // Legacy products without variants won't be filtered by color
-        return false;
-      });
-    }
-
-    // Filter by price
-    filtered = filtered.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
-
-    // Filter by stock
-    if (inStockOnly) {
-      filtered = filtered.filter(p => {
-        // Check variant-based products first
-        if (p.variants && p.variants.length > 0) {
-          return p.variants.some(v => v.active && getVariantStock(v) > 0);
-        }
-        // Fallback to old system for backward compatibility
-        if (p.warehouseStock) {
-          const totalStock = p.warehouseStock.reduce((sum, stock) => 
-            sum + (stock.quantity - stock.reserved), 0
-          );
-          return totalStock > 0;
-        }
-        return false;
-      });
-    }
-
-    // Sort
-    switch (sortBy) {
-      case 'price-low':
-        filtered.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-high':
-        filtered.sort((a, b) => b.price - a.price);
-        break;
-      case 'name':
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'newest':
-        filtered.sort((a, b) => b.id - a.id);
-        break;
-      default:
-        filtered.sort((a, b) => (b.featured ? 1 : 0) - (a.featured ? 1 : 0));
-    }
-
-    return filtered;
-  }, [selectedCategories, selectedSubCategories, selectedMaterials, selectedColors, priceRange, inStockOnly, sortBy]);
-
-  // Extract unique values for filters - Use taxonomy system for dynamic filtering
-  const availableProducts = allProducts.filter(p => p.active);
-
-  // Get categories from taxonomy - always show chairs and tables
-  const categories = useMemo(() => {
-    return ['chairs', 'tables'];
-  }, []);
-
-  // Get subcategories from taxonomy (only active ones)
-  const subCategories = useMemo(() => {
-    return getSubCategories(false).map(sc => sc.name);
-  }, []);
-
-  // Get materials from taxonomy (only active ones)
-  const materials = useMemo(() => {
-    return getMaterials(false).map(m => m.name);
-  }, []);
-
-  // Get colors from taxonomy (only active ones)
-  const colors = useMemo(() => {
-    return getColors(false).map(c => c.name);
-  }, []);
-
-  const maxPrice = useMemo(() => {
-    return Math.max(...availableProducts.map(p => p.price), 5000);
-  }, [availableProducts]);
-
-  const toggleCategory = (cat: string) => {
-    setSelectedCategories(prev =>
-      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
-    );
-  };
-
-  const toggleSubCategory = (subCat: string) => {
-    setSelectedSubCategories(prev =>
-      prev.includes(subCat) ? prev.filter(c => c !== subCat) : [...prev, subCat]
-    );
-  };
-
-  const toggleMaterial = (material: string) => {
-    setSelectedMaterials(prev =>
-      prev.includes(material) ? prev.filter(m => m !== material) : [...prev, material]
-    );
-  };
-
-  const toggleColor = (color: string) => {
-    setSelectedColors(prev =>
-      prev.includes(color) ? prev.filter(c => c !== color) : [...prev, color]
-    );
-  };
-
-  const clearFilters = () => {
-    setSelectedCategories([]);
-    setSelectedSubCategories([]);
-    setSelectedMaterials([]);
-    setSelectedColors([]);
-    setPriceRange([0, maxPrice]);
-    setInStockOnly(false);
-  };
-
-  const hasActiveFilters = 
-    selectedCategories.length > 0 ||
-    selectedSubCategories.length > 0 ||
-    selectedMaterials.length > 0 ||
-    selectedColors.length > 0 ||
-    priceRange[0] > 0 || 
-    priceRange[1] < maxPrice ||
-    inStockOnly;
+  // Use provided onProductClick or ViewModel's
+  const handleClick = onProductClick || vmHandleProductClick;
 
   const title = category 
     ? category.charAt(0).toUpperCase() + category.slice(1)
@@ -195,7 +66,7 @@ export function ProductsPage({ category, onProductClick }: ProductsPageProps) {
               variant="outline" 
               size="sm" 
               className="lg:hidden w-full sm:w-auto"
-              onClick={() => setShowFilters(!showFilters)}
+              onClick={toggleFiltersVisibility}
             >
               <Filter className="h-4 w-4 mr-2" />
               {showFilters ? 'Hide' : 'Show'} Filters
@@ -233,11 +104,11 @@ export function ProductsPage({ category, onProductClick }: ProductsPageProps) {
               </div>
 
               {/* Categories - Always show */}
-              {categories.length > 1 && (
+              {taxonomies.categories.length > 1 && (
                 <div className="space-y-2 pb-3 border-b">
                   <h4 className="text-xs uppercase tracking-wide text-muted-foreground">Product Type</h4>
                   <div className="space-y-1.5">
-                    {categories.map((cat) => (
+                    {taxonomies.categories.map((cat) => (
                       <div key={cat} className="flex items-center space-x-2">
                         <Checkbox
                           id={`cat-${cat}`}
@@ -254,11 +125,11 @@ export function ProductsPage({ category, onProductClick }: ProductsPageProps) {
               )}
 
               {/* Subcategories */}
-              {subCategories.length > 0 && (
+              {taxonomies.subCategories.length > 0 && (
                 <div className="space-y-2 pb-3 border-b">
                   <h4 className="text-xs uppercase tracking-wide text-muted-foreground">Category</h4>
                   <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1">
-                    {subCategories.map((subCat) => (
+                    {taxonomies.subCategories.map((subCat) => (
                       <div key={subCat} className="flex items-center space-x-2">
                         <Checkbox
                           id={`sub-${subCat}`}
@@ -275,11 +146,11 @@ export function ProductsPage({ category, onProductClick }: ProductsPageProps) {
               )}
 
               {/* Materials */}
-              {materials.length > 1 && (
+              {taxonomies.materials.length > 1 && (
                 <div className="space-y-2 pb-3 border-b">
                   <h4 className="text-xs uppercase tracking-wide text-muted-foreground">Material</h4>
                   <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1">
-                    {materials.map((material) => (
+                    {taxonomies.materials.map((material) => (
                       <div key={material} className="flex items-center space-x-2">
                         <Checkbox
                           id={`mat-${material}`}
@@ -296,11 +167,11 @@ export function ProductsPage({ category, onProductClick }: ProductsPageProps) {
               )}
 
               {/* Colors */}
-              {colors.length > 1 && (
+              {taxonomies.colors.length > 1 && (
                 <div className="space-y-2 pb-3 border-b">
                   <h4 className="text-xs uppercase tracking-wide text-muted-foreground">Color</h4>
                   <div className="max-h-36 overflow-y-auto space-y-1.5 pr-1">
-                    {colors.map((color) => (
+                    {taxonomies.colors.map((color) => (
                       <div key={color} className="flex items-center space-x-2">
                         <Checkbox
                           id={`color-${color}`}
@@ -365,46 +236,17 @@ export function ProductsPage({ category, onProductClick }: ProductsPageProps) {
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                {filteredProducts.map((product) => {
-                  // Get the minimum price - NEW: Check variants first, then fallback to old system
-                  const getDisplayPrice = () => {
-                    // Check variant system first
-                    if (product.variants && product.variants.length > 0) {
-                      const activeVariants = product.variants.filter(v => v.active);
-                      if (activeVariants.length > 0) {
-                        return Math.min(...activeVariants.map(v => v.price));
-                      }
-                    }
-                    // Legacy: Fallback to old sizeOptions system
-                    if (product.sizeOptions && product.sizeOptions.length > 0) {
-                      return Math.min(...product.sizeOptions.map(s => s.price));
-                    }
-                    return product.price;
-                  };
-
-                  // Check if product has multiple price points
-                  const hasVariations = () => {
-                    if (product.variants && product.variants.length > 1) {
-                      return true;
-                    }
-                    if (product.sizeOptions && product.sizeOptions.length > 0) {
-                      return true;
-                    }
-                    return false;
-                  };
-
-                  return (
-                    <ProductCard
-                      key={product.id}
-                      name={product.name}
-                      price={getDisplayPrice()}
-                      imageUrl={product.imageUrl}
-                      category={product.subCategory}
-                      onClick={() => onProductClick(product.id)}
-                      hasSizeOptions={hasVariations()}
-                    />
-                  );
-                })}
+                {filteredProducts.map((product) => (
+                  <ProductCard
+                    key={product.id}
+                    name={product.name}
+                    price={getDisplayPrice(product)}
+                    imageUrl={product.imageUrl}
+                    category={product.subCategory}
+                    onClick={() => handleClick(product.id)}
+                    hasSizeOptions={hasVariations(product)}
+                  />
+                ))}
               </div>
             )}
           </div>

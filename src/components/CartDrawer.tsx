@@ -108,12 +108,12 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
   );
   // Helper function to get available stock for a cart item
   const getItemAvailableStock = (item: (typeof items)[0]): number => {
-    const product = products.find((p) => p.id === item.id);
+    const product = products.find((p) => p.id === item.productId);
     if (!product) return 0;
 
     // New variant system
-    if (item.selectedVariantId && product.variants) {
-      const variant = getVariantById(product, item.selectedVariantId);
+    if (item.variantId && product.variants) {
+      const variant = getVariantById(product, item.variantId);
       if (variant) {
         return getVariantStock(variant);
       }
@@ -291,8 +291,9 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                   return (
                     <div
                       key={itemKey}
-                      className={`flex gap-2 p-2 sm:p-2.5 rounded-lg border transition-colors ${isSelected ? "bg-white" : "bg-muted/30"
-                        }`}
+                      className={`flex gap-2 p-2 sm:p-2.5 rounded-lg border transition-colors ${
+                        isSelected ? "bg-white" : "bg-muted/30"
+                      }`}
                     >
                       {/* Checkbox for item selection */}
                       <div className="flex items-start pt-1">
@@ -372,11 +373,11 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                                   return;
                                 }
                                 updateQuantity(
-                                  item.id,
+                                  item.productId,
                                   item.selectedColor,
                                   item.quantity - 1,
                                   item.selectedSize,
-                                  item.selectedVariantId,
+                                  item.variantId,
                                 );
                               }}
                               disabled={item.quantity <= 1}
@@ -407,11 +408,11 @@ export function CartDrawer({ open, onClose }: CartDrawerProps) {
                                 }
 
                                 updateQuantity(
-                                  item.id,
+                                  item.productId,
                                   item.selectedColor,
                                   item.quantity + 1,
                                   item.selectedSize,
-                                  item.selectedVariantId,
+                                  item.variantId,
                                 );
                               }}
                               disabled={

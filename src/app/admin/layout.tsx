@@ -1,27 +1,23 @@
-'use client';
+"use client";
 
-import { useAuth } from '@/contexts/AuthContext';
-import { redirect } from 'next/navigation';
+import { useAuth } from "@/contexts/AuthContext";
+import { redirect } from "next/navigation";
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { hasAdminAccess, isAuthenticated } = useAuth();
+  const { canAccessAdmin, isAuthenticated } = useAuth();
 
   // Redirect non-admin users
   if (!isAuthenticated()) {
-    redirect('/login');
+    redirect("/login");
   }
 
-  if (!hasAdminAccess()) {
-    redirect('/');
+  if (!canAccessAdmin()) {
+    redirect("/");
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      {children}
-    </div>
-  );
+  return <div className="min-h-screen bg-background">{children}</div>;
 }

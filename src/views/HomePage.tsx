@@ -2,30 +2,46 @@
 
 import { Hero } from "../components/Hero";
 import { FeaturedProducts } from "../components/FeaturedProducts";
-import { products } from "../lib/products";
-import { useRouter } from "next/navigation";
-
-// Helper function to get storage URL
-const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL ||
-  "https://ktcadsqclaszdyymftvf.supabase.co";
-
-const getStorageUrl = (folder: string, fileName: string): string => {
-  return `${SUPABASE_URL}/storage/v1/object/public/assets/${folder}/${fileName}`;
-};
+import { useProductViewModel } from "@/viewmodels/useProductViewModel";
+import { getStorageUrl } from "@/services/supabaseClient";
 
 export function HomePage() {
-  const router = useRouter();
-  const featuredProducts = products.filter((p) => p.featured && p.active);
+  // ViewModel handles all business logic
+  const { 
+    products: featuredProducts, 
+    isLoading, 
+    error,
+    handleProductClick 
+  } = useProductViewModel({ 
+    filters: { featured: true },
+    autoLoad: true 
+  });
 
-  const handleProductClick = (productId: number) => {
-    router.push(`/products/${productId}`);
-  };
+  // Get hero image URL
+  const heroImageUrl = getStorageUrl("assets", "web/hero-image.jpg");
 
-  // Use a hero image from the web folder (protected from modifications)
-  // Replace 'hero-image.jpg' with your actual hero image filename in web/ folder
-  const heroImageUrl = getStorageUrl("web", "hero-image.jpg");
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
+  // Error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-red-600 mb-2">Oops!</h2>
+          <p className="text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Main UI (pure presentation)
   return (
     <>
       <Hero imageUrl={heroImageUrl} />

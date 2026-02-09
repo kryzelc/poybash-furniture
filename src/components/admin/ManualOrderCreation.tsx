@@ -37,7 +37,8 @@ import {
   type ProductVariant,
   type Product,
 } from "../../lib/products";
-import type { Order, OrderItem, User } from "../../contexts/AuthContext";
+import type { Order, OrderItem } from "@/models/Order";
+import type { User } from "@/models/User";
 import { ImageWithFallback } from "../figma/ImageWithFallback";
 import {
   validateName,

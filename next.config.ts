@@ -27,6 +27,9 @@ const nextConfig: NextConfig = {
     },
   },
 
+  // Turbopack configuration (empty to silence warning)
+  turbopack: {},
+
   // Webpack configuration to fix chunk loading issues
   webpack: (config, { isServer }) => {
     // Disable webpack cache to prevent chunk loading errors
