@@ -86,6 +86,18 @@ class AuthService {
         active: u.active
       })));
       
+      // Debug each condition
+      users.forEach((u: any) => {
+        if (u.email.toLowerCase() === data.email.toLowerCase()) {
+          console.log('Found email match:', u.email);
+          console.log('  - Stored hash:', u.passwordHash);
+          console.log('  - Input hash:', passwordHash);
+          console.log('  - Hash match:', u.passwordHash === passwordHash);
+          console.log('  - Active:', u.active);
+          console.log('  - Active type:', typeof u.active);
+        }
+      });
+      
       const user = users.find(
         (u: any) => 
           u.email.toLowerCase() === data.email.toLowerCase() &&
