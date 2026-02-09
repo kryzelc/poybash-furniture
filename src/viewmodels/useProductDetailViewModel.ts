@@ -36,9 +36,17 @@ export function useProductDetailViewModel(productId: number) {
         setIsLoading(true);
         // For now, use static products
         const foundProduct = staticProducts.find(p => p.id === productId);
-        setProduct(foundProduct || null);
         
-        if (!foundProduct) {
+        if (foundProduct) {
+          // Add required timestamp fields for Product model compatibility
+          setProduct({
+            ...foundProduct,
+            variants: foundProduct.variants || [],
+            createdAt: '2024-01-01T00:00:00Z',
+            updatedAt: '2024-01-01T00:00:00Z',
+          });
+        } else {
+          setProduct(null);
           setError('Product not found');
         }
       } catch (err) {

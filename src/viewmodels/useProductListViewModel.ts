@@ -25,8 +25,15 @@ export interface ProductFilters {
 export function useProductListViewModel(initialCategory?: 'chairs' | 'tables') {
   const router = useRouter();
   
-  // State
-  const [products, setProducts] = useState<Product[]>(staticProducts.filter(p => p.active));
+  // State - Add timestamp fields for Product model compatibility
+  const [products, setProducts] = useState<Product[]>(
+    staticProducts.filter(p => p.active).map(p => ({
+      ...p,
+      variants: p.variants || [],
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z',
+    }))
+  );
   const [sortBy, setSortBy] = useState<SortOption>('all');
   const [selectedCategories, setSelectedCategories] = useState<string[]>(
     initialCategory ? [initialCategory] : []

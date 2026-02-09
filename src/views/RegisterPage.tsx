@@ -35,7 +35,7 @@ interface RegisterPageProps {
 }
 
 export function RegisterPage({ onNavigate }: RegisterPageProps) {
-  const { register } = useAuth();
+  const { signUp } = useAuth();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -126,14 +126,13 @@ export function RegisterPage({ onNavigate }: RegisterPageProps) {
     setIsLoading(true);
 
     try {
-      // Register in local storage only
-      const registrationResult = await register({
+      // Register user
+      const registrationResult = await signUp({
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
         firstName: sanitizeInput(formData.firstName),
         lastName: sanitizeInput(formData.lastName),
         phone: formData.phone ? formatPhoneNumber(formData.phone) : "",
-        role: "customer",
       });
 
       setIsLoading(false);

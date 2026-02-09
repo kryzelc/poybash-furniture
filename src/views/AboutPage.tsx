@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "../components/ui/card";
 
-import { SUPABASE_URL } from "../utils/imageUrls";
+import { SUPABASE_URL } from "../services/storageService";
 
 const aboutImage = `${SUPABASE_URL}/storage/v1/object/public/assets/web/about.png`;
 

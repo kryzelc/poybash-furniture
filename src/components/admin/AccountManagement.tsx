@@ -26,7 +26,7 @@ import {
   updateUserInfo,
   createUser,
   checkEmailExists,
-} from "../../lib/userService";
+} from "../../services/userService";
 import {
   Card,
   CardContent,

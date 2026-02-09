@@ -26,6 +26,14 @@ export interface ProductVariant {
   active: boolean;
 }
 
+// Legacy type for backward compatibility
+export interface SizeOption {
+  label: string;
+  price: number;
+  dimensions: ProductDimensions;
+  warehouseStock: WarehouseStock[];
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -43,6 +51,11 @@ export interface Product {
   active: boolean;
   createdAt: string;
   updatedAt: string;
+  
+  // DEPRECATED - Kept for backward compatibility during migration
+  sizeOptions?: SizeOption[]; // Legacy size system for tables
+  warehouseStock?: WarehouseStock[]; // Legacy stock system
+  colors?: string[]; // Legacy color array
 }
 
 /**

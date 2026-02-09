@@ -59,7 +59,7 @@ import { InvoiceReceipt } from "../components/InvoiceReceipt";
 import { addAuditLog } from "../lib/auditLog";
 import { useAuditLog } from "../hooks/useAuditLog";
 import { toast } from "sonner";
-import { SUPABASE_URL } from "../utils/imageUrls";
+import { SUPABASE_URL } from "../services/storageService";
 
 const poybashLogo = `${SUPABASE_URL}/storage/v1/object/public/assets/logos/poybash-logo.png`;
 import {

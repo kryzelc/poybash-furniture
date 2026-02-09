@@ -102,14 +102,11 @@ export function useCartViewModel() {
         );
       }
 
-      // Determine price
+      // Determine price from variant
       let price = product.price;
-      if (variantId && product.variants) {
+      if (variantId && product.variants.length > 0) {
         const variant = product.variants.find(v => v.id === variantId);
         if (variant) price = variant.price;
-      } else if (product.sizeOptions && size) {
-        const sizeOption = product.sizeOptions.find(s => s.label === size);
-        if (sizeOption) price = sizeOption.price;
       }
 
       const newItem: CartItem = {

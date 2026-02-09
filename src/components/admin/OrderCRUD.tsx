@@ -53,7 +53,7 @@ import {
   useCoupon,
   type Coupon,
 } from "../../lib/coupons";
-import { createUser, checkEmailExists } from "../../lib/userService";
+import { createUser, checkEmailExists } from "../../services/userService";
 // reserveStock is now handled automatically in placeOrder
 // import { reserveStock } from '../../lib/inventory';
 

@@ -111,9 +111,10 @@ class ProductService {
       );
     }
 
-    // Add timestamp fields to match Product model
+    // Add timestamp fields and ensure variants array exists
     return products.map(p => ({
       ...p,
+      variants: p.variants || [], // Ensure variants is always an array
       createdAt: '2024-01-01T00:00:00Z', // Default timestamp for static products
       updatedAt: '2024-01-01T00:00:00Z',
     }));
@@ -134,9 +135,10 @@ class ProductService {
     const product = staticProducts.find(p => p.id === id && p.active);
     if (!product) return null;
     
-    // Add timestamp fields to match Product model
+    // Add timestamp fields and ensure variants array exists
     return {
       ...product,
+      variants: product.variants || [], // Ensure variants is always an array
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z',
     };

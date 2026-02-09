@@ -10,3 +10,6 @@ export * from './orderService';
 export * from './authService';
 export * from './couponService';
 export * from './inventoryService';
+export * from './userService';
+export * from './storageService';
+export * from './realtimeService';

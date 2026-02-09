@@ -44,10 +44,11 @@ export function getMaxPrice(product: Product): number {
 
 /**
  * Format price for display with proper currency symbol
+ * Note: This function is also available in lib/utils.ts
+ * TODO: Consider importing from utils.ts to avoid duplication
  */
-export function formatPrice(price: number): string {
-  return `₱${price.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
+import { formatPrice as formatPriceUtil } from './utils';
+export const formatPrice = formatPriceUtil;
 
 /**
  * Get price range text for products with variants or size options

@@ -24,7 +24,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { SUPABASE_URL } from "../utils/imageUrls";
+import { SUPABASE_URL } from "../services/storageService";
 
 const poybashLogo = `${SUPABASE_URL}/storage/v1/object/public/assets/logos/poybash-logo.png`;
 

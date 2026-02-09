@@ -14,15 +14,18 @@ interface OrderConfirmationPageProps {
 }
 
 export function OrderConfirmationPage({ orderId, onNavigate }: OrderConfirmationPageProps) {
-  const { getOrders } = useAuth();
+  const { getMyOrders } = useAuth();
   const [order, setOrder] = useState<any>(null);
 
   useEffect(() => {
     // Find the order by ID
-    const orders = getOrders();
-    const foundOrder = orders.find(o => o.id === orderId);
-    setOrder(foundOrder);
-  }, [orderId, getOrders]);
+    const loadOrder = async () => {
+      const orders = await getMyOrders();
+      const foundOrder = orders.find(o => o.id === orderId);
+      setOrder(foundOrder);
+    };
+    loadOrder();
+  }, [orderId, getMyOrders]);
 
   if (!order) {
     return (

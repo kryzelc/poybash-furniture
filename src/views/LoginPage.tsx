@@ -26,7 +26,7 @@ interface LoginPageProps {
 
 export function LoginPage({ onNavigate }: LoginPageProps) {
   const router = useRouter();
-  const { login, canAccessAdmin } = useAuth();
+  const { signIn, canAccessAdmin } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -36,10 +36,10 @@ export function LoginPage({ onNavigate }: LoginPageProps) {
     setIsLoading(true);
 
     try {
-      const success = await login(email, password);
+      const result = await signIn({ email, password });
       setIsLoading(false);
 
-      if (success) {
+      if (result.success) {
         toast.success("Welcome back!", {
           description: "You have successfully signed in to your account.",
         });

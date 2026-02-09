@@ -195,7 +195,7 @@ export function ProductsPage({ category, onProductClick }: ProductsPageProps) {
                   max={maxPrice}
                   step={100}
                   value={priceRange}
-                  onValueChange={setPriceRange}
+                  onValueChange={(value) => setPriceRange(value as [number, number])}
                   className="py-3"
                 />
                 <div className="flex items-center justify-between text-xs">
@@ -213,7 +213,7 @@ export function ProductsPage({ category, onProductClick }: ProductsPageProps) {
               <p className="text-muted-foreground text-sm sm:text-base">
                 Showing {filteredProducts.length} of {availableProducts.length} products
               </p>
-              <Select value={sortBy} onValueChange={setSortBy}>
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as any)}>
                 <SelectTrigger className="w-full sm:w-[180px] lg:w-[200px]">
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>

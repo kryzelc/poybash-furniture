@@ -1,12 +1,11 @@
-// Helper function to get image URL from Supabase storage
-const SUPABASE_URL =
-  process.env.NEXT_PUBLIC_SUPABASE_URL || "https://ktcadsqclaszdyymftvf.supabase.co";
+// Use centralized storage service instead of duplicating
+import { getStorageImageUrl } from '../services/storageService';
 
 const getStorageUrl = (
   folder: "chairs" | "tables",
   fileName: string,
 ): string => {
-  return `${SUPABASE_URL}/storage/v1/object/public/assets/${folder}/${fileName}`;
+  return getStorageImageUrl(`assets/${folder}/${fileName}`);
 };
 
 // Product image paths (from Supabase storage bucket)
