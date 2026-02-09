@@ -90,7 +90,7 @@ export function Header({ onCartOpen }: HeaderProps) {
                   alt="PoyBash Furniture"
                   className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 lg:w-10 lg:h-10 transition-transform duration-200 group-hover:scale-105 flex-shrink-0"
                 />
-                <span className="text-xs sm:text-sm md:text-base lg:text-xl font-semibold tracking-tight text-primary">
+                <span className="text-base sm:text-sm md:text-base lg:text-xl font-semibold tracking-tight text-primary">
                   <span className="hidden sm:inline">PoyBash Furniture</span>
                   <span className="sm:hidden">PoyBash</span>
                 </span>
