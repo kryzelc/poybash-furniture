@@ -126,12 +126,57 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
   const {
     user,
     canAccessAdmin,
+    signOut,
   } = useAuth();
   const { logProductAction } = useAuditLog();
   
   // Helper functions for role checks
   const isOwner = () => user?.role === 'owner';
   const isAdmin = () => user?.role === 'admin' || user?.role === 'owner';
+  
+  // Order management functions (localStorage-based)
+  const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
+    const storedOrders = localStorage.getItem('orders');
+    if (!storedOrders) return;
+    
+    const ordersList = JSON.parse(storedOrders);
+    const updatedOrders = ordersList.map((o: Order) =>
+      o.id === orderId ? { ...o, status: newStatus, updatedAt: new Date().toISOString() } : o
+    );
+    localStorage.setItem('orders', JSON.stringify(updatedOrders));
+    setOrders(updatedOrders);
+  };
+  
+  const cancelOrder = (orderId: string, reason?: string) => {
+    const storedOrders = localStorage.getItem('orders');
+    if (!storedOrders) return;
+    
+    const ordersList = JSON.parse(storedOrders);
+    const updatedOrders = ordersList.map((o: Order) =>
+      o.id === orderId ? { 
+        ...o, 
+        status: 'cancelled' as OrderStatus, 
+        cancelReason: reason,
+        updatedAt: new Date().toISOString() 
+      } : o
+    );
+    localStorage.setItem('orders', JSON.stringify(updatedOrders));
+    setOrders(updatedOrders);
+  };
+  
+  const processManualRefund = (orderId: string, refundData: any) => {
+    // TODO: Implement refund processing
+    console.log('Processing refund for order:', orderId, refundData);
+  };
+  
+  const placeOrder = async (orderData: any) => {
+    // TODO: Implement order placement from admin
+    console.log('Placing order:', orderData);
+  };
+  
+  const logout = async () => {
+    await signOut();
+  };
 
   // Set default tab based on role
   const getDefaultTab = () => {
