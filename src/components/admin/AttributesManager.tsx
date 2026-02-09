@@ -666,7 +666,7 @@ export function AttributesManager({ onClose, logAction }: AttributesManagerProps
                                 setMainCategoryDialogItem(cat);
                                 setMainCategoryDialogAction('deactivate');
                               }}
-                              className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </Button>
@@ -678,7 +678,7 @@ export function AttributesManager({ onClose, logAction }: AttributesManagerProps
                                 setMainCategoryDialogItem(cat);
                                 setMainCategoryDialogAction('reactivate');
                               }}
-                              className="h-8 w-8 p-0 text-green-500 hover:text-green-600 hover:bg-green-50"
+                              className="h-8 w-8 p-0 text-accent-foreground hover:text-accent-foreground hover:bg-accent/20"
                             >
                               <RotateCcw className="w-3.5 h-3.5" />
                             </Button>
@@ -814,7 +814,7 @@ export function AttributesManager({ onClose, logAction }: AttributesManagerProps
                                   setSubCategoryDialogItem(subCat);
                                   setSubCategoryDialogAction('deactivate');
                                 }}
-                                className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </Button>
@@ -826,7 +826,7 @@ export function AttributesManager({ onClose, logAction }: AttributesManagerProps
                                   setSubCategoryDialogItem(subCat);
                                   setSubCategoryDialogAction('reactivate');
                                 }}
-                                className="h-8 w-8 p-0 text-green-500 hover:text-green-600 hover:bg-green-50"
+                                className="h-8 w-8 p-0 text-accent-foreground hover:text-accent-foreground hover:bg-accent/20"
                               >
                                 <RotateCcw className="w-3.5 h-3.5" />
                               </Button>
@@ -932,7 +932,7 @@ export function AttributesManager({ onClose, logAction }: AttributesManagerProps
                               setMaterialDialogItem(material);
                               setMaterialDialogAction('deactivate');
                             }}
-                            className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -944,7 +944,7 @@ export function AttributesManager({ onClose, logAction }: AttributesManagerProps
                               setMaterialDialogItem(material);
                               setMaterialDialogAction('reactivate');
                             }}
-                            className="h-8 w-8 p-0 text-green-500 hover:text-green-600 hover:bg-green-50"
+                            className="h-8 w-8 p-0 text-accent-foreground hover:text-accent-foreground hover:bg-accent/20"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
                           </Button>
@@ -1065,7 +1065,7 @@ export function AttributesManager({ onClose, logAction }: AttributesManagerProps
                               setColorDialogItem(color);
                               setColorDialogAction('deactivate');
                             }}
-                            className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </Button>
@@ -1077,7 +1077,7 @@ export function AttributesManager({ onClose, logAction }: AttributesManagerProps
                               setColorDialogItem(color);
                               setColorDialogAction('reactivate');
                             }}
-                            className="h-8 w-8 p-0 text-green-500 hover:text-green-600 hover:bg-green-50"
+                            className="h-8 w-8 p-0 text-accent-foreground hover:text-accent-foreground hover:bg-accent/20"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
                           </Button>

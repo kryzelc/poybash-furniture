@@ -760,7 +760,7 @@ function BatchHistoryDialog({
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5">
+            <div className="bg-muted/20 border border-muted rounded-lg p-2.5">
               <div className="flex items-start gap-2">
                 <AlertTriangle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="text-xs text-blue-900">
@@ -793,16 +793,16 @@ function BatchHistoryDialog({
                       return (
                         <TableRow 
                           key={`${batch.warehouse}-${batch.batchId}`}
-                          className={isOldest ? 'bg-blue-50' : ''}
+                          className={isOldest ? 'bg-muted/20' : ''}
                         >
                           <TableCell className="text-center py-2">
                             <div className="flex flex-col items-center gap-0.5">
                               <span className="text-xs">{index + 1}</span>
                               {isOldest && (
-                                <Badge className="text-[8px] px-1 py-0 h-4 bg-blue-600">OLD</Badge>
+                                <Badge className="text-[8px] px-1 py-0 h-4 bg-muted-foreground text-background">OLD</Badge>
                               )}
                               {isNewest && (
-                                <Badge className="text-[8px] px-1 py-0 h-4 bg-green-600">NEW</Badge>
+                                <Badge className="text-[8px] px-1 py-0 h-4 bg-accent-foreground text-accent">NEW</Badge>
                               )}
                             </div>
                           </TableCell>
@@ -827,7 +827,7 @@ function BatchHistoryDialog({
                           <TableCell className="text-center py-2">
                             <Badge 
                               variant={batch.available === 0 ? 'destructive' : 'default'}
-                              className={`text-xs ${batch.available > 0 ? 'bg-green-600' : ''}`}
+                              className={`text-xs ${batch.available > 0 ? 'bg-accent-foreground text-accent' : ''}`}
                             >
                               {batch.available}
                             </Badge>

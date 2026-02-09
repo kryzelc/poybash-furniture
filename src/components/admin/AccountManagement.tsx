@@ -1190,8 +1190,8 @@ function UserDetailsView({
                   {new Date(user.createdAt).toLocaleString()}
                 </p>
               </div>
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm text-blue-800">
+              <div className="p-3 bg-muted/20 border border-muted rounded-lg">
+                <p className="text-sm text-muted-foreground">
                   🔒 <strong>Security:</strong> You'll be asked to verify your
                   password before these changes are saved.
                 </p>

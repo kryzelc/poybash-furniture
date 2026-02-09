@@ -1404,12 +1404,12 @@ export function ManualOrderCreation({
             </CardContent>
           </Card>
         ) : (
-          <Card className="bg-green-50 border-green-200">
+          <Card className="bg-accent/20 border-accent">
             <CardContent className="pt-6">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="default" className="bg-green-600">
+                    <Badge variant="default" className="bg-accent-foreground text-accent">
                       Selected Customer
                     </Badge>
                   </div>
@@ -2118,7 +2118,7 @@ export function ManualOrderCreation({
                 placeholder="30"
                 min="30"
                 max="100"
-                className="bg-white border-[#8D6E63]"
+                className="bg-background border-primary"
               />
               <p className="text-xs text-muted-foreground">
                 Customer will pay {reservationPercentage || 30}% (₱
@@ -2263,7 +2263,7 @@ export function ManualOrderCreation({
             </Button>
           </div>
         ) : (
-          <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 rounded">
+          <div className="flex items-center justify-between p-3 bg-accent/20 border border-accent rounded">
             <div>
               <p className="font-medium text-green-700 dark:text-green-400">
                 {appliedCoupon.code}

@@ -710,12 +710,12 @@ export function CreateOrderDialog({
                 </CardContent>
               </Card>
             ) : (
-              <Card className="bg-green-50 border-green-200">
+              <Card className="bg-accent/20 border-accent">
                 <CardContent className="pt-6">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge className="bg-green-600">
+                        <Badge className="bg-accent-foreground text-accent">
                           Selected Customer
                         </Badge>
                       </div>
@@ -1024,7 +1024,7 @@ export function CreateOrderDialog({
                             {isLowStock && !isOutOfStock && (
                               <Badge
                                 variant="outline"
-                                className="text-xs bg-yellow-50 text-yellow-700 border-yellow-300"
+                                className="text-xs bg-secondary/30 text-secondary-foreground border-secondary"
                               >
                                 Low Stock
                               </Badge>
@@ -1032,7 +1032,7 @@ export function CreateOrderDialog({
                             {isOutOfStock && (
                               <Badge
                                 variant="outline"
-                                className="text-xs bg-red-50 text-red-700 border-red-300"
+                                className="text-xs bg-destructive/10 text-destructive border-destructive/30"
                               >
                                 Out of Stock
                               </Badge>
@@ -1075,7 +1075,7 @@ export function CreateOrderDialog({
                     return (
                       <div
                         key={index}
-                        className={`flex items-center gap-4 p-2 rounded ${hasStockIssue ? "bg-red-50 border border-red-300" : "bg-secondary"}`}
+                        className={`flex items-center gap-4 p-2 rounded ${hasStockIssue ? "bg-destructive/10 border border-destructive/30" : "bg-secondary"}`}
                       >
                         <img
                           src={item.imageUrl}
@@ -1096,7 +1096,7 @@ export function CreateOrderDialog({
                             {hasStockIssue && (
                               <Badge
                                 variant="outline"
-                                className="text-xs bg-red-100 text-red-700 border-red-300"
+                                className="text-xs bg-destructive/10 text-destructive border-destructive/30"
                               >
                                 <AlertTriangle className="h-3 w-3 mr-1" />
                                 Only {availableStock} available (Total in order:{" "}
@@ -1408,12 +1408,12 @@ export function CreateOrderDialog({
 
                 {/* Applied Coupon */}
                 {appliedCoupon && (
-                  <Card className="bg-green-50 border-green-200">
+                  <Card className="bg-accent/20 border-accent">
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <Badge className="bg-green-600">
+                            <Badge className="bg-accent-foreground text-accent">
                               {appliedCoupon.code}
                             </Badge>
                             <Badge variant="outline" className="text-xs">

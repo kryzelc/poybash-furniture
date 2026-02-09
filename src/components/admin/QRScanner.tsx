@@ -224,19 +224,19 @@ export function QRScanner({ orders, onClose }: QRScannerProps) {
   const getStatusColor = (status: Order["status"]) => {
     switch (status) {
       case "completed":
-        return "bg-green-500/10 text-green-700";
+        return "bg-accent/20 text-accent-foreground";
       case "ready":
-        return "bg-blue-500/10 text-blue-700";
+        return "bg-muted/30 text-muted-foreground";
       case "processing":
-        return "bg-yellow-500/10 text-yellow-700";
+        return "bg-secondary/40 text-secondary-foreground";
       case "pending":
-        return "bg-orange-500/10 text-orange-700";
+        return "bg-primary/15 text-primary";
       case "cancelled":
-        return "bg-red-500/10 text-red-700";
+        return "bg-destructive/10 text-destructive";
       case "pending":
-        return "bg-purple-500/10 text-purple-700";
+        return "bg-secondary/30 text-secondary-foreground";
       default:
-        return "bg-gray-500/10 text-gray-700";
+        return "bg-muted/20 text-muted-foreground";
     }
   };
 

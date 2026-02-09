@@ -466,7 +466,7 @@ export function CouponManagement() {
                           ) : usageFull ? (
                             <Badge variant="secondary" className="text-xs">Full</Badge>
                           ) : coupon.isActive ? (
-                            <Badge className="bg-green-600 text-xs">Active</Badge>
+                            <Badge className="bg-accent-foreground text-accent text-xs">Active</Badge>
                           ) : (
                             <Badge variant="secondary" className="text-xs">Inactive</Badge>
                           )}

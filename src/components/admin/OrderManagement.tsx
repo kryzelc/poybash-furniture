@@ -164,7 +164,7 @@ export function OrderManagement({ orders = [], onUpdateOrderStatus, onCancelOrde
                 }
               }}
               placeholder="Enter Order ID (e.g., ORD-123456)"
-              className="flex-1 px-3 py-2 border border-[#5D4037]/20 rounded-md bg-input-background focus:outline-none focus:ring-2 focus:ring-[#A1887F] focus:border-transparent transition-all"
+              className="flex-1 px-3 py-2 border border-primary/20 rounded-md bg-input focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
             />
             <Button onClick={() => {
               const order = orders.find(o => o.id === manualOrderLookup.trim());
@@ -740,8 +740,8 @@ function OrderDetailsView({
         <CardContent className="pb-4">
           {/* Reservation Badge - Only show for active reservation orders */}
           {order.isReservation && !['cancelled', 'refunded', 'completed'].includes(order.status) && (
-            <div className="mb-4 p-3 bg-purple-50 border border-purple-200 rounded-lg">
-              <div className="flex items-center gap-2 text-purple-700">
+            <div className="mb-4 p-3 bg-secondary/30 border border-secondary rounded-lg">
+              <div className="flex items-center gap-2 text-secondary-foreground">
                 <Clock className="h-4 w-4" />
                 <span className="font-medium">This is a reservation order</span>
               </div>
@@ -928,8 +928,8 @@ function OrderDetailsView({
               </div>
             )}
             {order.paymentMethod !== 'cash' && !order.paymentReference && !order.paymentProof && !order.paymentRecipient && !order.paymentName && !order.paymentPhone && !order.transactionDetails && (
-              <div className="text-center py-4 p-3 border border-orange-200 bg-orange-50 rounded-lg">
-                <p className="text-xs text-orange-600">⚠️ No payment verification information provided</p>
+              <div className="text-center py-4 p-3 border border-primary/30 bg-primary/10 rounded-lg">
+                <p className="text-xs text-primary">⚠️ No payment verification information provided</p>
               </div>
             )}
           </div>
@@ -1016,7 +1016,7 @@ function OrderDetailsView({
 
       {/* Refund Request Information - Show pending refund requests */}
       {order.items.some(item => item.refundRequested && item.refundStatus === 'pending') && !order.refundDetails && (
-        <Card className="border-purple-200 bg-purple-50/50">
+        <Card className="border-secondary bg-secondary/20">
           <CardHeader>
             <div className="flex items-center gap-2">
               <AlertCircle className="h-5 w-5 text-purple-600" />
@@ -1040,7 +1040,7 @@ function OrderDetailsView({
                       <p className="text-xs text-muted-foreground">{item.color}{item.size ? ` • ${item.size}` : ''} • Qty: {item.quantity}</p>
                       <p className="text-sm text-primary mt-1">₱{(item.price * item.quantity).toFixed(2)}</p>
                       {item.refundReason && (
-                        <div className="mt-2 p-2 bg-purple-50 rounded border border-purple-100">
+                        <div className="mt-2 p-2 bg-secondary/20 rounded border border-secondary">
                           <p className="text-xs text-muted-foreground mb-0.5">Refund Reason:</p>
                           <p className="text-sm">{item.refundReason}</p>
                         </div>
@@ -1073,7 +1073,7 @@ function OrderDetailsView({
                           </Dialog>
                         </div>
                       )}
-                      <Badge className="mt-2 bg-purple-100 text-purple-700 border-purple-200">
+                      <Badge className="mt-2 bg-secondary/40 text-secondary-foreground border-secondary">
                         Status: {item.refundStatus}
                       </Badge>
                     </div>
@@ -1126,9 +1126,9 @@ function OrderDetailsView({
           <CardContent>
             {order.refundDetails ? (
               <div className="space-y-4">
-                <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg space-y-3">
+                <div className="p-4 bg-secondary/30 border border-secondary rounded-lg space-y-3">
                   <div className="flex items-center justify-between">
-                    <Badge className="bg-purple-500/20 text-purple-700">Refund Processed</Badge>
+                    <Badge className="bg-secondary/50 text-secondary-foreground">Refund Processed</Badge>
                     <span className="text-sm text-muted-foreground">
                       {new Date(order.refundDetails.processedAt).toLocaleString()}
                     </span>
@@ -1309,15 +1309,15 @@ function OrderDetailsView({
 // Helper function to get status color
 function getStatusColor(status: Order['status']) {
   const colors: Record<Order['status'], string> = {
-    'pending': 'bg-orange-500/20 text-orange-500',
-    'reserved': 'bg-purple-500/20 text-purple-500',
-    'processing': 'bg-blue-500/20 text-blue-500',
-    'ready-for-pickup': 'bg-green-500/20 text-green-500',
-    'completed': 'bg-green-700/20 text-green-700',
-    'cancelled': 'bg-red-500/20 text-red-500',
-    'refund-requested': 'bg-purple-500/20 text-purple-500',
-    'refunded': 'bg-purple-700/20 text-purple-700',
+    'pending': 'bg-primary/15 text-primary',
+    'reserved': 'bg-secondary/50 text-secondary-foreground',
+    'processing': 'bg-muted/40 text-muted-foreground',
+    'ready-for-pickup': 'bg-accent/30 text-accent-foreground',
+    'completed': 'bg-accent/40 text-accent-foreground',
+    'cancelled': 'bg-destructive/20 text-destructive',
+    'refund-requested': 'bg-secondary/50 text-secondary-foreground',
+    'refunded': 'bg-muted/50 text-muted-foreground',
   };
 
-  return colors[status] || 'bg-gray-500/20 text-gray-500';
+  return colors[status] || 'bg-muted/30 text-muted-foreground';
 }

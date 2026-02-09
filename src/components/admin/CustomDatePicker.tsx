@@ -152,7 +152,7 @@ export function CustomDatePicker({
 
   if (selectingYear) {
     return (
-      <div className="w-[340px] bg-white rounded-lg border border-[#D4C5B9] shadow-lg p-4">
+      <div className="w-[340px] bg-background rounded-lg border border-border shadow-lg p-4">
         <div className="flex items-center justify-between mb-4">
           <Button
             variant="ghost"
@@ -185,7 +185,7 @@ export function CustomDatePicker({
                 onClick={() => handleYearSelect(year)}
                 className={
                   year === currentYear
-                    ? "bg-[#8B4513] hover:bg-[#A0522D] text-white"
+                    ? "bg-primary hover:bg-primary/90 text-primary-foreground"
                     : ""
                 }
               >
@@ -200,7 +200,7 @@ export function CustomDatePicker({
           </Button>
           <Button
             onClick={() => setSelectingYear(false)}
-            className="bg-[#8B4513] hover:bg-[#A0522D] text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             Apply
           </Button>
@@ -211,7 +211,7 @@ export function CustomDatePicker({
 
   if (selectingMonth) {
     return (
-      <div className="w-[340px] bg-white rounded-lg border border-[#D4C5B9] shadow-lg p-4">
+      <div className="w-[340px] bg-background rounded-lg border border-border shadow-lg p-4">
         <div className="mb-4">
           <h3 className="text-center">Select month</h3>
         </div>
@@ -224,7 +224,7 @@ export function CustomDatePicker({
                 onClick={() => handleMonthSelect(index)}
                 className={
                   index === currentMonth
-                    ? "bg-[#8B4513] hover:bg-[#A0522D] text-white"
+                    ? "bg-primary hover:bg-primary/90 text-primary-foreground"
                     : ""
                 }
               >
@@ -239,7 +239,7 @@ export function CustomDatePicker({
           </Button>
           <Button
             onClick={() => setSelectingMonth(false)}
-            className="bg-[#8B4513] hover:bg-[#A0522D] text-white"
+            className="bg-primary hover:bg-primary/90 text-primary-foreground"
           >
             Apply
           </Button>
@@ -249,7 +249,7 @@ export function CustomDatePicker({
   }
 
   return (
-    <div className="w-[340px] bg-white rounded-lg border border-[#D4C5B9] shadow-lg p-4">
+    <div className="w-[340px] bg-background rounded-lg border border-border shadow-lg p-4">
       {/* Month/Year Navigation */}
       <div className="flex items-center justify-between mb-4">
         <Button
@@ -265,14 +265,14 @@ export function CustomDatePicker({
           <Button
             variant="ghost"
             onClick={() => setSelectingMonth(true)}
-            className="hover:bg-[#F5E6D3]"
+            className="hover:bg-secondary"
           >
             {fullMonths[currentMonth]}
           </Button>
           <Button
             variant="ghost"
             onClick={() => setSelectingYear(true)}
-            className="hover:bg-[#F5E6D3]"
+            className="hover:bg-secondary"
           >
             {currentYear}
           </Button>
@@ -293,7 +293,7 @@ export function CustomDatePicker({
         {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
           <div
             key={day}
-            className="text-center text-xs text-[#8B7355] py-1"
+            className="text-center text-xs text-muted-foreground py-1"
           >
             {day}
           </div>
@@ -328,9 +328,9 @@ export function CustomDatePicker({
               className={`
                 aspect-square flex items-center justify-center text-sm rounded-md
                 transition-colors
-                ${isPastDate ? "opacity-30 cursor-not-allowed text-gray-400" : ""}
-                ${!isPastDate && isSelected ? "bg-[#8B4513] text-white font-semibold" : !isPastDate ? "hover:bg-[#F5E6D3]" : ""}
-                ${isTodayDate && !isSelected ? "border border-[#8B4513]" : ""}
+                ${isPastDate ? "opacity-30 cursor-not-allowed text-muted-foreground" : ""}
+                ${!isPastDate && isSelected ? "bg-primary text-primary-foreground font-semibold" : !isPastDate ? "hover:bg-secondary" : ""}
+                ${isTodayDate && !isSelected ? "border border-primary" : ""}
               `}
             >
               {day}
@@ -346,7 +346,7 @@ export function CustomDatePicker({
         </Button>
         <Button
           onClick={onApply}
-          className="bg-[#8B4513] hover:bg-[#A0522D] text-white"
+          className="bg-primary hover:bg-primary/90 text-primary-foreground"
           disabled={!value}
         >
           Apply

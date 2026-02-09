@@ -310,11 +310,11 @@ export function AuditTrailViewer() {
   const getSeverityColor = (severity: "low" | "medium" | "high") => {
     switch (severity) {
       case "high":
-        return "text-red-600 bg-red-50 border-red-200";
+        return "text-destructive bg-destructive/10 border-destructive/30";
       case "medium":
-        return "text-orange-600 bg-orange-50 border-orange-200";
+        return "text-primary bg-primary/10 border-primary/30";
       case "low":
-        return "text-yellow-600 bg-yellow-50 border-yellow-200";
+        return "text-secondary-foreground bg-secondary/20 border-secondary";
     }
   };
 
@@ -339,7 +339,7 @@ export function AuditTrailViewer() {
               <Button
                 size="sm"
                 variant="outline"
-                className="border-red-300 text-red-700 hover:bg-red-100"
+                className="border-destructive/50 text-destructive hover:bg-destructive/10"
                 onClick={() => setShowSuspicious(!showSuspicious)}
               >
                 <Eye className="h-4 w-4 mr-2" />
@@ -383,12 +383,12 @@ export function AuditTrailViewer() {
       )}
 
       {/* User Activity Summary */}
-      <Card className="bg-gradient-to-br from-[#f5deb3]/20 to-white border-[#deb887]/30">
+      <Card className="bg-gradient-to-br from-secondary/30 to-background border-secondary">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-[#8b4513]" />
+                <TrendingUp className="h-5 w-5 text-muted-foreground" />
                 User Activity Overview
               </CardTitle>
               <CardDescription>Most active users in the system</CardDescription>
@@ -781,7 +781,7 @@ export function AuditTrailViewer() {
                       paginatedLogs.map((log) => (
                         <TableRow 
                           key={log.id}
-                          className={isCriticalAction(log.actionType as AuditActionType) ? "bg-red-50/50 hover:bg-red-50" : ""}
+                          className={isCriticalAction(log.actionType as AuditActionType) ? "bg-destructive/5 hover:bg-destructive/10" : ""}
                         >
                           <TableCell className="text-center w-[160px]">
                             <Dialog>
@@ -932,13 +932,13 @@ export function AuditTrailViewer() {
                         {/* Timeline dot */}
                         <div className={`absolute left-0 top-2 w-6 h-6 rounded-full border-2 flex items-center justify-center ${
                           isCriticalAction(log.actionType as AuditActionType)
-                            ? "bg-red-100 border-red-500"
-                            : "bg-white border-[#8b4513]"
+                            ? "bg-destructive/10 border-destructive"
+                            : "bg-background border-primary"
                         }`}>
                           {isCriticalAction(log.actionType as AuditActionType) ? (
                             <AlertCircle className="h-3 w-3 text-red-600" />
                           ) : (
-                            <Clock className="h-3 w-3 text-[#8b4513]" />
+                            <Clock className="h-3 w-3 text-muted-foreground" />
                           )}
                         </div>
 
@@ -947,7 +947,7 @@ export function AuditTrailViewer() {
                           <DialogTrigger asChild>
                             <Card 
                               className={`cursor-pointer hover:shadow-md transition-shadow ${
-                                isCriticalAction(log.actionType as AuditActionType) ? "border-red-200 bg-red-50/30" : ""
+                                isCriticalAction(log.actionType as AuditActionType) ? "border-destructive/30 bg-destructive/5" : ""
                               }`}
                               onClick={() => setSelectedLog(log)}
                             >
@@ -1052,7 +1052,7 @@ function AuditLogDetails({ log }: { log: AuditLogEntry }) {
     <div className="space-y-3 max-h-[70vh] overflow-y-auto pr-2">
       {/* Critical Action Warning */}
       {isCritical && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-destructive/30 bg-destructive/10">
           <CardContent className="pt-4 flex items-start gap-3">
             <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5" />
             <div>
@@ -1188,11 +1188,11 @@ function AuditLogDetails({ log }: { log: AuditLogEntry }) {
                   <div className="grid grid-cols-2 gap-2">
                     <div>
                       <p className="text-xs text-muted-foreground">Old Value</p>
-                      <p className="font-mono text-xs bg-red-50 p-1.5 rounded">{change.oldValue}</p>
+                      <p className="font-mono text-xs bg-destructive/10 p-1.5 rounded">{change.oldValue}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">New Value</p>
-                      <p className="font-mono text-xs bg-green-50 p-1.5 rounded">{change.newValue}</p>
+                      <p className="font-mono text-xs bg-accent/20 p-1.5 rounded">{change.newValue}</p>
                     </div>
                   </div>
                 </div>

@@ -697,20 +697,20 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0 }}
               >
-                <Card className="bg-gradient-to-br from-[#d2691e]/20 to-[#d2691e]/5 border-[#d2691e]/30 h-full">
+                <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 h-full">
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <p className="text-muted-foreground text-sm mb-1">
                           PENDING ORDERS
                         </p>
-                        <p className="text-3xl">{stats.pendingOrders}</p>
+                        <p className="text-3xl text-primary">{stats.pendingOrders}</p>
                         <p className="text-xs text-muted-foreground mt-1">
                           Awaiting processing
                         </p>
                       </div>
-                      <div className="p-3 bg-[#d2691e]/20 rounded-full">
-                        <Clock className="h-6 w-6 text-[#d2691e]" />
+                      <div className="p-3 bg-primary/15 rounded-full">
+                        <Clock className="h-6 w-6 text-primary" />
                       </div>
                     </div>
                     <div className="h-16 w-full min-h-[64px]">
@@ -740,22 +740,22 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
               >
-                <Card className="bg-gradient-to-br from-[#8b4513]/20 to-[#8b4513]/5 border-[#8b4513]/30 h-full">
+                <Card className="bg-gradient-to-br from-muted/40 to-muted/10 border-muted-foreground/20 h-full">
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <p className="text-muted-foreground text-sm mb-1">
                           TOTAL REVENUE
                         </p>
-                        <p className="text-3xl">
+                        <p className="text-3xl text-primary">
                           {formatCurrency(stats.totalRevenue)}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           From completed orders
                         </p>
                       </div>
-                      <div className="p-3 bg-[#8b4513]/20 rounded-full">
-                        <Coins className="h-6 w-6 text-[#8b4513]" />
+                      <div className="p-3 bg-muted-foreground/15 rounded-full">
+                        <Coins className="h-6 w-6 text-muted-foreground" />
                       </div>
                     </div>
                     <div className="h-16 w-full min-h-[64px]">
@@ -785,20 +785,20 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
-                <Card className="bg-gradient-to-br from-[#cd853f]/20 to-[#cd853f]/5 border-[#cd853f]/30 h-full">
+                <Card className="bg-gradient-to-br from-accent/30 to-accent/10 border-accent-foreground/20 h-full">
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <p className="text-muted-foreground text-sm mb-1">
                           COMPLETED ORDERS
                         </p>
-                        <p className="text-3xl">{stats.completedOrders}</p>
+                        <p className="text-3xl text-primary">{stats.completedOrders}</p>
                         <p className="text-xs text-muted-foreground mt-1">
                           Successfully fulfilled
                         </p>
                       </div>
-                      <div className="p-3 bg-[#cd853f]/20 rounded-full">
-                        <CheckCircle className="h-6 w-6 text-[#cd853f]" />
+                      <div className="p-3 bg-accent/40 rounded-full">
+                        <CheckCircle className="h-6 w-6 text-accent-foreground" />
                       </div>
                     </div>
                     <div className="h-16 w-full min-h-[64px]">
@@ -828,20 +828,20 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <Card className="bg-gradient-to-br from-[#deb887]/20 to-[#deb887]/5 border-[#deb887]/30 h-full">
+                <Card className="bg-gradient-to-br from-secondary/50 to-secondary/20 border-secondary-foreground/20 h-full">
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <p className="text-muted-foreground text-sm mb-1">
                           NEW CUSTOMERS
                         </p>
-                        <p className="text-3xl">{stats.newCustomers}</p>
+                        <p className="text-3xl text-primary">{stats.newCustomers}</p>
                         <p className="text-xs text-muted-foreground mt-1">
                           Last 30 days
                         </p>
                       </div>
-                      <div className="p-3 bg-[#deb887]/20 rounded-full">
-                        <Users className="h-6 w-6 text-[#deb887]" />
+                      <div className="p-3 bg-secondary/60 rounded-full">
+                        <Users className="h-6 w-6 text-secondary-foreground" />
                       </div>
                     </div>
                     <div className="h-16 w-full min-h-[64px]">
@@ -992,7 +992,7 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
             {isOwner() && (
               <div className="space-y-6 mt-8">
                 {/* Sales Report Section */}
-                <div className="bg-gradient-to-br from-[#f5deb3]/20 to-[#deb887]/10 p-8 rounded-xl border border-[#deb887]/30">
+                <div className="bg-gradient-to-br from-secondary/30 to-accent/20 p-8 rounded-xl border border-muted">
                   <div className="max-w-4xl mx-auto">
                     <div className="mb-6">
                       <h3 className="text-2xl mb-2">Sales Analytics</h3>
@@ -1005,7 +1005,7 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
                 </div>
 
                 {/* Audit Trail Section */}
-                <div className="bg-gradient-to-br from-[#8b4513]/5 to-[#d2691e]/5 p-8 rounded-xl border border-[#8b4513]/20">
+                <div className="bg-gradient-to-br from-muted/20 to-secondary/20 p-8 rounded-xl border border-muted">
                   <div className="max-w-7xl mx-auto">
                     <div className="mb-6">
                       <h3 className="text-2xl mb-2">System Audit Trail</h3>

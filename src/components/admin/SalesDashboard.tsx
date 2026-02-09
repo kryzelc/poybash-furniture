@@ -157,26 +157,26 @@ export function SalesDashboard({
       Order["status"],
       { variant: any; icon: any; color: string }
     > = {
-      pending: { variant: "secondary", icon: Clock, color: "text-[#d2691e]" },
+      pending: { variant: "secondary", icon: Clock, color: "text-primary" },
       confirmed: {
         variant: "default",
         icon: CheckCircle,
-        color: "text-blue-700",
+        color: "text-foreground",
       },
       processing: {
         variant: "default",
         icon: Package,
-        color: "text-[#8b4513]",
+        color: "text-muted-foreground",
       },
       ready: {
         variant: "default",
         icon: CheckCircle,
-        color: "text-[#cd853f]",
+        color: "text-accent-foreground",
       },
       completed: {
         variant: "default",
         icon: CheckCircle,
-        color: "text-[#8b4513]",
+        color: "text-muted-foreground",
       },
       cancelled: {
         variant: "destructive",
@@ -186,7 +186,7 @@ export function SalesDashboard({
       refunded: {
         variant: "secondary",
         icon: AlertCircle,
-        color: "text-[#d2691e]",
+        color: "text-primary",
       },
     };
 
@@ -206,7 +206,7 @@ export function SalesDashboard({
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {/* Total Orders Card */}
         <Card
-          className="bg-gradient-to-br from-[#8b4513]/20 to-[#8b4513]/5 border-[#8b4513]/30 cursor-pointer hover:shadow-md transition-shadow"
+          className="bg-gradient-to-br from-muted/40 to-muted/10 border-muted-foreground/20 cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => onQuickFilter("orders", "all")}
         >
           <CardContent className="pt-6">
@@ -215,11 +215,11 @@ export function SalesDashboard({
                 <p className="text-muted-foreground text-sm mb-1">
                   TOTAL ORDERS
                 </p>
-                <p className="text-3xl">{stats.totalOrders}</p>
+                <p className="text-3xl text-primary">{stats.totalOrders}</p>
                 <p className="text-xs text-muted-foreground mt-1">All time</p>
               </div>
-              <div className="p-3 bg-[#8b4513]/20 rounded-full">
-                <ShoppingCart className="h-6 w-6 text-[#8b4513]" />
+              <div className="p-3 bg-muted-foreground/15 rounded-full">
+                <ShoppingCart className="h-6 w-6 text-muted-foreground" />
               </div>
             </div>
             <div className="h-16 w-full min-h-[64px]">
@@ -240,7 +240,7 @@ export function SalesDashboard({
 
         {/* Pending Orders Card */}
         <Card
-          className="bg-gradient-to-br from-[#d2691e]/20 to-[#d2691e]/5 border-[#d2691e]/30 cursor-pointer hover:shadow-md transition-shadow"
+          className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20 cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => onQuickFilter("orders", "pending")}
         >
           <CardContent className="pt-6">
@@ -249,13 +249,13 @@ export function SalesDashboard({
                 <p className="text-muted-foreground text-sm mb-1">
                   PENDING ORDERS
                 </p>
-                <p className="text-3xl">{stats.pendingOrders}</p>
+                <p className="text-3xl text-primary">{stats.pendingOrders}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Awaiting processing
                 </p>
               </div>
-              <div className="p-3 bg-[#d2691e]/20 rounded-full">
-                <Clock className="h-6 w-6 text-[#d2691e]" />
+              <div className="p-3 bg-primary/15 rounded-full">
+                <Clock className="h-6 w-6 text-primary" />
               </div>
             </div>
             <div className="h-16 w-full min-h-[64px]">
@@ -276,7 +276,7 @@ export function SalesDashboard({
 
         {/* Completed Orders Card */}
         <Card
-          className="bg-gradient-to-br from-[#cd853f]/20 to-[#cd853f]/5 border-[#cd853f]/30 cursor-pointer hover:shadow-md transition-shadow"
+          className="bg-gradient-to-br from-accent/30 to-accent/10 border-accent-foreground/20 cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => onQuickFilter("orders", "completed")}
         >
           <CardContent className="pt-6">
@@ -285,13 +285,13 @@ export function SalesDashboard({
                 <p className="text-muted-foreground text-sm mb-1">
                   COMPLETED ORDERS
                 </p>
-                <p className="text-3xl">{stats.completedOrders}</p>
+                <p className="text-3xl text-primary">{stats.completedOrders}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Successfully fulfilled
                 </p>
               </div>
-              <div className="p-3 bg-[#cd853f]/20 rounded-full">
-                <CheckCircle className="h-6 w-6 text-[#cd853f]" />
+              <div className="p-3 bg-accent/40 rounded-full">
+                <CheckCircle className="h-6 w-6 text-accent-foreground" />
               </div>
             </div>
             <div className="h-16 w-full min-h-[64px]">
@@ -312,7 +312,7 @@ export function SalesDashboard({
 
         {/* Refund Requests Card */}
         <Card
-          className="bg-gradient-to-br from-[#deb887]/20 to-[#deb887]/5 border-[#deb887]/30 cursor-pointer hover:shadow-md transition-shadow"
+          className="bg-gradient-to-br from-secondary/50 to-secondary/20 border-secondary-foreground/20 cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => onQuickFilter("orders", "refund-requested")}
         >
           <CardContent className="pt-6">
@@ -321,13 +321,13 @@ export function SalesDashboard({
                 <p className="text-muted-foreground text-sm mb-1">
                   REFUND REQUESTS
                 </p>
-                <p className="text-3xl">{stats.refundRequests}</p>
+                <p className="text-3xl text-primary">{stats.refundRequests}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Pending approval
                 </p>
               </div>
-              <div className="p-3 bg-[#deb887]/20 rounded-full">
-                <AlertCircle className="h-6 w-6 text-[#deb887]" />
+              <div className="p-3 bg-secondary/60 rounded-full">
+                <AlertCircle className="h-6 w-6 text-secondary-foreground" />
               </div>
             </div>
             <div className="h-16 w-full min-h-[64px]">
@@ -422,7 +422,7 @@ export function SalesDashboard({
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[#8b4513]">{item.quantity}</p>
+                      <p className="text-primary">{item.quantity}</p>
                       <p className="text-xs text-muted-foreground">
                         units sold
                       </p>
@@ -446,8 +446,8 @@ export function SalesDashboard({
           <CardContent className="space-y-6">
             <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/30">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#8b4513]/20 rounded-full">
-                  <Users className="h-5 w-5 text-[#8b4513]" />
+                <div className="p-2 bg-muted-foreground/15 rounded-full">
+                  <Users className="h-5 w-5 text-muted-foreground" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">
@@ -459,8 +459,8 @@ export function SalesDashboard({
             </div>
             <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/30">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-[#cd853f]/20 rounded-full">
-                  <TrendingUp className="h-5 w-5 text-[#cd853f]" />
+                <div className="p-2 bg-accent/30 rounded-full">
+                  <TrendingUp className="h-5 w-5 text-accent-foreground" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">New (30 days)</p>

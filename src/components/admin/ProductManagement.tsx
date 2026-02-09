@@ -600,7 +600,7 @@ export function ProductManagement({
       {(lowStockProducts.length > 0 || outOfStockProducts.length > 0) && (
         <div className="grid gap-4 md:grid-cols-2">
           {outOfStockProducts.length > 0 && (
-            <Card className="border-red-500/50 bg-red-500/5">
+            <Card className="border-destructive/50 bg-destructive/5">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-red-500 mt-0.5" />
@@ -617,7 +617,7 @@ export function ProductManagement({
             </Card>
           )}
           {lowStockProducts.length > 0 && (
-            <Card className="border-orange-500/50 bg-orange-500/5">
+            <Card className="border-primary/50 bg-primary/5">
               <CardContent className="pt-6">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-orange-500 mt-0.5" />
@@ -976,7 +976,7 @@ export function ProductManagement({
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(index)}
-                      className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="h-3 w-3" />
                     </button>
