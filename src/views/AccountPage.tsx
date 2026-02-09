@@ -489,19 +489,19 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case "completed":
-        return "bg-[#D7CCC8] text-[#5D4037] hover:bg-[#D7CCC8]/80";
+        return "bg-[#F3F0EB] text-[#6B4E3D] hover:bg-[#F3F0EB]/80";
       case "ready-for-pickup":
-        return "bg-[#D7CCC8] text-[#795548] hover:bg-[#D7CCC8]/80";
+        return "bg-[#F3F0EB] text-[#6B4E3D] hover:bg-[#F3F0EB]/80";
       case "processing":
-        return "bg-[#D7CCC8]/70 text-[#795548] hover:bg-[#D7CCC8]";
+        return "bg-[#F3F0EB]/70 text-[#6B4E3D] hover:bg-[#F3F0EB]";
       case "pending":
-        return "bg-[#D7CCC8]/50 text-[#795548] hover:bg-[#D7CCC8]/70";
+        return "bg-[#F3F0EB]/50 text-[#6B4E3D] hover:bg-[#F3F0EB]/70";
       case "cancelled":
         return "bg-red-500/10 text-red-700 hover:bg-red-500/20";
       case "refund-requested":
-        return "bg-[#D7CCC8] text-[#3E2723] hover:bg-[#D7CCC8]/80";
+        return "bg-[#F3F0EB] text-[#6B4E3D] hover:bg-[#F3F0EB]/80";
       case "refunded":
-        return "bg-[#795548] text-white hover:bg-[#795548]/90";
+        return "bg-[#6B4E3D] text-white hover:bg-[#6B4E3D]/90";
       default:
         return "";
     }
@@ -529,13 +529,13 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-background py-12">
+    <div className="min-h-screen bg-[#FDFBF7] py-12">
       <div className="container mx-auto px-4 lg:px-8">
         <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
-              <h1 className="mb-2 text-[#5D4037]">My Account</h1>
+              <h1 className="mb-2 text-[#6B4E3D]">My Account</h1>
               <p className="text-muted-foreground">
                 Manage your profile and view your orders
               </p>
@@ -543,7 +543,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
             <Button
               variant="outline"
               onClick={handleLogout}
-              className="text-[#5D4037] border-[#795548] hover:bg-[#D7CCC8]"
+              className="text-[#6B4E3D] border-[#6B4E3D] hover:bg-[#6B4E3D] hover:text-white transition-all duration-300"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Log Out
@@ -551,31 +551,31 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
           </div>
 
           <Tabs defaultValue="orders" className="space-y-6">
-            <TabsList className="rounded-full bg-[#D7CCC8] border border-[#795548]/20">
+            <TabsList className="flex flex-wrap justify-center w-full h-auto bg-transparent gap-4 p-0">
               <TabsTrigger
                 value="orders"
-                className="rounded-full data-[state=active]:bg-[#5D4037] data-[state=active]:text-white data-[state=inactive]:text-[#795548]"
+                className="rounded-full px-6 py-3 data-[state=active]:bg-[#6B4E3D] data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:bg-white data-[state=inactive]:text-[#6B4E3D] hover:bg-[#6B4E3D]/10 transition-all duration-300"
               >
                 <Package className="h-4 w-4 mr-2" />
                 Orders {orders.length > 0 && `(${orders.length})`}
               </TabsTrigger>
               <TabsTrigger
                 value="profile"
-                className="rounded-full data-[state=active]:bg-[#5D4037] data-[state=active]:text-white data-[state=inactive]:text-[#795548]"
+                className="rounded-full px-6 py-3 data-[state=active]:bg-[#6B4E3D] data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:bg-white data-[state=inactive]:text-[#6B4E3D] hover:bg-[#6B4E3D]/10 transition-all duration-300"
               >
                 <User className="h-4 w-4 mr-2" />
                 Profile
               </TabsTrigger>
               <TabsTrigger
                 value="addresses"
-                className="rounded-full data-[state=active]:bg-[#5D4037] data-[state=active]:text-white data-[state=inactive]:text-[#795548]"
+                className="rounded-full px-6 py-3 data-[state=active]:bg-[#6B4E3D] data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:bg-white data-[state=inactive]:text-[#6B4E3D] hover:bg-[#6B4E3D]/10 transition-all duration-300"
               >
                 <MapPin className="h-4 w-4 mr-2" />
                 Addresses
               </TabsTrigger>
               <TabsTrigger
                 value="settings"
-                className="rounded-full data-[state=active]:bg-[#5D4037] data-[state=active]:text-white data-[state=inactive]:text-[#795548]"
+                className="rounded-full px-6 py-3 data-[state=active]:bg-[#6B4E3D] data-[state=active]:text-white data-[state=active]:shadow-md data-[state=inactive]:bg-white data-[state=inactive]:text-[#6B4E3D] hover:bg-[#6B4E3D]/10 transition-all duration-300"
               >
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
@@ -584,7 +584,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
 
             {/* Orders Tab */}
             <TabsContent value="orders">
-              <Card>
+              <Card className="border-none shadow-sm bg-white">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div>
@@ -645,7 +645,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                   ) : (
                     <div className="space-y-4">
                       {filteredOrders.map((order) => (
-                        <Card key={order.id}>
+                        <Card key={order.id} className="border-none shadow-sm bg-white hover:shadow-md transition-shadow duration-300">
                           <CardContent className="pt-6">
                             <div className="flex justify-between items-start mb-4">
                               <div>
@@ -676,7 +676,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                               {order.items.map((item: any, index: number) => (
                                 <div key={index}>
                                   <div className="flex gap-4">
-                                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#D7CCC8] flex-shrink-0">
+                                    <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#F3F0EB] flex-shrink-0">
                                       <img
                                         src={getProductImage(
                                           item.productId,
@@ -704,7 +704,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                                       )}
                                     </div>
                                     <div className="text-right">
-                                      <p className="text-[#5D4037]">
+                                      <p className="text-[#6B4E3D]">
                                         ₱
                                         {(item.price * item.quantity).toFixed(
                                           2,
@@ -727,7 +727,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                                   </div>
                                   {item.refundRequested &&
                                     item.refundReason && (
-                                      <div className="ml-20 mt-2 p-2 bg-[#D7CCC8]/50 rounded text-sm">
+                                      <div className="ml-20 mt-2 p-2 bg-[#FDFBF7] rounded text-sm border border-[#6B4E3D]/10">
                                         <p className="text-muted-foreground">
                                           Refund reason: {item.refundReason}
                                         </p>
@@ -742,7 +742,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                             <div className="flex justify-between items-center">
                               <div>
                                 <p className="text-muted-foreground">Total</p>
-                                <p className="text-[#5D4037]">
+                                <p className="text-[#6B4E3D] font-semibold">
                                   ₱{order.total.toFixed(2)}
                                 </p>
                               </div>
@@ -781,7 +781,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
 
             {/* Profile Tab */}
             <TabsContent value="profile">
-              <Card>
+              <Card className="border-none shadow-sm bg-white">
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
@@ -809,8 +809,8 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 rounded-full bg-[#D7CCC8] flex items-center justify-center">
-                      <User className="h-10 w-10 text-[#5D4037]" />
+                    <div className="w-20 h-20 rounded-full bg-[#F3F0EB] flex items-center justify-center">
+                      <User className="h-10 w-10 text-[#6B4E3D]" />
                     </div>
                     <div>
                       <h3>
@@ -860,7 +860,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                           type="email"
                           value={profileData.email}
                           disabled
-                          className="bg-[#D7CCC8]/50 cursor-not-allowed"
+                          className="bg-[#F3F0EB]/50 cursor-not-allowed"
                         />
                         <p className="text-xs text-muted-foreground">
                           Email cannot be changed here. Use the Security section
@@ -911,7 +911,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
 
             {/* Addresses Tab */}
             <TabsContent value="addresses">
-              <Card>
+              <Card className="border-none shadow-sm bg-white">
                 <CardHeader>
                   <div className="flex justify-between items-center">
                     <div>
@@ -937,7 +937,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                   ) : (
                     <div className="space-y-4">
                       {user.addresses.map((address) => (
-                        <Card key={address.id}>
+                        <Card key={address.id} className="border-none shadow-sm bg-white hover:shadow-md transition-shadow duration-300">
                           <CardContent className="pt-6">
                             <div className="flex justify-between items-start">
                               <div className="flex-1">
@@ -1011,7 +1011,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
             {/* Settings Tab */}
             <TabsContent value="settings">
               <div className="space-y-6">
-                <Card>
+                <Card className="border-none shadow-sm bg-white">
                   <CardHeader>
                     <CardTitle>Account Settings</CardTitle>
                     <CardDescription>
@@ -1056,7 +1056,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                   </CardContent>
                 </Card>
 
-                <Card>
+                <Card className="border-none shadow-sm bg-white">
                   <CardHeader>
                     <CardTitle className="text-red-600">Danger Zone</CardTitle>
                     <CardDescription>
@@ -1094,7 +1094,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
           {selectedOrder && (
             <div className="overflow-y-auto max-h-[calc(95vh-120px)] space-y-6 invoice-scroll pb-8">
               {/* Pickup Verification QR */}
-              <Card className="bg-gradient-to-br from-[#D7CCC8]/30 to-[#D7CCC8]/10 border-[#795548]/20">
+              <Card className="border-none shadow-sm bg-white">
                 <CardContent className="pt-6">
                   <div className="flex flex-col md:flex-row items-center gap-6">
                     <div className="flex-shrink-0">
@@ -1149,8 +1149,8 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
           </DialogHeader>
           <div className="space-y-6">
             {selectedItem && (
-              <div className="flex gap-4 p-3 bg-[#D7CCC8]/50 rounded-lg">
-                <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#D7CCC8] flex-shrink-0">
+              <div className="flex gap-4 p-3 bg-[#FDFBF7] rounded-lg border border-[#6B4E3D]/10">
+                <div className="w-16 h-16 rounded-lg overflow-hidden bg-[#F3F0EB] flex-shrink-0">
                   <img
                     src={getProductImage(
                       selectedItem.productId,
@@ -1165,7 +1165,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                   <p className="text-muted-foreground">
                     {selectedItem.color} × {selectedItem.quantity}
                   </p>
-                  <p className="text-[#5D4037]">
+                  <p className="text-[#6B4E3D] font-semibold">
                     ₱{(selectedItem.price * selectedItem.quantity).toFixed(2)}
                   </p>
                   <p className="text-muted-foreground mt-1">
@@ -1391,7 +1391,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
             )}
 
             {selectedOrder?.paymentMethod === "cash" && (
-              <div className="p-4 bg-[#D7CCC8]/50 text-[#5D4037] rounded-lg border border-[#795548]/30">
+              <div className="p-4 bg-amber-50 text-amber-900 rounded-lg border border-amber-200">
                 <p>
                   Since you paid with Cash on Pickup, your refund will be
                   processed as cash pickup at our store.
@@ -1399,7 +1399,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
               </div>
             )}
 
-            <div className="p-4 bg-[#D7CCC8]/50 rounded-lg border border-[#795548]/20">
+            <div className="p-4 bg-[#FDFBF7] rounded-lg border border-[#6B4E3D]/20">
               <h4 className="mb-2">Refund Policy</h4>
               <ul className="text-muted-foreground space-y-1">
                 <li>
@@ -1709,7 +1709,7 @@ export function AccountPage({ onNavigate }: AccountPageProps) {
                 type="email"
                 value={user?.email || ""}
                 disabled
-                className="bg-[#D7CCC8]/50"
+                className="bg-[#F3F0EB]"
               />
             </div>
 
