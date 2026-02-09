@@ -128,6 +128,10 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
     canAccessAdmin,
   } = useAuth();
   const { logProductAction } = useAuditLog();
+  
+  // Helper functions for role checks
+  const isOwner = () => user?.role === 'owner';
+  const isAdmin = () => user?.role === 'admin' || user?.role === 'owner';
 
   // Set default tab based on role
   const getDefaultTab = () => {
