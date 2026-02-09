@@ -32,33 +32,39 @@ export function ProductCard({
         {/* Gradient Overlay on Hover */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
-        {/* Badge for size options */}
+        {/* Badge for size options - Enhanced typography */}
         {hasSizeOptions && (
-          <div className="absolute top-3 left-3 px-3 py-1 bg-primary/90 backdrop-blur-sm text-white text-xs font-medium rounded-full shadow-md">
+          <div className="absolute top-3 left-3 px-3 py-1.5 bg-primary/90 backdrop-blur-sm text-white badge-text rounded-full shadow-md">
             Multiple Sizes
           </div>
         )}
       </div>
 
-      <div className="p-4">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium mb-0.5">
+      <div className="p-4 sm:p-5">
+        {/* Category Label - Enhanced visibility */}
+        <p className="category-label text-muted-foreground mb-2">
           {category}
         </p>
-        <h3 className="font-medium text-base sm:text-lg line-clamp-2 mb-1 group-hover:text-primary transition-colors leading-snug">
+        
+        {/* Product Title - Optimized for scanning */}
+        <h3 className="product-title-card mb-3 group-hover:text-primary transition-colors">
           {name}
         </h3>
-        <p className="text-base font-semibold text-foreground">
+        
+        {/* Price - High visibility with proper hierarchy */}
+        <div className="flex items-baseline gap-2">
           {hasSizeOptions && (
-            <span className="text-sm font-normal text-muted-foreground">
-              From{" "}
+            <span className="meta-text">
+              From
             </span>
           )}
-          ₱
-          {price.toLocaleString("en-PH", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}
-        </p>
+          <p className="price-small number-display text-foreground">
+            ₱{price.toLocaleString("en-PH", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </p>
+        </div>
       </div>
     </div>
   );

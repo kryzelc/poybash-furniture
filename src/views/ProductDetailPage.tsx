@@ -144,23 +144,30 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
 
           {/* Product Info */}
           <div className="space-y-6">
+            {/* Product Header */}
             <div>
-              <Badge variant="secondary" className="mb-2">
+              {/* Category Badge - Enhanced visibility */}
+              <Badge variant="secondary" className="badge-text mb-3 px-3 py-1.5">
                 {product.subCategory}
               </Badge>
-              <h1 className="mb-2">{product.name}</h1>
-              <p className="text-primary text-2xl font-semibold">
+              
+              {/* Product Title - Primary focus */}
+              <h1 className="product-title text-balance mb-4">{product.name}</h1>
+              
+              {/* Price - High visibility */}
+              <p className="price-large text-primary number-display">
                 ₱{currentPrice.toFixed(2)}
               </p>
             </div>
 
             <Separator />
 
+            {/* Description Section */}
             <div>
-              <h4 className="mb-3 font-medium">Description</h4>
-              <p className="text-muted-foreground leading-relaxed">
-                {product.description}
-              </p>
+              <h4 className="card-title">Description</h4>
+              <div className="description-text">
+                <p>{product.description}</p>
+              </div>
             </div>
 
             <Separator />
@@ -171,7 +178,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
                 {/* Size Selection - Only show if product has size variations */}
                 {sizes.length > 0 && (
                   <div>
-                    <h4 className="mb-3 font-medium">Size</h4>
+                    <h4 className="label-text mb-3">Size</h4>
                     <div className="flex flex-wrap gap-3">
                       {sizes.map((size) => {
                         // Check if this size has any stock in any color
@@ -187,16 +194,16 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
                             key={size}
                             onClick={() => handleSizeChange(size)}
                             disabled={!hasStock}
-                            className={`px-4 py-2 rounded-lg border-2 transition-colors ${selectedSize === size
-                              ? "border-primary bg-primary/5"
+                            className={`px-5 py-3 rounded-lg border-2 transition-all cta-text-small ${selectedSize === size
+                              ? "border-primary bg-primary/5 font-bold"
                               : hasStock
-                                ? "border-border hover:border-primary/50"
+                                ? "border-border hover:border-primary/50 hover:bg-primary/5"
                                 : "border-border opacity-50 cursor-not-allowed"
                               }`}
                           >
                             {size}
                             {!hasStock && (
-                              <span className="text-xs ml-1">(Out)</span>
+                              <span className="meta-text ml-1">(Out)</span>
                             )}
                           </button>
                         );
@@ -208,7 +215,7 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
                 {/* Color Selection */}
                 {colors.length > 0 && (
                   <div>
-                    <h4 className="mb-3 font-medium">Color</h4>
+                    <h4 className="label-text mb-3">Color</h4>
                     <div className="flex flex-wrap gap-3">
                       {colors.map((color) => {
                         // Check if this color is available for the selected size
@@ -261,41 +268,42 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
               </>
             )}
 
-            {/* Quantity */}
+            {/* Quantity Selector */}
             <div>
-              <h4 className="mb-3 font-medium">Quantity</h4>
-              <div className="flex items-center gap-3">
+              <h4 className="label-text mb-3">Quantity</h4>
+              <div className="flex items-center gap-4">
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={decrementQuantity}
                   disabled={quantity <= 1}
+                  className="h-12 w-12"
                 >
-                  <Minus className="h-4 w-4" />
+                  <Minus className="h-5 w-5" />
                 </Button>
-                <span className="w-12 text-center">{quantity}</span>
+                <span className="number-display text-xl font-semibold w-16 text-center">{quantity}</span>
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={incrementQuantity}
                   disabled={quantity >= availableStock}
+                  className="h-12 w-12"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-5 w-5" />
                 </Button>
               </div>
               {availableStock > 0 && (
-                <p className="text-xs text-muted-foreground mt-2">
-                  {availableStock} {availableStock === 1 ? "item" : "items"}{" "}
-                  available
+                <p className="meta-text mt-3">
+                  {availableStock} {availableStock === 1 ? "item" : "items"} available
                 </p>
               )}
             </div>
 
-            {/* Add to Cart */}
-            <div className="space-y-3">
+            {/* Add to Cart CTA - Primary Action */}
+            <div className="space-y-4 pt-2">
               <Button
                 size="lg"
-                className="w-full gap-2"
+                className="w-full gap-3 h-14 cta-text"
                 onClick={handleAddToCart}
                 disabled={isOutOfStock}
               >
@@ -303,10 +311,10 @@ export function ProductDetailPage({ productId }: ProductDetailPageProps) {
                 {isOutOfStock ? "Out of Stock" : "Add to Cart"}
               </Button>
               {!isOutOfStock && (
-                <p className="text-muted-foreground flex items-center gap-2">
-                  <Check className="h-4 w-4 text-green-600" />
+                <div className="flex items-center gap-2 justify-center status-text text-green-700">
+                  <Check className="h-5 w-5" />
                   In Stock - Available for Pickup
-                </p>
+                </div>
               )}
             </div>
 

@@ -44,7 +44,7 @@ const CardTitle = React.forwardRef<HTMLHeadingElement, React.ComponentProps<"div
       <h4
         ref={ref}
         data-slot="card-title"
-        className={cn("leading-none", className)}
+        className={cn("card-title", className)}
         {...props}
       />
     );
@@ -58,7 +58,7 @@ const CardDescription = React.forwardRef<HTMLParagraphElement, React.ComponentPr
       <p
         ref={ref}
         data-slot="card-description"
-        className={cn("text-muted-foreground", className)}
+        className={cn("text-muted-foreground description-short", className)}
         {...props}
       />
     );
