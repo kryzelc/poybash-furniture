@@ -2,10 +2,12 @@
  * Auth Service
  * 
  * Handles authentication and user management operations.
+ * Supports both Supabase (production) and localStorage (demo/development).
  */
 
 import { supabase } from './supabaseClient';
 import { User, Address, getUserFullName } from '@/models/User';
+import { getAllUsers as getUsersFromStorage } from './userService';
 
 export interface SignUpData {
   email: string;
@@ -20,7 +22,76 @@ export interface SignInData {
   password: string;
 }
 
+// Feature flag: Use localStorage for demo mode
+const USE_LOCALSTORAGE = true; // Set to false when you connect to real Supabase
+
 class AuthService {
+  /**
+   * Hash password (simple implementation for demo)
+   */
+  private hashPassword(password: string): string {
+    let hash = 0;
+    for (let i = 0; i < password.length; i++) {
+      const char = password.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash;
+    }
+    return hash.toString(36);
+  }
+  
+  /**
+   * Get current user session from localStorage
+   */
+  private getLocalStorageSession(): { userId: string } | null {
+    if (typeof window === 'undefined') return null;
+    const session = localStorage.getItem('auth_session');
+    return session ? JSON.parse(session) : null;
+  }
+  
+  /**
+   * Set current user session in localStorage
+   */
+  private setLocalStorageSession(userId: string): void {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem('auth_session', JSON.stringify({ userId }));
+  }
+  
+  /**
+   * Clear current user session from localStorage
+   */
+  private clearLocalStorageSession(): void {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem('auth_session');
+  }
+  
+  /**
+   * Sign in with localStorage
+   */
+  private async signInWithLocalStorage(data: SignInData): Promise<{ user: User | null; error: string | null }> {
+    try {
+      const users = await getUsersFromStorage();
+      const passwordHash = this.hashPassword(data.password);
+      
+      const user = users.find(
+        (u: any) => 
+          u.email.toLowerCase() === data.email.toLowerCase() &&
+          u.passwordHash === passwordHash &&
+          u.active
+      );
+      
+      if (!user) {
+        return { user: null, error: 'Invalid email or password' };
+      }
+      
+      // Create session
+      this.setLocalStorageSession(user.id);
+      
+      return { user, error: null };
+    } catch (error) {
+      console.error('LocalStorage sign in error:', error);
+      return { user: null, error: 'Failed to sign in' };
+    }
+  }
   /**
    * Sign up new user
    */
@@ -71,6 +142,12 @@ class AuthService {
    * Sign in user
    */
   async signIn(data: SignInData): Promise<{ user: User | null; error: string | null }> {
+    // Use localStorage for demo mode
+    if (USE_LOCALSTORAGE) {
+      return this.signInWithLocalStorage(data);
+    }
+    
+    // Supabase authentication (production)
     try {
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: data.email,
@@ -106,6 +183,13 @@ class AuthService {
    * Sign out user
    */
   async signOut(): Promise<{ error: string | null }> {
+    // Use localStorage for demo mode
+    if (USE_LOCALSTORAGE) {
+      this.clearLocalStorageSession();
+      return { error: null };
+    }
+    
+    // Supabase sign out (production)
     try {
       const { error } = await supabase.auth.signOut();
       return { error: error?.message || null };
@@ -119,6 +203,17 @@ class AuthService {
    * Get current session
    */
   async getSession() {
+    // Use localStorage for demo mode
+    if (USE_LOCALSTORAGE) {
+      const session = this.getLocalStorageSession();
+      if (!session) return null;
+      
+      return {
+        user: { id: session.userId }
+      };
+    }
+    
+    // Supabase session (production)
     const { data, error } = await supabase.auth.getSession();
     
     if (error || !data.session) {
@@ -132,6 +227,14 @@ class AuthService {
    * Get user by ID
    */
   async getUserById(userId: string): Promise<User | null> {
+    // Use localStorage for demo mode
+    if (USE_LOCALSTORAGE) {
+      const users = await getUsersFromStorage();
+      const user = users.find((u: any) => u.id === userId && u.active);
+      return user || null;
+    }
+    
+    // Supabase (production)
     const { data, error } = await supabase
       .from('users')
       .select('*, addresses(*)')
