@@ -550,15 +550,16 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
   // Helper functions for dynamic dashboard title and greeting
   const getDashboardTitle = (role: string) => {
     switch (role) {
-      case "admin":
       case "owner":
+        return "Owner Dashboard";
+      case "admin":
         return "Admin Dashboard";
       case "staff":
         return "Sales Dashboard";
       case "inventory-clerk":
         return "Inventory Dashboard";
       default:
-        return "Admin Dashboard";
+        return "Dashboard";
     }
   };
 
