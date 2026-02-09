@@ -53,10 +53,25 @@ export async function getAllUsers(): Promise<
 > {
   try {
     const users = getAllUsersFromStorage();
-    // Remove password hash from returned data
+    // Remove password hash from returned data (for security)
     return users.map(({ passwordHash, ...user }) => user);
   } catch (error) {
     console.error("Error fetching users:", error);
+    return [];
+  }
+}
+
+/**
+ * Get all users WITH password hashes (for authentication only)
+ * INTERNAL USE ONLY - Do not expose to UI
+ */
+export async function getAllUsersWithHashes(): Promise<
+  Array<UserType & { passwordHash: string }>
+> {
+  try {
+    return getAllUsersFromStorage();
+  } catch (error) {
+    console.error("Error fetching users with hashes:", error);
     return [];
   }
 }

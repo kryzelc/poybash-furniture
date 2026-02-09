@@ -7,7 +7,7 @@
 
 import { supabase } from './supabaseClient';
 import { User, Address, getUserFullName } from '@/models/User';
-import { getAllUsers as getUsersFromStorage } from './userService';
+import { getAllUsersWithHashes as getUsersFromStorage } from './userService';
 
 export interface SignUpData {
   email: string;
