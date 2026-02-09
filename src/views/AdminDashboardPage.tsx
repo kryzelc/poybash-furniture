@@ -125,15 +125,7 @@ interface AdminDashboardPageProps {
 export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
   const {
     user,
-    orders,
-    updateOrderStatus,
-    cancelOrder,
-    processManualRefund,
-    isAdmin,
-    isOwner,
     canAccessAdmin,
-    placeOrder,
-    logout,
   } = useAuth();
   const { logProductAction } = useAuditLog();
 
@@ -149,12 +141,21 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
   const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
   const [productFilter, setProductFilter] = useState<string>("all");
   const [products, setProducts] = useState<Product[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [showManualOrderDialog, setShowManualOrderDialog] = useState(false);
   const [showQRScanner, setShowQRScanner] = useState(false);
 
-  // Load products
+  // Load products and orders
   useEffect(() => {
     setProducts(getProducts());
+    
+    // Load orders from localStorage
+    const storedOrders = localStorage.getItem('orders');
+    if (storedOrders) {
+      setOrders(JSON.parse(storedOrders));
+    } else {
+      setOrders([]);
+    }
   }, [activeTab]);
 
   // Refresh products function - can be called by child components
@@ -179,6 +180,21 @@ export function AdminDashboardPage({ onNavigate }: AdminDashboardPageProps) {
 
   // Calculate statistics
   const stats = useMemo(() => {
+    // Guard against undefined orders
+    if (!orders || !Array.isArray(orders)) {
+      return {
+        totalRevenue: 0,
+        pendingOrders: 0,
+        completedOrders: 0,
+        refundRequests: 0,
+        totalCustomers: 0,
+        newCustomers: 0,
+        inStockProducts: products.length,
+        dailyData: [],
+        topProducts: [],
+      };
+    }
+    
     const totalRevenue = orders
       .filter((o) => o.status === "completed")
       .reduce((sum, order) => sum + order.total, 0);

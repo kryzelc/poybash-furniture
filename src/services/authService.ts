@@ -69,34 +69,8 @@ class AuthService {
    */
   private async signInWithLocalStorage(data: SignInData): Promise<{ user: User | null; error: string | null }> {
     try {
-      console.log('🔐 [AUTH] Attempting localStorage sign in...');
-      console.log('📧 Email:', data.email);
-      
       const users = await getUsersFromStorage();
-      console.log('👥 Total users in storage:', users.length);
-      
       const passwordHash = this.hashPassword(data.password);
-      console.log('🔑 Password hash:', passwordHash);
-      
-      // Debug: Show all users
-      console.log('📋 Available users:', users.map((u: any) => ({
-        email: u.email,
-        role: u.role,
-        hash: u.passwordHash,
-        active: u.active
-      })));
-      
-      // Debug each condition
-      users.forEach((u: any) => {
-        if (u.email.toLowerCase() === data.email.toLowerCase()) {
-          console.log('Found email match:', u.email);
-          console.log('  - Stored hash:', u.passwordHash);
-          console.log('  - Input hash:', passwordHash);
-          console.log('  - Hash match:', u.passwordHash === passwordHash);
-          console.log('  - Active:', u.active);
-          console.log('  - Active type:', typeof u.active);
-        }
-      });
       
       const user = users.find(
         (u: any) => 
@@ -106,18 +80,13 @@ class AuthService {
       );
       
       if (!user) {
-        console.error('❌ [AUTH] No matching user found');
-        console.log('Searched for:', {
-          email: data.email.toLowerCase(),
-          passwordHash: passwordHash
-        });
         return { user: null, error: 'Invalid email or password' };
       }
       
-      console.log('✅ [AUTH] User found:', user.email, '-', user.role);
-      
       // Create session
       this.setLocalStorageSession(user.id);
+      
+      console.log('✅ Logged in as:', user.email, '-', user.role);
       
       return { user, error: null };
     } catch (error) {
